@@ -10,7 +10,7 @@ const CustomLayout = styled(Layout)`
 `
 
 const CustomContent = styled(Content)`
-	/* margin-top: 20px; */
+	height: calc(100vh + 500px);
 	padding: 100px;
 `
 

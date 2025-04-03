@@ -12,6 +12,24 @@ import {
 	LaptopOutlined,
 	MehOutlined,
 } from '@ant-design/icons'
+import styled from 'styled-components'
+
+const StyledCalendar = styled(Calendar)`
+	.ant-picker-calendar-date-content {
+		height: 120px !important; /* 높이 강제 적용 */
+		overflow-y: hidden !important;
+	}
+
+	padding-top: 25px;
+`
+
+const StyledP = styled.p`
+	color: black;
+`
+
+const StyledHolidayP = styled.p`
+	color: red;
+`
 
 export const CustomCalendar = () => {
 	// 휴일 LIST
@@ -60,8 +78,14 @@ export const CustomCalendar = () => {
 			icon: <HomeOutlined />,
 		},
 		{
-			label: '야근',
-			key: '야근',
+			label: '야근(식대x)',
+			key: '야근(식대x)',
+			icon: <MehOutlined />,
+			danger: true,
+		},
+		{
+			label: '야근(식대)',
+			key: '야근(식대)',
 			icon: <MehOutlined />,
 			danger: true,
 		},
@@ -138,14 +162,14 @@ export const CustomCalendar = () => {
 							<div
 								style={{
 									color: colorTextTertiary,
-									// background: colorBgLayout,
 									textAlign: 'center',
-									height: '100%',
+									height: '100px',
+									lineHeight: '100px',
 								}}
 							>
-								<p style={{ color: 'red' }}>근로자의날</p>
+								<StyledHolidayP>근로자의날</StyledHolidayP>
 								{savedMenuKey && savedMenuKey !== '휴무' && (
-									<p>{savedMenuKey}</p>
+									<StyledP>{savedMenuKey}</StyledP>
 								)}
 							</div>
 						</Dropdown>
@@ -153,7 +177,18 @@ export const CustomCalendar = () => {
 				)
 			}
 
-			return <p style={{ color: 'red' }}>근로자의날</p>
+			return (
+				<div
+					style={{
+						color: colorTextTertiary,
+						textAlign: 'center',
+						height: '100px',
+						lineHeight: '100px',
+					}}
+				>
+					<StyledHolidayP>근로자의날</StyledHolidayP>
+				</div>
+			)
 		}
 
 		if (holidayName) {
@@ -167,21 +202,32 @@ export const CustomCalendar = () => {
 							<div
 								style={{
 									color: colorTextTertiary,
-									// background: colorBgLayout,
 									textAlign: 'center',
-									height: '100%',
+									height: '100px',
+									lineHeight: '100px',
 								}}
 							>
-								<p style={{ color: 'red' }}>{holidayName}</p>
+								<StyledHolidayP>{holidayName}</StyledHolidayP>
 								{savedMenuKey && savedMenuKey !== '휴무' && (
-									<p>{savedMenuKey}</p>
+									<StyledP>{savedMenuKey}</StyledP>
 								)}
 							</div>
 						</Dropdown>
 					</>
 				)
 			}
-			return <span style={{ color: 'red' }}>{holidayName}</span>
+			return (
+				<div
+					style={{
+						color: colorTextTertiary,
+						textAlign: 'center',
+						height: '100px',
+						lineHeight: '100px',
+					}}
+				>
+					<StyledHolidayP>{holidayName}</StyledHolidayP>
+				</div>
+			)
 		}
 
 		if (isWeekend) {
@@ -195,14 +241,14 @@ export const CustomCalendar = () => {
 							<div
 								style={{
 									color: colorTextTertiary,
-									// background: colorBgLayout,
 									textAlign: 'center',
-									height: '100%',
+									height: '100px',
+									lineHeight: '100px',
 								}}
 							>
-								<p style={{ color: 'red' }}></p>
+								<StyledHolidayP></StyledHolidayP>
 								{savedMenuKey && savedMenuKey !== '휴무' && (
-									<p>{savedMenuKey}</p>
+									<StyledP>{savedMenuKey}</StyledP>
 								)}
 							</div>
 						</Dropdown>
@@ -210,7 +256,7 @@ export const CustomCalendar = () => {
 				)
 			}
 
-			return <p style={{ color: 'red' }}></p>
+			return <></>
 		}
 
 		if (value.month() === dayjs().month()) {
@@ -222,13 +268,14 @@ export const CustomCalendar = () => {
 					<div
 						style={{
 							color: colorTextTertiary,
-							// background: colorBgLayout,
 							textAlign: 'center',
-							height: '100%',
+							height: '100px',
+							lineHeight: '100px',
 						}}
 					>
-						{/* Right Click on here */}
-						{savedMenuKey && savedMenuKey !== '근무' && <p>{savedMenuKey}</p>}
+						{savedMenuKey && savedMenuKey !== '근무' && (
+							<StyledP>{savedMenuKey}</StyledP>
+						)}
 					</div>
 				</Dropdown>
 			)
@@ -254,8 +301,7 @@ export const CustomCalendar = () => {
 			{!fetchStatus ? (
 				<Skeleton.Node active={true} style={{ width: '100%' }} />
 			) : (
-				<Calendar
-					style={{ flex: 1 }}
+				<StyledCalendar
 					cellRender={cellRender}
 					disabledDate={disabledDate}
 					headerRender={() => <></>}

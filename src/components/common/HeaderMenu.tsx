@@ -25,14 +25,6 @@ const MenuDiv = styled.div`
 	}
 `
 
-const MobileMenuHeader = styled.div`
-	@media screen and (max-width: 760px) {
-		display: block;
-	}
-
-	display: none;
-`
-
 const MenuWrapper = styled.div`
 	@media screen and (max-width: 760px) {
 		width: 100%;
@@ -56,21 +48,8 @@ const SubMenuWrapper = styled.div`
 
 const MenuItems = styled.div``
 
-const MenuItemsSmall = styled.div`
-	font-size: 1rem;
-	line-height: 2rem;
-`
-
 const MenuSpan = styled.span`
 	cursor: pointer;
-`
-
-const MobileMenuDiv = styled.div`
-	display: none;
-	padding: 0rem 2rem 2rem 2rem;
-	z-index: 100;
-	background-color: 'white';
-	box-shadow: 1rem 1rem 1rem 0 rgba(192, 160, 160, 0.2);
 `
 
 export const HeaderMenu = () => {
@@ -82,36 +61,17 @@ export const HeaderMenu = () => {
 						<MenuWrapper>
 							<SubMenuWrapper>
 								<MenuItems>
-									<MenuSpan>.</MenuSpan>
+									<MenuSpan>밥먹자</MenuSpan>
 								</MenuItems>
 							</SubMenuWrapper>
-							<SubMenuWrapper>
+							{/* <SubMenuWrapper>
 								<MenuItemsSmall>
-									<MenuSpan>T</MenuSpan>
+									<MenuSpan></MenuSpan>
 								</MenuItemsSmall>
-							</SubMenuWrapper>
+							</SubMenuWrapper> */}
 						</MenuWrapper>
 					</MenuDiv>
-					<MobileMenuHeader>
-						<MenuWrapper>
-							<SubMenuWrapper>
-								<MenuItems>
-									<MenuSpan>T</MenuSpan>
-								</MenuItems>
-							</SubMenuWrapper>
-							<SubMenuWrapper>
-								{/* <MenuOutlined onClick={() => showMenu()} /> */}
-							</SubMenuWrapper>
-						</MenuWrapper>
-					</MobileMenuHeader>
 				</CustomFlexBox>
-				<MobileMenuDiv>
-					<SubMenuWrapper>
-						<MenuItemsSmall>
-							<MenuSpan>T</MenuSpan>
-						</MenuItemsSmall>
-					</SubMenuWrapper>
-				</MobileMenuDiv>
 			</CustomHeader>
 		</>
 	)
