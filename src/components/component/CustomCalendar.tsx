@@ -1,25 +1,43 @@
 import type { CalendarProps, MenuProps } from 'antd'
-import { Button, Calendar, Dropdown, Skeleton, theme } from 'antd'
+import {
+	Button,
+	Calendar,
+	Dropdown,
+	Input,
+	message,
+	Popconfirm,
+	Skeleton,
+	Tag,
+	theme,
+} from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import locale from 'antd/es/calendar/locale/ko_KR'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getHoliday } from '../../api'
 import {
+	CheckOutlined,
+	CloseOutlined,
 	DislikeOutlined,
 	FrownOutlined,
 	HomeOutlined,
 	LaptopOutlined,
 	MehOutlined,
+	QuestionOutlined,
 } from '@ant-design/icons'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
-import { setWorkday } from '../../store/action/workdaySlice'
+import {
+	setWorkday,
+	SpecialDay,
+	workdayReset,
+} from '../../store/action/workdaySlice'
 import { RootState } from '../../store'
 import {
 	calendarReset,
 	setCalendarUpdate,
 } from '../../store/action/calendarSlice'
+import { numberRegexp } from '../hook/useNumberRegexp'
 
 const StyledCalendar = styled(Calendar)`
 	.ant-picker-calendar-date-content {
@@ -44,6 +62,22 @@ export const CustomCalendar = () => {
 	const calendarStatus = useSelector((state: RootState) => state.calendarStatus)
 
 	const [fetchStatus, setFetchStatus] = useState<boolean>(false)
+
+	const [confirmTemporaryData, setConfirmTemporaryData] = useState<string>()
+	const [inputTemporaryData, setInputTemporaryData] = useState<
+		number | string
+	>()
+
+	const [messageApi, contextHolder] = message.useMessage()
+
+	const hiddenRef = useRef(null)
+
+	const error = () => {
+		messageApi.open({
+			type: 'error',
+			content: '숫자가 아니거나, 동일한 값을 입력했습니다.',
+		})
+	}
 
 	useEffect(() => {
 		const fetchHoliday = async () => {
@@ -98,7 +132,9 @@ export const CustomCalendar = () => {
 		loadHolidays()
 	}, [])
 
-	useEffect(() => {}, [workdayStatus])
+	useEffect(() => {
+		console.log(workdayStatus, '업데이트확인')
+	}, [workdayStatus])
 
 	useEffect(() => {
 		const today = dayjs()
@@ -289,7 +325,7 @@ export const CustomCalendar = () => {
 								<StyledHolidayP>
 									근로자의날
 									{savedMenuKey && savedMenuKey !== '휴무' && (
-										<span style={{ color: 'black' }}> ({savedMenuKey})</span>
+										<Tag color="volcano"> ({savedMenuKey})</Tag>
 									)}
 								</StyledHolidayP>
 							</div>
@@ -331,7 +367,7 @@ export const CustomCalendar = () => {
 								<StyledHolidayP>
 									{holidayName}
 									{savedMenuKey && savedMenuKey !== '휴무' && (
-										<span style={{ color: 'black' }}> ({savedMenuKey})</span>
+										<Tag color="volcano"> ({savedMenuKey})</Tag>
 									)}
 								</StyledHolidayP>
 							</div>
@@ -370,7 +406,7 @@ export const CustomCalendar = () => {
 								}}
 							>
 								{savedMenuKey && savedMenuKey !== '휴무' && (
-									<StyledP>{savedMenuKey}</StyledP>
+									<Tag color="volcano"> ({savedMenuKey})</Tag>
 								)}
 							</div>
 						</Dropdown>
@@ -387,23 +423,103 @@ export const CustomCalendar = () => {
 					menu={{ items: workDayItems, onClick: handleMenuClick(value) }}
 					trigger={['contextMenu']}
 				>
-					<div
-						style={{
-							color: colorTextTertiary,
-							textAlign: 'center',
-							height: '100px',
-							lineHeight: '100px',
-						}}
+					<Popconfirm
+						title="얼마짜리 먹을 계획이야?"
+						description={
+							<Input
+								placeholder="금액입력"
+								variant="underlined"
+								style={{ padding: 0 }}
+								onChange={handleInputChange}
+							/>
+						}
+						okText={<CheckOutlined />}
+						cancelText={<CloseOutlined />}
+						trigger="click"
+						icon={''}
+						onConfirm={handleConfirm}
 					>
-						{savedMenuKey && savedMenuKey !== '근무' && (
-							<StyledP>{savedMenuKey}</StyledP>
-						)}
-					</div>
+						<div
+							style={{
+								color: colorTextTertiary,
+								textAlign: 'center',
+								height: '100px',
+								lineHeight: '100px',
+							}}
+							onClick={() => handleLeftClick(value)}
+						>
+							{savedMenuKey &&
+								savedMenuKey !== '근무' &&
+								savedMenuKey !== '휴가/오전반차' && (
+									<Tag color="volcano"> ({savedMenuKey})</Tag>
+								)}
+							{savedMenuKey && savedMenuKey === '휴가/오전반차' && (
+								<Tag color="purple"> ({savedMenuKey})</Tag>
+							)}
+						</div>
+					</Popconfirm>
 				</Dropdown>
 			)
 		}
 
 		return <></>
+	}
+
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { value } = e.target
+
+		if (value.length === 0) {
+			setInputTemporaryData('')
+		}
+
+		if (numberRegexp(value) === false) {
+			return
+		} else {
+			if (value.length > 7) {
+				return
+			}
+			setInputTemporaryData(value)
+		}
+	}
+
+	const handleConfirm = () => {
+		const copy = {
+			...workdayStatus,
+			specialDayList: workdayStatus.specialDayList.map(item => ({ ...item })), // 깊은 복사
+		}
+
+		if (
+			isNaN(Number(inputTemporaryData)) ||
+			inputTemporaryData?.toString().trim() === ''
+		) {
+			;(hiddenRef.current as any)?.click()
+			return
+		}
+
+		console.log(copy.specialDayList)
+
+		const specialObj: SpecialDay = {
+			locdate: confirmTemporaryData!,
+			amount: Number(inputTemporaryData),
+		}
+		const existingIndex = copy.specialDayList.findIndex(
+			item => item.locdate === confirmTemporaryData,
+		)
+
+		console.log(existingIndex)
+
+		if (existingIndex !== -1) {
+			copy.specialDayList[existingIndex].amount = specialObj.amount
+		} else {
+			copy.specialDayList.push(specialObj)
+		}
+
+		dispatch(setWorkday(copy))
+	}
+
+	const handleLeftClick = (value: Dayjs) => {
+		setInputTemporaryData('')
+		setConfirmTemporaryData(value.format('YYYY-MM-DD'))
 	}
 
 	const cellRender: CalendarProps<Dayjs>['cellRender'] = (current, info) => {
@@ -424,9 +540,13 @@ export const CustomCalendar = () => {
 	return (
 		<>
 			{!fetchStatus ? (
-				<Skeleton.Node active={true} style={{ width: '100%' }} />
+				<Skeleton.Node
+					active={true}
+					style={{ width: '90vw', height: '100vh' }}
+				/>
 			) : (
 				<>
+					{contextHolder}
 					<div style={{ textAlign: 'center', marginBottom: 50 }}>
 						<h1>{dayjs().month() + 1}월</h1>
 					</div>
@@ -441,6 +561,13 @@ export const CustomCalendar = () => {
 							달력 초기화
 						</Button>
 					</div>
+					<Button
+						ref={hiddenRef}
+						onClick={error}
+						style={{ visibility: 'hidden' }}
+					>
+						Error
+					</Button>
 				</>
 			)}
 		</>

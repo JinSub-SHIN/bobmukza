@@ -4,6 +4,7 @@ import { RootState } from '../../store'
 import { numberWithCommas } from '../hook/useNumberComma'
 import { setWorkday } from '../../store/action/workdaySlice'
 import { Card, Col, Input, Row, Tooltip } from 'antd'
+import { numberRegexp } from '../hook/useNumberRegexp'
 
 const CalculatingWrapper = styled.div`
 	margin-top: 10px;
@@ -36,11 +37,6 @@ export const Calculating = () => {
 	const dispatch = useDispatch()
 
 	const workdayStatus = useSelector((state: RootState) => state.workdayStatus)
-
-	const numberRegexp = (inputValue: string) => {
-		const allowedRegex = /^[0-9]+$/
-		return allowedRegex.test(inputValue)
-	}
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const copy = { ...workdayStatus }
@@ -79,10 +75,9 @@ export const Calculating = () => {
 		<>
 			<StyledInput
 				placeholder="현재 까지 사용한 금액 입력"
-				variant="filled"
+				// variant="filled"
 				onChange={handleChange}
 				value={workdayStatus.usageAmount}
-				type="number"
 			/>
 			<div style={{ marginTop: 30, textAlign: 'center' }}>
 				<Row gutter={24}>

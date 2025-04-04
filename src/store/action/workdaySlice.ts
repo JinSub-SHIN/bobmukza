@@ -1,8 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import type { Dayjs } from 'dayjs'
 
 export interface HolidayObj {
 	locdate: string
 	dateName: string
+}
+
+export interface SpecialDay {
+	locdate: string
+	amount: number
 }
 
 export interface Workday {
@@ -16,6 +22,7 @@ export interface Workday {
 	afterTodayHolidayCount: number
 	willPayCount: number
 	usageAmount: number | undefined
+	specialDayList: SpecialDay[]
 }
 
 const initialState: Workday = {
@@ -29,6 +36,7 @@ const initialState: Workday = {
 	afterTodayHolidayCount: 0,
 	willPayCount: 0,
 	usageAmount: undefined,
+	specialDayList: [],
 }
 
 const workdaySlice = createSlice({
