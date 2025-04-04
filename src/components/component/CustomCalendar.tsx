@@ -1,5 +1,5 @@
 import type { CalendarProps, MenuProps } from 'antd'
-import { Calendar, Dropdown, Skeleton, theme } from 'antd'
+import { Button, Calendar, Dropdown, Skeleton, theme } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import locale from 'antd/es/calendar/locale/ko_KR'
@@ -13,10 +13,17 @@ import {
 	MehOutlined,
 } from '@ant-design/icons'
 import styled from 'styled-components'
+import { useDispatch, useSelector } from 'react-redux'
+import { setWorkday } from '../../store/action/workdaySlice'
+import { RootState } from '../../store'
+import {
+	calendarReset,
+	setCalendarUpdate,
+} from '../../store/action/calendarSlice'
 
 const StyledCalendar = styled(Calendar)`
 	.ant-picker-calendar-date-content {
-		height: 120px !important; /* 높이 강제 적용 */
+		height: 120px !important;
 		overflow-y: hidden !important;
 	}
 
@@ -32,39 +39,166 @@ const StyledHolidayP = styled.p`
 `
 
 export const CustomCalendar = () => {
-	// 휴일 LIST
-	const [holidayList, setHolidayList] = useState<
-		{ locdate: string; dateName: string }[]
-	>([])
+	const dispatch = useDispatch()
+	const workdayStatus = useSelector((state: RootState) => state.workdayStatus)
+	const calendarStatus = useSelector((state: RootState) => state.calendarStatus)
 
 	const [fetchStatus, setFetchStatus] = useState<boolean>(false)
 
 	useEffect(() => {
 		const fetchHoliday = async () => {
 			try {
-				const response = await getHoliday('2025', '05')
-				setFetchStatus(true)
+				const now = dayjs()
+				const nextMonth = now.add(1, 'month')
+
+				const response = await getHoliday(now.format('YYYY'), now.format('MM'))
+
+				const nextMonthResponse = await getHoliday(
+					nextMonth.format('YYYY'),
+					nextMonth.format('MM'),
+				)
+
 				const holidayresponseArray = response.response.body.items.item
-				// 국가 API
-				const locdates = holidayresponseArray.map((holiday: any) => ({
+					? response.response.body.items.item
+					: []
+				const holidayNextresponseArray = nextMonthResponse.response.body.items
+					.item
+					? nextMonthResponse.response.body.items.item
+					: []
+
+				setFetchStatus(true)
+
+				const nowHoliday = holidayresponseArray.map((holiday: any) => ({
 					locdate: holiday.locdate.toString(),
 					dateName: holiday.dateName.toString(),
 				}))
-				return locdates
+
+				const nextHoliday = holidayNextresponseArray.map((holiday: any) => ({
+					locdate: holiday.locdate.toString(),
+					dateName: holiday.dateName.toString(),
+				}))
+
+				const copy = { ...workdayStatus }
+				copy.holidayList = nowHoliday
+				copy.nextMonthHolidayList = nextHoliday
+				dispatch(setWorkday(copy))
 			} catch (error) {
-				// error
+				return []
 			}
 		}
 		const loadHolidays = async () => {
-			const holidays = await fetchHoliday()
-			setHolidayList(holidays) // ✅ useState에 직접 저장
+			await fetchHoliday()
+			const workday = getWeekdaysInMonth()
+			const remaningWorkday = getRemainingWorkdays()
+			const copy = { ...workdayStatus }
+			copy.workday = workday
+			copy.workRemaningDay = remaningWorkday
+			dispatch(setWorkday(copy))
 		}
 		loadHolidays()
 	}, [])
 
+	useEffect(() => {}, [workdayStatus])
+
 	useEffect(() => {
-		console.log(holidayList)
-	}, [holidayList])
+		const today = dayjs()
+
+		const afterHolidaycount = calendarStatus.filter(
+			item =>
+				item.status === '휴가/오전반차' &&
+				dayjs(item.date).isAfter(today, 'day'),
+		).length
+
+		const vacationCount = calendarStatus.filter(
+			item => item.status === '휴가/오전반차',
+		).length
+		const overtimeDontEatCount = calendarStatus.filter(
+			item => item.status === '야근(식대x)',
+		).length
+		const overtimeCount = calendarStatus.filter(
+			item => item.status === '야근(식대)',
+		).length
+		const extraLunchCount = calendarStatus.filter(
+			item => item.status === '점심',
+		).length
+		const extraLunchDinnerCount = calendarStatus.filter(
+			item => item.status === '점심/저녁',
+		).length
+
+		const copy = { ...workdayStatus }
+		copy.extraWorkCount =
+			overtimeDontEatCount +
+			overtimeCount +
+			extraLunchCount +
+			extraLunchDinnerCount
+
+		copy.extraMoneyCount =
+			overtimeCount + extraLunchCount + extraLunchDinnerCount * 2
+		copy.holidayTotalCount = vacationCount
+		copy.afterTodayHolidayCount = afterHolidaycount
+
+		dispatch(setWorkday(copy))
+	}, [calendarStatus])
+
+	const getWeekdaysInMonth = () => {
+		const now = dayjs()
+		const daysInMonth = now.daysInMonth()
+		let count = 0
+		for (let day = 1; day <= daysInMonth; day++) {
+			const date = now.date(day)
+			const dayOfWeek = date.day()
+			const isHoliday = workdayStatus.holidayList.some(
+				holiday => holiday.locdate === date.format('YYYYMMDD'),
+			)
+			if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday) {
+				count++
+			}
+		}
+		const month = now.format('MM')
+		// 근로자의날 특수케이스추가
+		if (month === '05') {
+			count--
+		}
+		return count
+	}
+
+	const getRemainingWorkdays = () => {
+		const now = dayjs()
+		const isBefore1PM = now.hour() < 13
+
+		const year = now.format('YYYY')
+		const month = now.format('MM')
+		const daysInMonth = now.daysInMonth()
+
+		let count = 0
+
+		for (let day = now.date(); day <= daysInMonth; day++) {
+			const date = dayjs(`${year}-${month}-${String(day).padStart(2, '0')}`)
+			const dayOfWeek = date.day()
+			const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+			const isHoliday = workdayStatus.holidayList.some(
+				holiday => holiday.locdate === date.format('YYYYMMDD'),
+			)
+
+			// 오늘이면 시간 확인
+			if (day === now.date()) {
+				if (!isWeekend && !isHoliday && isBefore1PM) {
+					count++
+				}
+			} else {
+				if (!isWeekend && !isHoliday) {
+					count++
+				}
+			}
+		}
+
+		// 근로자의날 특수케이스추가
+		if (month === '05') {
+			count--
+		}
+
+		return count
+	}
 
 	const workDayItems: MenuProps['items'] = [
 		{
@@ -111,26 +245,11 @@ export const CustomCalendar = () => {
 		},
 	]
 
-	const getMonthData = (value: Dayjs) => {
-		if (value.month() === 8) {
-			return 1394
-		}
-	}
-
-	const monthCellRender = (value: Dayjs) => {
-		const num = getMonthData(value)
-		return num ? (
-			<div className="notes-month">
-				<section>{num}</section>
-				<span>Backlog number</span>
-			</div>
-		) : null
-	}
-
 	const handleMenuClick = (value: Dayjs) => (e: any) => {
 		const selectedDate = value.format('YYYY-MM-DD')
 		const selectedMenu = e.key
-		localStorage.setItem(selectedDate, selectedMenu)
+		const updatedItem = { date: selectedDate, status: selectedMenu }
+		dispatch(setCalendarUpdate(updatedItem))
 	}
 
 	const dateCellRender = (value: Dayjs) => {
@@ -140,16 +259,16 @@ export const CustomCalendar = () => {
 
 		const isWeekend = value.day() === 0 || value.day() === 6
 
-		const holiday = holidayList.find(
+		const holiday = workdayStatus.holidayList.find(
 			holiday => holiday.locdate === value.format('YYYYMMDD'),
 		)
 
 		const workHoliday = value.format('YYYYMMDD') === '20250501'
 		const holidayName = holiday ? holiday.dateName : undefined
 
-		const savedMenuKey = localStorage.getItem(value.format('YYYY-MM-DD'))
-
-		console.log(savedMenuKey, '@@@@@')
+		const savedMenuKey = calendarStatus.find(
+			item => item.date === value.format('YYYY-MM-DD'),
+		)?.status
 
 		if (workHoliday) {
 			if (value.month() === dayjs().month()) {
@@ -167,10 +286,12 @@ export const CustomCalendar = () => {
 									lineHeight: '100px',
 								}}
 							>
-								<StyledHolidayP>근로자의날</StyledHolidayP>
-								{savedMenuKey && savedMenuKey !== '휴무' && (
-									<StyledP>{savedMenuKey}</StyledP>
-								)}
+								<StyledHolidayP>
+									근로자의날
+									{savedMenuKey && savedMenuKey !== '휴무' && (
+										<span style={{ color: 'black' }}> ({savedMenuKey})</span>
+									)}
+								</StyledHolidayP>
 							</div>
 						</Dropdown>
 					</>
@@ -207,10 +328,12 @@ export const CustomCalendar = () => {
 									lineHeight: '100px',
 								}}
 							>
-								<StyledHolidayP>{holidayName}</StyledHolidayP>
-								{savedMenuKey && savedMenuKey !== '휴무' && (
-									<StyledP>{savedMenuKey}</StyledP>
-								)}
+								<StyledHolidayP>
+									{holidayName}
+									{savedMenuKey && savedMenuKey !== '휴무' && (
+										<span style={{ color: 'black' }}> ({savedMenuKey})</span>
+									)}
+								</StyledHolidayP>
 							</div>
 						</Dropdown>
 					</>
@@ -246,7 +369,6 @@ export const CustomCalendar = () => {
 									lineHeight: '100px',
 								}}
 							>
-								<StyledHolidayP></StyledHolidayP>
 								{savedMenuKey && savedMenuKey !== '휴무' && (
 									<StyledP>{savedMenuKey}</StyledP>
 								)}
@@ -286,7 +408,6 @@ export const CustomCalendar = () => {
 
 	const cellRender: CalendarProps<Dayjs>['cellRender'] = (current, info) => {
 		if (info.type === 'date') return dateCellRender(current)
-		if (info.type === 'month') return monthCellRender(current)
 		return info.originNode
 	}
 
@@ -296,18 +417,32 @@ export const CustomCalendar = () => {
 		return date.month() !== currentMonth
 	}
 
+	const handleReset = () => {
+		dispatch(calendarReset())
+	}
+
 	return (
-		<div style={{ maxHeight: 500, display: 'flex' }}>
+		<>
 			{!fetchStatus ? (
 				<Skeleton.Node active={true} style={{ width: '100%' }} />
 			) : (
-				<StyledCalendar
-					cellRender={cellRender}
-					disabledDate={disabledDate}
-					headerRender={() => <></>}
-					locale={locale}
-				/>
+				<>
+					<div style={{ textAlign: 'center', marginBottom: 50 }}>
+						<h1>{dayjs().month() + 1}월</h1>
+					</div>
+					<StyledCalendar
+						cellRender={cellRender}
+						disabledDate={disabledDate}
+						headerRender={() => <></>}
+						locale={locale}
+					/>
+					<div style={{ marginTop: 30 }}>
+						<Button block style={{ height: 50 }} onClick={handleReset}>
+							달력 초기화
+						</Button>
+					</div>
+				</>
 			)}
-		</div>
+		</>
 	)
 }

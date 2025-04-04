@@ -30,7 +30,7 @@ const MenuWrapper = styled.div`
 		width: 100%;
 	}
 
-	max-width: 67.25rem;
+	padding-left: 20vw;
 	display: flex;
 	justify-content: space-between;
 	margin: 0 auto;
@@ -61,14 +61,9 @@ export const HeaderMenu = () => {
 						<MenuWrapper>
 							<SubMenuWrapper>
 								<MenuItems>
-									<MenuSpan>밥먹자</MenuSpan>
+									<MenuSpan>🍕🍟🌭🍖🍙🍕🍟🌭🍖🍙</MenuSpan>
 								</MenuItems>
 							</SubMenuWrapper>
-							{/* <SubMenuWrapper>
-								<MenuItemsSmall>
-									<MenuSpan></MenuSpan>
-								</MenuItemsSmall>
-							</SubMenuWrapper> */}
 						</MenuWrapper>
 					</MenuDiv>
 				</CustomFlexBox>
