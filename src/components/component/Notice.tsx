@@ -21,10 +21,6 @@ const DrawerInnerHeader = styled.div`
 	margin-bottom: 10px;
 `
 
-const BlackDiv = styled.div`
-	margin-bottom: 10px;
-`
-
 export const Notice = () => {
 	const [open, setOpen] = useState(false)
 
