@@ -9,7 +9,8 @@ import { numberRegexp } from '../hook/useNumberRegexp'
 const CalculatingWrapper = styled.div`
 	margin-top: 10px;
 	padding: 25px;
-	font-size: 25px;
+	font-size: 20px;
+	font-weight: 600;
 `
 
 const StyledInput = styled(Input)`
@@ -66,16 +67,22 @@ export const Calculating = () => {
 		? totalAmount - workdayStatus.usageAmount
 		: totalAmount
 
+	const willPayAmount = workdayStatus.specialDayList.reduce(
+		(sum, item) => sum + item.amount,
+		0,
+	)
+
 	const averageAmount = (
-		remainingAmount /
-		(workdayStatus.workRemaningDay - workdayStatus.afterTodayHolidayCount)
+		(remainingAmount - willPayAmount) /
+		(workdayStatus.workRemaningDay -
+			workdayStatus.afterTodayHolidayCount -
+			workdayStatus.specialDayList.length)
 	).toFixed(1)
 
 	return (
 		<>
 			<StyledInput
 				placeholder="현재 까지 사용한 금액 입력"
-				// variant="filled"
 				onChange={handleChange}
 				value={workdayStatus.usageAmount}
 			/>
@@ -89,7 +96,7 @@ export const Calculating = () => {
 						>
 							<CalculatingWrapper>
 								<CalculatingContent>
-									기본 제공 식대 :{' '}
+									기본 제공 식대 :
 									{numberWithCommas(workdayStatus.workday * 13000)}원 (
 									{workdayStatus.workday}일)
 								</CalculatingContent>
@@ -114,7 +121,7 @@ export const Calculating = () => {
 						>
 							<CalculatingWrapper>
 								<CalculatingContent>
-									현재 이용 금액 :{' '}
+									현재 이용 금액 :
 									{workdayStatus.usageAmount
 										? numberWithCommas(workdayStatus.usageAmount)
 										: '0'}
@@ -134,6 +141,18 @@ export const Calculating = () => {
 						>
 							<CalculatingWrapper>
 								<CalculatingContent>
+									남은 근무 일수 :
+									{workdayStatus.workRemaningDay -
+										workdayStatus.afterTodayHolidayCount}
+									일
+								</CalculatingContent>
+								<CalculatingContent>
+									예상 지출 등록 일수 : {workdayStatus.specialDayList.length}일
+								</CalculatingContent>
+								<CalculatingContent>
+									예상 지출 금액 : {numberWithCommas(willPayAmount)}원
+								</CalculatingContent>
+								<CalculatingContent>
 									<Tooltip
 										title={
 											<div
@@ -144,24 +163,25 @@ export const Calculating = () => {
 													whiteSpace: 'nowrap',
 												}}
 											>
-												<p>점심먹기 이전이라면 근무일로 !</p>
-												<p>점심먹기 이후라면 근무일이 지난것으로 취급해요 !</p>
+												<p>
+													(잔액-예상지출금액) ÷ (남은 근무 일수 - 예상 지출 등록
+													일수)
+												</p>
 											</div>
 										}
-										color="orange"
+										color="black"
 										overlayStyle={{ maxWidth: 'none' }}
 									>
-										남은 근무 일수 :
-										{workdayStatus.workRemaningDay -
-											workdayStatus.afterTodayHolidayCount}
-										일
+										<span style={{ textDecoration: 'underline' }}>
+											남은 평균 금액
+										</span>
 									</Tooltip>
-								</CalculatingContent>
-								<CalculatingContent>
-									남은 평균 금액 :
-									{Number(averageAmount) >= 13000
-										? ` ${averageAmount}원😀`
-										: ` ${averageAmount}원🤢`}
+									<span>
+										:
+										{Number(averageAmount) >= 13000
+											? ` ${averageAmount}원😀`
+											: ` ${averageAmount}원🤢`}
+									</span>
 								</CalculatingContent>
 							</CalculatingWrapper>
 						</StyledCard>

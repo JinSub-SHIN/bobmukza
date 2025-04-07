@@ -138,9 +138,15 @@ export const CustomCalendar = () => {
 				copy.workday = workday
 				copy.workRemaningDay = remaningWorkday
 
-				dispatch(setWorkday(copy))
+				// 오늘 이후인 기념일만 남기고 나머지는 삭제한다.
+				const filtered = workdayStatus.specialDayList.filter(item => {
+					const itemDate = dayjs(item.locdate)
+					return itemDate.isAfter(dayjs())
+				})
 
-				return { nowHoliday, nextHoliday }
+				copy.specialDayList = filtered
+
+				dispatch(setWorkday(copy))
 			} catch (error) {
 				return []
 			}
