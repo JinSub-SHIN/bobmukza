@@ -23,21 +23,19 @@ import {
 	HomeOutlined,
 	LaptopOutlined,
 	MehOutlined,
-	QuestionOutlined,
+	SyncOutlined,
 } from '@ant-design/icons'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
-import {
-	setWorkday,
-	SpecialDay,
-	workdayReset,
-} from '../../store/action/workdaySlice'
+import { setWorkday, SpecialDay } from '../../store/action/workdaySlice'
 import { RootState } from '../../store'
 import {
 	calendarReset,
 	setCalendarUpdate,
 } from '../../store/action/calendarSlice'
 import { numberRegexp } from '../hook/useNumberRegexp'
+import { cloneDeep } from 'lodash'
+import { numberWithCommas } from '../hook/useNumberComma'
 
 const StyledCalendar = styled(Calendar)`
 	.ant-picker-calendar-date-content {
@@ -45,11 +43,16 @@ const StyledCalendar = styled(Calendar)`
 		overflow-y: hidden !important;
 	}
 
-	padding-top: 25px;
-`
+	.ant-picker-calendar .ant-picker-content thead th:nth-child(6) {
+		color: red;
+	}
 
-const StyledP = styled.p`
-	color: black;
+	/* 일요일 - 7번째 */
+	.ant-picker-calendar .ant-picker-content thead th:nth-child(7) {
+		color: red;
+	}
+
+	padding-top: 25px;
 `
 
 const StyledHolidayP = styled.p`
@@ -112,22 +115,25 @@ export const CustomCalendar = () => {
 					dateName: holiday.dateName.toString(),
 				}))
 
-				const copy = { ...workdayStatus }
+				const copy = cloneDeep(workdayStatus)
 				copy.holidayList = nowHoliday
 				copy.nextMonthHolidayList = nextHoliday
+
+				const workday = getWeekdaysInMonth()
+				const remaningWorkday = getRemainingWorkdays()
+
+				copy.workday = workday
+				copy.workRemaningDay = remaningWorkday
+
 				dispatch(setWorkday(copy))
+
+				return { nowHoliday, nextHoliday }
 			} catch (error) {
 				return []
 			}
 		}
 		const loadHolidays = async () => {
 			await fetchHoliday()
-			const workday = getWeekdaysInMonth()
-			const remaningWorkday = getRemainingWorkdays()
-			const copy = { ...workdayStatus }
-			copy.workday = workday
-			copy.workRemaningDay = remaningWorkday
-			dispatch(setWorkday(copy))
 		}
 		loadHolidays()
 	}, [])
@@ -138,7 +144,6 @@ export const CustomCalendar = () => {
 
 	useEffect(() => {
 		const today = dayjs()
-
 		const afterHolidaycount = calendarStatus.filter(
 			item =>
 				item.status === '휴가/오전반차' &&
@@ -205,7 +210,6 @@ export const CustomCalendar = () => {
 		const year = now.format('YYYY')
 		const month = now.format('MM')
 		const daysInMonth = now.daysInMonth()
-
 		let count = 0
 
 		for (let day = now.date(); day <= daysInMonth; day++) {
@@ -299,13 +303,27 @@ export const CustomCalendar = () => {
 			holiday => holiday.locdate === value.format('YYYYMMDD'),
 		)
 
+		const nextMonthHoliday = workdayStatus.nextMonthHolidayList.find(
+			holiday => holiday.locdate === value.format('YYYYMMDD'),
+		)
+
+		const speicalDay = workdayStatus.specialDayList.find(
+			specialDay => specialDay.locdate === value.format('YYYY-MM-DD'),
+		)
+
+		console.log(speicalDay, '입니다')
+
 		const workHoliday = value.format('YYYYMMDD') === '20250501'
 		const holidayName = holiday ? holiday.dateName : undefined
+		const nextMonthHolidayName = nextMonthHoliday
+			? nextMonthHoliday.dateName
+			: undefined
 
 		const savedMenuKey = calendarStatus.find(
 			item => item.date === value.format('YYYY-MM-DD'),
 		)?.status
 
+		// 근로자의날인경우
 		if (workHoliday) {
 			if (value.month() === dayjs().month()) {
 				return (
@@ -348,6 +366,7 @@ export const CustomCalendar = () => {
 			)
 		}
 
+		// 이번달에 공휴일인 경우
 		if (holidayName) {
 			if (value.month() === dayjs().month()) {
 				return (
@@ -389,10 +408,27 @@ export const CustomCalendar = () => {
 			)
 		}
 
+		// 다음달에 공휴일인 경우
+		if (nextMonthHolidayName) {
+			return (
+				<div
+					style={{
+						color: colorTextTertiary,
+						textAlign: 'center',
+						height: '100px',
+						lineHeight: '100px',
+					}}
+				>
+					<StyledHolidayP>{nextMonthHolidayName}</StyledHolidayP>
+				</div>
+			)
+		}
+
+		// 주말인 경우
 		if (isWeekend) {
 			if (value.month() === dayjs().month()) {
 				return (
-					<>
+					<div style={{ color: 'red' }}>
 						<Dropdown
 							menu={{ items: holidayItems, onClick: handleMenuClick(value) }}
 							trigger={['contextMenu']}
@@ -410,13 +446,14 @@ export const CustomCalendar = () => {
 								)}
 							</div>
 						</Dropdown>
-					</>
+					</div>
 				)
 			}
 
 			return <></>
 		}
 
+		// 근무일인 경우
 		if (value.month() === dayjs().month()) {
 			return (
 				<Dropdown
@@ -457,6 +494,24 @@ export const CustomCalendar = () => {
 								<Tag color="purple"> ({savedMenuKey})</Tag>
 							)}
 						</div>
+						{/* 기념일이면서, 해당기념일이 오늘 13시 이후인지 확인 */}
+						{speicalDay &&
+							dayjs(speicalDay.locdate).isAfter(
+								dayjs().startOf('day').add(13, 'hour'),
+							) && (
+								<div
+									style={{
+										position: 'absolute',
+										bottom: 0,
+										right: 0,
+										padding: 3,
+									}}
+								>
+									<Tag icon={<SyncOutlined spin />} color="processing">
+										예정 : {numberWithCommas(speicalDay.amount)}원
+									</Tag>
+								</div>
+							)}
 					</Popconfirm>
 				</Dropdown>
 			)
@@ -483,10 +538,7 @@ export const CustomCalendar = () => {
 	}
 
 	const handleConfirm = () => {
-		const copy = {
-			...workdayStatus,
-			specialDayList: workdayStatus.specialDayList.map(item => ({ ...item })), // 깊은 복사
-		}
+		const copy = cloneDeep(workdayStatus)
 
 		if (
 			isNaN(Number(inputTemporaryData)) ||
@@ -496,8 +548,6 @@ export const CustomCalendar = () => {
 			return
 		}
 
-		console.log(copy.specialDayList)
-
 		const specialObj: SpecialDay = {
 			locdate: confirmTemporaryData!,
 			amount: Number(inputTemporaryData),
@@ -506,12 +556,18 @@ export const CustomCalendar = () => {
 			item => item.locdate === confirmTemporaryData,
 		)
 
-		console.log(existingIndex)
-
-		if (existingIndex !== -1) {
-			copy.specialDayList[existingIndex].amount = specialObj.amount
+		if (specialObj.amount === 0) {
+			// amount가 0이면 해당 항목 삭제 (있을 때만)
+			if (existingIndex !== -1) {
+				copy.specialDayList.splice(existingIndex, 1)
+			}
 		} else {
-			copy.specialDayList.push(specialObj)
+			// amount가 0이 아니면 추가하거나 수정
+			if (existingIndex !== -1) {
+				copy.specialDayList[existingIndex].amount = specialObj.amount
+			} else {
+				copy.specialDayList.push(specialObj)
+			}
 		}
 
 		dispatch(setWorkday(copy))
