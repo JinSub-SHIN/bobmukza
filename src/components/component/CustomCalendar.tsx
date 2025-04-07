@@ -27,7 +27,11 @@ import {
 } from '@ant-design/icons'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
-import { setWorkday, SpecialDay } from '../../store/action/workdaySlice'
+import {
+	setWorkday,
+	SpecialDay,
+	workdayReset,
+} from '../../store/action/workdaySlice'
 import { RootState } from '../../store'
 import {
 	calendarReset,
@@ -65,6 +69,7 @@ export const CustomCalendar = () => {
 	const calendarStatus = useSelector((state: RootState) => state.calendarStatus)
 
 	const [fetchStatus, setFetchStatus] = useState<boolean>(false)
+	const [refetchStatus, setReFetchStatus] = useState(0)
 
 	const [confirmTemporaryData, setConfirmTemporaryData] = useState<string>()
 	const [inputTemporaryData, setInputTemporaryData] = useState<
@@ -74,11 +79,19 @@ export const CustomCalendar = () => {
 	const [messageApi, contextHolder] = message.useMessage()
 
 	const hiddenRef = useRef(null)
+	const hiddenRef2 = useRef(null)
 
 	const error = () => {
 		messageApi.open({
 			type: 'error',
-			content: '숫자가 아니거나, 동일한 값을 입력했습니다.',
+			content: '잘못 입력했어요! (숫자인지, 동일한 값이 아닌지 확인)',
+		})
+	}
+
+	const error2 = () => {
+		messageApi.open({
+			type: 'error',
+			content: '당일 및 이전 지출 계획은 등록 안되요!',
 		})
 	}
 
@@ -136,7 +149,7 @@ export const CustomCalendar = () => {
 			await fetchHoliday()
 		}
 		loadHolidays()
-	}, [])
+	}, [refetchStatus])
 
 	useEffect(() => {
 		console.log(workdayStatus, '업데이트확인')
@@ -289,6 +302,19 @@ export const CustomCalendar = () => {
 		const selectedDate = value.format('YYYY-MM-DD')
 		const selectedMenu = e.key
 		const updatedItem = { date: selectedDate, status: selectedMenu }
+
+		const copy = cloneDeep(workdayStatus)
+
+		// 기념일이 있었다면 기념일 삭제
+		const existingIndex = workdayStatus.specialDayList.findIndex(
+			item => item.locdate === selectedDate,
+		)
+
+		if (existingIndex !== -1) {
+			copy.specialDayList.splice(existingIndex, 1)
+		}
+
+		dispatch(setWorkday(copy))
 		dispatch(setCalendarUpdate(updatedItem))
 	}
 
@@ -310,8 +336,6 @@ export const CustomCalendar = () => {
 		const speicalDay = workdayStatus.specialDayList.find(
 			specialDay => specialDay.locdate === value.format('YYYY-MM-DD'),
 		)
-
-		console.log(speicalDay, '입니다')
 
 		const workHoliday = value.format('YYYYMMDD') === '20250501'
 		const holidayName = holiday ? holiday.dateName : undefined
@@ -495,23 +519,20 @@ export const CustomCalendar = () => {
 							)}
 						</div>
 						{/* 기념일이면서, 해당기념일이 오늘 13시 이후인지 확인 */}
-						{speicalDay &&
-							dayjs(speicalDay.locdate).isAfter(
-								dayjs().startOf('day').add(13, 'hour'),
-							) && (
-								<div
-									style={{
-										position: 'absolute',
-										bottom: 0,
-										right: 0,
-										padding: 3,
-									}}
-								>
-									<Tag icon={<SyncOutlined spin />} color="processing">
-										예정 : {numberWithCommas(speicalDay.amount)}원
-									</Tag>
-								</div>
-							)}
+						{speicalDay && dayjs(speicalDay.locdate).isAfter(dayjs()) && (
+							<div
+								style={{
+									position: 'absolute',
+									bottom: 0,
+									right: 0,
+									padding: 3,
+								}}
+							>
+								<Tag icon={<SyncOutlined spin />} color="processing">
+									예정 : {numberWithCommas(speicalDay.amount)}원
+								</Tag>
+							</div>
+						)}
 					</Popconfirm>
 				</Dropdown>
 			)
@@ -539,6 +560,11 @@ export const CustomCalendar = () => {
 
 	const handleConfirm = () => {
 		const copy = cloneDeep(workdayStatus)
+
+		if (dayjs(confirmTemporaryData).isBefore(dayjs())) {
+			;(hiddenRef2.current as any)?.click()
+			return
+		}
 
 		if (
 			isNaN(Number(inputTemporaryData)) ||
@@ -571,6 +597,9 @@ export const CustomCalendar = () => {
 		}
 
 		dispatch(setWorkday(copy))
+
+		setConfirmTemporaryData('')
+		setInputTemporaryData('')
 	}
 
 	const handleLeftClick = (value: Dayjs) => {
@@ -591,6 +620,11 @@ export const CustomCalendar = () => {
 
 	const handleReset = () => {
 		dispatch(calendarReset())
+		dispatch(workdayReset())
+		setFetchStatus(false)
+		setConfirmTemporaryData('')
+		setInputTemporaryData('')
+		setReFetchStatus(refetchStatus + 1)
 	}
 
 	return (
@@ -620,6 +654,13 @@ export const CustomCalendar = () => {
 					<Button
 						ref={hiddenRef}
 						onClick={error}
+						style={{ visibility: 'hidden' }}
+					>
+						Error
+					</Button>
+					<Button
+						ref={hiddenRef2}
+						onClick={error2}
 						style={{ visibility: 'hidden' }}
 					>
 						Error

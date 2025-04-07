@@ -11,6 +11,7 @@ const DrawerFooter = styled.div`
 	position: absolute;
 	bottom: 0;
 	font-size: 7px;
+	padding: 10px;
 `
 
 export const Notice = () => {
@@ -39,6 +40,9 @@ export const Notice = () => {
 				<DrawerInner>
 					* 하단 입력창에 금액을 입력하면 잔액 및 남은 평균 일수 동안 얼마짜리를
 					먹을 수 있는지 알 수 있어요.
+				</DrawerInner>
+				<DrawerInner>
+					* 달력에 클릭하여, 미리 지출할 금액을 입력할 수 있어요.
 				</DrawerInner>
 				<DrawerInner>
 					* 달력에 우클릭하여, 연차/야근식대/주말출근 등을 선택하여 추가 계산 할
