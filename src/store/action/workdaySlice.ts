@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import type { Dayjs } from 'dayjs'
 
 export interface HolidayObj {
 	locdate: string
