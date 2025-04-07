@@ -1,4 +1,4 @@
-import type { CalendarProps, MenuProps } from 'antd'
+import type { CalendarProps, InputRef, MenuProps } from 'antd'
 import {
 	Button,
 	Calendar,
@@ -48,12 +48,12 @@ const StyledCalendar = styled(Calendar)`
 	}
 
 	.ant-picker-calendar .ant-picker-content thead th:nth-child(6) {
-		color: red;
+		color: red !important;
 	}
 
 	/* 일요일 - 7번째 */
 	.ant-picker-calendar .ant-picker-content thead th:nth-child(7) {
-		color: red;
+		color: red !important;
 	}
 
 	padding-top: 25px;
@@ -80,6 +80,9 @@ export const CustomCalendar = () => {
 
 	const hiddenRef = useRef(null)
 	const hiddenRef2 = useRef(null)
+	const inputRef = useRef<InputRef>(null)
+
+	const [calendarSellKey, setCalendarSellKey] = useState('')
 
 	const error = () => {
 		messageApi.open({
@@ -100,7 +103,6 @@ export const CustomCalendar = () => {
 			try {
 				const now = dayjs()
 				const nextMonth = now.add(1, 'month')
-
 				const response = await getHoliday(now.format('YYYY'), now.format('MM'))
 
 				const nextMonthResponse = await getHoliday(
@@ -324,6 +326,15 @@ export const CustomCalendar = () => {
 		dispatch(setCalendarUpdate(updatedItem))
 	}
 
+	const handleOpenChange = (open: boolean, value: string) => {
+		setCalendarSellKey(value)
+		if (open) {
+			setTimeout(() => {
+				inputRef.current?.focus()
+			}, 0)
+		}
+	}
+
 	const dateCellRender = (value: Dayjs) => {
 		const {
 			token: { colorTextTertiary },
@@ -491,6 +502,7 @@ export const CustomCalendar = () => {
 					trigger={['contextMenu']}
 				>
 					<Popconfirm
+						key={value.format('YYYY-MM-DD')}
 						title="얼마짜리 먹을 계획이야?"
 						description={
 							<Input
@@ -498,6 +510,10 @@ export const CustomCalendar = () => {
 								variant="underlined"
 								style={{ padding: 0 }}
 								onChange={handleInputChange}
+								ref={inputRef}
+								onPressEnter={() => {
+									handleConfirm()
+								}}
 							/>
 						}
 						okText={<CheckOutlined />}
@@ -505,6 +521,13 @@ export const CustomCalendar = () => {
 						trigger="click"
 						icon={''}
 						onConfirm={handleConfirm}
+						onOpenChange={open =>
+							handleOpenChange(open, value.format('YYYY-MM-DD'))
+						}
+						onCancel={() => {
+							setCalendarSellKey('')
+						}}
+						open={value.format('YYYY-MM-DD') === calendarSellKey}
 					>
 						<div
 							style={{
@@ -524,7 +547,7 @@ export const CustomCalendar = () => {
 								<Tag color="purple"> ({savedMenuKey})</Tag>
 							)}
 						</div>
-						{/* 기념일이면서, 해당기념일이 오늘 13시 이후인지 확인 */}
+						{/* 기념일이면서, 해당기념일이 오늘 이후인지 확인 */}
 						{speicalDay && dayjs(speicalDay.locdate).isAfter(dayjs()) && (
 							<div
 								style={{
@@ -603,7 +626,7 @@ export const CustomCalendar = () => {
 		}
 
 		dispatch(setWorkday(copy))
-
+		setCalendarSellKey('')
 		setConfirmTemporaryData('')
 		setInputTemporaryData('')
 	}
