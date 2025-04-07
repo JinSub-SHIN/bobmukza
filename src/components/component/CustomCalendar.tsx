@@ -47,13 +47,17 @@ const StyledCalendar = styled(Calendar)`
 		overflow-y: hidden !important;
 	}
 
-	.ant-picker-calendar .ant-picker-content thead th:nth-child(6) {
-		color: red !important;
+	.ant-picker-content thead {
+		font-size: 15px;
+		font-weight: 600;
 	}
 
-	/* 일요일 - 7번째 */
-	.ant-picker-calendar .ant-picker-content thead th:nth-child(7) {
-		color: red !important;
+	.ant-picker-content thead > tr > th:nth-child(1) {
+		color: red !important; /* 일요일 */
+	}
+
+	.ant-picker-content thead > tr > th:nth-child(7) {
+		color: red !important; /* 토요일 */
 	}
 
 	padding-top: 25px;
@@ -469,7 +473,7 @@ export const CustomCalendar = () => {
 		if (isWeekend) {
 			if (value.month() === dayjs().month()) {
 				return (
-					<div style={{ color: 'red' }}>
+					<>
 						<Dropdown
 							menu={{ items: holidayItems, onClick: handleMenuClick(value) }}
 							trigger={['contextMenu']}
@@ -487,7 +491,7 @@ export const CustomCalendar = () => {
 								)}
 							</div>
 						</Dropdown>
-					</div>
+					</>
 				)
 			}
 
