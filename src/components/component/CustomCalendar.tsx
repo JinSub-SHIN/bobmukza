@@ -531,7 +531,7 @@ export const CustomCalendar = () => {
 						onCancel={() => {
 							setCalendarSellKey('')
 						}}
-						open={value.format('YYYY-MM-DD') === calendarSellKey}
+						open={value.format('YYYY-MM-DD') == calendarSellKey}
 					>
 						<div
 							style={{
@@ -630,9 +630,13 @@ export const CustomCalendar = () => {
 		}
 
 		dispatch(setWorkday(copy))
-		setCalendarSellKey('')
+
 		setConfirmTemporaryData('')
 		setInputTemporaryData('')
+
+		setTimeout(() => {
+			setCalendarSellKey('')
+		}, 0)
 	}
 
 	const handleLeftClick = (value: Dayjs) => {
