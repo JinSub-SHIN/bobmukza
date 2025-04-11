@@ -101,6 +101,10 @@ export const Calculating = () => {
 			workdayStatus.specialDayList.length)
 	).toFixed(1)
 
+	if (workdayStatus.workday === 0) {
+		return <></>
+	}
+
 	return (
 		<>
 			<StyledInput
@@ -247,11 +251,6 @@ export const Calculating = () => {
 											? `오전반차 차감 금액 : 0원 (0일)`
 											: `오전반차 차감 금액 : -${numberWithCommas(workdayStatus.morningHoldayCount * 10000)}원 (${workdayStatus.morningHoldayCount}일)`}
 									</CalculatingContent>
-									{/* <CalculatingContent>
-									{workdayStatus.holidayTotalCount === 0
-										? `휴가 차감 금액 : 0원 (0일)`
-										: `휴가 차감 금액 : -${numberWithCommas(workdayStatus.holidayTotalCount * 13000)}원 (${workdayStatus.holidayTotalCount}일)`}
-								</CalculatingContent> */}
 									<CalculatingContent>
 										{workdayStatus.extraMoneyCount === 0
 											? `야근 추가 식대 : 0원 (0회)`
