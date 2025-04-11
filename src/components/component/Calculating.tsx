@@ -7,19 +7,20 @@ import { Card, Col, Input, Row, Tooltip } from 'antd'
 import { numberRegexp } from '../hook/useNumberRegexp'
 
 const CalculatingWrapper = styled.div`
-	margin-top: 10px;
-	padding: 25px;
-	font-size: 20px;
+	padding: 5px;
+	font-size: 16px;
 	font-weight: 600;
 `
 
 const StyledInput = styled(Input)`
-	height: 70px;
+	height: 60px;
 
 	& ::placeholder {
 		color: black !important;
 		font-size: 20px !important;
 	}
+
+	margin-top: 45px;
 `
 
 const StyledCard = styled(Card)`
@@ -32,6 +33,24 @@ const CalculatingContent = styled.div`
 
 const CardTitleHeader = styled.div`
 	line-height: 100px;
+`
+
+const GirdCard = styled(Card)`
+	margin-bottom: 10px;
+`
+
+const ResponsiveWrapper = styled.div`
+	@media (max-width: 1600px) {
+		display: none;
+	}
+`
+
+const MobileWrapper = styled.div`
+	display: none;
+
+	@media (max-width: 1600px) {
+		display: block;
+	}
 `
 
 export const Calculating = () => {
@@ -89,139 +108,256 @@ export const Calculating = () => {
 				onChange={handleChange}
 				value={workdayStatus.usageAmount}
 			/>
-			<div style={{ marginTop: 30, textAlign: 'center' }}>
-				<Row gutter={24}>
-					<Col span={8}>
-						<StyledCard
-							title={<CardTitleHeader>기본 정보</CardTitleHeader>}
-							variant="borderless"
-							hoverable
-						>
-							<CalculatingWrapper>
-								<CalculatingContent>
-									기본 제공 식대 :
-									{numberWithCommas(workdayStatus.workday * 13000)}원 (
-									{workdayStatus.workday}일)
-								</CalculatingContent>
-								<CalculatingContent>
-									{workdayStatus.allHolidayCount === 0
-										? `휴가 차감 금액 : 0원 (0일)`
-										: `휴가 차감 금액 : -${numberWithCommas(workdayStatus.allHolidayCount * 13000)}원 (${workdayStatus.allHolidayCount}일)`}
-								</CalculatingContent>
-								<CalculatingContent>
-									{workdayStatus.morningHoldayCount === 0
-										? `오전반차 차감 금액 : 0원 (0일)`
-										: `오전반차 차감 금액 : -${numberWithCommas(workdayStatus.morningHoldayCount * 10000)}원 (${workdayStatus.morningHoldayCount}일)`}
-								</CalculatingContent>
-								{/* <CalculatingContent>
+			<div style={{ marginTop: 10, textAlign: 'center' }}>
+				<ResponsiveWrapper>
+					<GirdCard hoverable>
+						<Card.Meta title={<>기본 정보</>} />
+						<CalculatingWrapper>
+							<CalculatingContent>
+								기본 제공 식대 :
+								{numberWithCommas(workdayStatus.workday * 13000)}원 (
+								{workdayStatus.workday}일)
+							</CalculatingContent>
+							<CalculatingContent>
+								{workdayStatus.allHolidayCount === 0
+									? `휴가 차감 금액 : 0원 (0일)`
+									: `휴가 차감 금액 : -${numberWithCommas(workdayStatus.allHolidayCount * 13000)}원 (${workdayStatus.allHolidayCount}일)`}
+							</CalculatingContent>
+							<CalculatingContent>
+								{workdayStatus.morningHoldayCount === 0
+									? `오전반차 차감 금액 : 0원 (0일)`
+									: `오전반차 차감 금액 : -${numberWithCommas(workdayStatus.morningHoldayCount * 10000)}원 (${workdayStatus.morningHoldayCount}일)`}
+							</CalculatingContent>
+							<CalculatingContent>
+								{workdayStatus.extraMoneyCount === 0
+									? `야근 추가 식대 : 0원 (0회)`
+									: `야근 추가 식대 : +${numberWithCommas(workdayStatus.extraMoneyCount * 10000)}원 (${workdayStatus.extraMoneyCount}회)`}
+							</CalculatingContent>
+						</CalculatingWrapper>
+					</GirdCard>
+
+					<GirdCard hoverable>
+						<Card.Meta title={<>계산 정보</>} />
+						<CalculatingWrapper>
+							<CalculatingContent>
+								현재 이용 금액 :
+								{workdayStatus.usageAmount
+									? numberWithCommas(workdayStatus.usageAmount)
+									: '0'}
+								원
+							</CalculatingContent>
+							<CalculatingContent>
+								잔액 : {numberWithCommas(remainingAmount)}원
+							</CalculatingContent>
+						</CalculatingWrapper>
+					</GirdCard>
+
+					<GirdCard hoverable>
+						<Card.Meta title={<>기타 정보</>} />
+						<CalculatingWrapper>
+							<CalculatingContent>
+								<Tooltip
+									title={
+										<div
+											style={{
+												display: 'flex',
+												flexDirection: 'column',
+												width: 'fit-content',
+												whiteSpace: 'nowrap',
+											}}
+										>
+											<p>당일 점심을 먹은 이후면 근무일수로 취급x</p>
+										</div>
+									}
+									color="black"
+									overlayStyle={{ maxWidth: 'none' }}
+								>
+									<span style={{ textDecoration: 'underline' }}>
+										남은 근무 일수
+									</span>
+								</Tooltip>
+								<span>
+									:
+									{workdayStatus.workRemaningDay -
+										workdayStatus.afterTodayHolidayCount}
+									일
+								</span>
+							</CalculatingContent>
+							<CalculatingContent>
+								예상 지출 등록 일수 : {workdayStatus.specialDayList.length}일
+							</CalculatingContent>
+							<CalculatingContent>
+								예상 지출 금액 : {numberWithCommas(willPayAmount)}원
+							</CalculatingContent>
+							<CalculatingContent>
+								<Tooltip
+									title={
+										<div
+											style={{
+												display: 'flex',
+												flexDirection: 'column',
+												width: 'fit-content',
+												whiteSpace: 'nowrap',
+											}}
+										>
+											<p>
+												(잔액-예상지출금액) ÷ (남은 근무 일수 - 예상 지출 등록
+												일수)
+											</p>
+										</div>
+									}
+									color="black"
+									overlayStyle={{ maxWidth: 'none' }}
+								>
+									<span style={{ textDecoration: 'underline' }}>
+										남은 평균 금액
+									</span>
+								</Tooltip>
+								<span>
+									:
+									{Number(averageAmount) >= 13000
+										? ` ${averageAmount}원😀`
+										: ` ${averageAmount}원🤢`}
+								</span>
+							</CalculatingContent>
+						</CalculatingWrapper>
+					</GirdCard>
+				</ResponsiveWrapper>
+				<MobileWrapper>
+					<Row gutter={24}>
+						<Col span={8}>
+							<StyledCard
+								title={<CardTitleHeader>기본 정보</CardTitleHeader>}
+								variant="borderless"
+								hoverable
+							>
+								<CalculatingWrapper>
+									<CalculatingContent>
+										기본 제공 식대 :
+										{numberWithCommas(workdayStatus.workday * 13000)}원 (
+										{workdayStatus.workday}일)
+									</CalculatingContent>
+									<CalculatingContent>
+										{workdayStatus.allHolidayCount === 0
+											? `휴가 차감 금액 : 0원 (0일)`
+											: `휴가 차감 금액 : -${numberWithCommas(workdayStatus.allHolidayCount * 13000)}원 (${workdayStatus.allHolidayCount}일)`}
+									</CalculatingContent>
+									<CalculatingContent>
+										{workdayStatus.morningHoldayCount === 0
+											? `오전반차 차감 금액 : 0원 (0일)`
+											: `오전반차 차감 금액 : -${numberWithCommas(workdayStatus.morningHoldayCount * 10000)}원 (${workdayStatus.morningHoldayCount}일)`}
+									</CalculatingContent>
+									{/* <CalculatingContent>
 									{workdayStatus.holidayTotalCount === 0
 										? `휴가 차감 금액 : 0원 (0일)`
 										: `휴가 차감 금액 : -${numberWithCommas(workdayStatus.holidayTotalCount * 13000)}원 (${workdayStatus.holidayTotalCount}일)`}
 								</CalculatingContent> */}
-								<CalculatingContent>
-									{workdayStatus.extraMoneyCount === 0
-										? `야근 추가 식대 : 0원 (0회)`
-										: `야근 추가 식대 : +${numberWithCommas(workdayStatus.extraMoneyCount * 10000)}원 (${workdayStatus.extraMoneyCount}회)`}
-								</CalculatingContent>
-							</CalculatingWrapper>
-						</StyledCard>
-					</Col>
-					<Col span={8}>
-						<StyledCard
-							title={<CardTitleHeader>계산 정보</CardTitleHeader>}
-							variant="borderless"
-							hoverable
-						>
-							<CalculatingWrapper>
-								<CalculatingContent>
-									현재 이용 금액 :
-									{workdayStatus.usageAmount
-										? numberWithCommas(workdayStatus.usageAmount)
-										: '0'}
-									원
-								</CalculatingContent>
-								<CalculatingContent>
-									잔액 : {numberWithCommas(remainingAmount)}원
-								</CalculatingContent>
-							</CalculatingWrapper>
-						</StyledCard>
-					</Col>
-					<Col span={8}>
-						<StyledCard
-							title={<CardTitleHeader>기타 정보</CardTitleHeader>}
-							variant="borderless"
-							hoverable
-						>
-							<CalculatingWrapper>
-								<CalculatingContent>
-									<Tooltip
-										title={
-											<div
-												style={{
-													display: 'flex',
-													flexDirection: 'column',
-													width: 'fit-content',
-													whiteSpace: 'nowrap',
-												}}
-											>
-												<p>당일 점심을 먹은 이후면 근무일수로 취급x</p>
-											</div>
-										}
-										color="black"
-										overlayStyle={{ maxWidth: 'none' }}
-									>
-										<span style={{ textDecoration: 'underline' }}>
-											남은 근무 일수
+									<CalculatingContent>
+										{workdayStatus.extraMoneyCount === 0
+											? `야근 추가 식대 : 0원 (0회)`
+											: `야근 추가 식대 : +${numberWithCommas(workdayStatus.extraMoneyCount * 10000)}원 (${workdayStatus.extraMoneyCount}회)`}
+									</CalculatingContent>
+								</CalculatingWrapper>
+							</StyledCard>
+						</Col>
+						<Col span={8}>
+							<StyledCard
+								title={<CardTitleHeader>계산 정보</CardTitleHeader>}
+								variant="borderless"
+								hoverable
+							>
+								<CalculatingWrapper>
+									<CalculatingContent>
+										현재 이용 금액 :
+										{workdayStatus.usageAmount
+											? numberWithCommas(workdayStatus.usageAmount)
+											: '0'}
+										원
+									</CalculatingContent>
+									<CalculatingContent>
+										잔액 : {numberWithCommas(remainingAmount)}원
+									</CalculatingContent>
+								</CalculatingWrapper>
+							</StyledCard>
+						</Col>
+						<Col span={8}>
+							<StyledCard
+								title={<CardTitleHeader>기타 정보</CardTitleHeader>}
+								variant="borderless"
+								hoverable
+							>
+								<CalculatingWrapper>
+									<CalculatingContent>
+										<Tooltip
+											title={
+												<div
+													style={{
+														display: 'flex',
+														flexDirection: 'column',
+														width: 'fit-content',
+														whiteSpace: 'nowrap',
+													}}
+												>
+													<p>당일 점심을 먹은 이후면 근무일수로 취급x</p>
+												</div>
+											}
+											color="black"
+											overlayStyle={{ maxWidth: 'none' }}
+										>
+											<span style={{ textDecoration: 'underline' }}>
+												남은 근무 일수
+											</span>
+										</Tooltip>
+										<span>
+											:
+											{workdayStatus.workRemaningDay -
+												workdayStatus.afterTodayHolidayCount}
+											일
 										</span>
-									</Tooltip>
-									<span>
-										:
-										{workdayStatus.workRemaningDay -
-											workdayStatus.afterTodayHolidayCount}
+									</CalculatingContent>
+									<CalculatingContent>
+										예상 지출 등록 일수 : {workdayStatus.specialDayList.length}
 										일
-									</span>
-								</CalculatingContent>
-								<CalculatingContent>
-									예상 지출 등록 일수 : {workdayStatus.specialDayList.length}일
-								</CalculatingContent>
-								<CalculatingContent>
-									예상 지출 금액 : {numberWithCommas(willPayAmount)}원
-								</CalculatingContent>
-								<CalculatingContent>
-									<Tooltip
-										title={
-											<div
-												style={{
-													display: 'flex',
-													flexDirection: 'column',
-													width: 'fit-content',
-													whiteSpace: 'nowrap',
-												}}
-											>
-												<p>
-													(잔액-예상지출금액) ÷ (남은 근무 일수 - 예상 지출 등록
-													일수)
-												</p>
-											</div>
-										}
-										color="black"
-										overlayStyle={{ maxWidth: 'none' }}
-									>
-										<span style={{ textDecoration: 'underline' }}>
-											남은 평균 금액
+									</CalculatingContent>
+									<CalculatingContent>
+										예상 지출 금액 : {numberWithCommas(willPayAmount)}원
+									</CalculatingContent>
+									<CalculatingContent>
+										<Tooltip
+											title={
+												<div
+													style={{
+														display: 'flex',
+														flexDirection: 'column',
+														width: 'fit-content',
+														whiteSpace: 'nowrap',
+													}}
+												>
+													<p>
+														(잔액-예상지출금액) ÷ (남은 근무 일수 - 예상 지출
+														등록 일수)
+													</p>
+												</div>
+											}
+											color="black"
+											overlayStyle={{ maxWidth: 'none' }}
+										>
+											<span style={{ textDecoration: 'underline' }}>
+												남은 평균 금액
+											</span>
+										</Tooltip>
+										<span>
+											:
+											{Number(averageAmount) >= 13000
+												? ` ${averageAmount}원😀`
+												: ` ${averageAmount}원🤢`}
 										</span>
-									</Tooltip>
-									<span>
-										:
-										{Number(averageAmount) >= 13000
-											? ` ${averageAmount}원😀`
-											: ` ${averageAmount}원🤢`}
-									</span>
-								</CalculatingContent>
-							</CalculatingWrapper>
-						</StyledCard>
-					</Col>
-				</Row>
+									</CalculatingContent>
+								</CalculatingWrapper>
+							</StyledCard>
+						</Col>
+					</Row>
+				</MobileWrapper>
 			</div>
 		</>
 	)

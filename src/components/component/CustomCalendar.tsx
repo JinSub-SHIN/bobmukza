@@ -23,7 +23,6 @@ import {
 	HomeOutlined,
 	LaptopOutlined,
 	MehOutlined,
-	SyncOutlined,
 } from '@ant-design/icons'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
@@ -43,7 +42,7 @@ import { numberWithCommas } from '../hook/useNumberComma'
 
 const StyledCalendar = styled(Calendar)`
 	.ant-picker-calendar-date-content {
-		height: 120px !important;
+		height: 60px !important;
 		overflow-y: hidden !important;
 	}
 
@@ -187,10 +186,10 @@ export const CustomCalendar = () => {
 		).length
 
 		const overtimeDontEatCount = calendarStatus.filter(
-			item => item.status === '야근(식대x)',
+			item => item.status === '야근(밥x)',
 		).length
 		const overtimeCount = calendarStatus.filter(
-			item => item.status === '야근(식대)',
+			item => item.status === '야근(밥)',
 		).length
 		const extraLunchCount = calendarStatus.filter(
 			item => item.status === '점심',
@@ -295,14 +294,14 @@ export const CustomCalendar = () => {
 			icon: <HomeOutlined />,
 		},
 		{
-			label: '야근(식대x)',
-			key: '야근(식대x)',
+			label: '야근(밥x)',
+			key: '야근(밥x)',
 			icon: <MehOutlined />,
 			danger: true,
 		},
 		{
-			label: '야근(식대)',
-			key: '야근(식대)',
+			label: '야근(밥)',
+			key: '야근(밥)',
 			icon: <MehOutlined />,
 			danger: true,
 		},
@@ -399,8 +398,8 @@ export const CustomCalendar = () => {
 								style={{
 									color: colorTextTertiary,
 									textAlign: 'center',
-									height: '100px',
-									lineHeight: '100px',
+									height: '50px',
+									lineHeight: '50px',
 								}}
 							>
 								<StyledHolidayP>
@@ -420,8 +419,8 @@ export const CustomCalendar = () => {
 					style={{
 						color: colorTextTertiary,
 						textAlign: 'center',
-						height: '100px',
-						lineHeight: '100px',
+						height: '50px',
+						lineHeight: '50px',
 					}}
 				>
 					<StyledHolidayP>근로자의날</StyledHolidayP>
@@ -442,8 +441,8 @@ export const CustomCalendar = () => {
 								style={{
 									color: colorTextTertiary,
 									textAlign: 'center',
-									height: '100px',
-									lineHeight: '100px',
+									height: '50px',
+									lineHeight: '50px',
 								}}
 							>
 								<StyledHolidayP>
@@ -462,8 +461,8 @@ export const CustomCalendar = () => {
 					style={{
 						color: colorTextTertiary,
 						textAlign: 'center',
-						height: '100px',
-						lineHeight: '100px',
+						height: '50px',
+						lineHeight: '50px',
 					}}
 				>
 					<StyledHolidayP>{holidayName}</StyledHolidayP>
@@ -478,8 +477,8 @@ export const CustomCalendar = () => {
 					style={{
 						color: colorTextTertiary,
 						textAlign: 'center',
-						height: '100px',
-						lineHeight: '100px',
+						height: '50px',
+						lineHeight: '50px',
 					}}
 				>
 					<StyledHolidayP>{nextMonthHolidayName}</StyledHolidayP>
@@ -500,8 +499,8 @@ export const CustomCalendar = () => {
 								style={{
 									color: colorTextTertiary,
 									textAlign: 'center',
-									height: '100px',
-									lineHeight: '100px',
+									height: '50px',
+									lineHeight: '50px',
 								}}
 							>
 								{savedMenuKey && savedMenuKey !== '휴무' && (
@@ -555,8 +554,8 @@ export const CustomCalendar = () => {
 							style={{
 								color: colorTextTertiary,
 								textAlign: 'center',
-								height: '100px',
-								lineHeight: '100px',
+								height: '50px',
+								lineHeight: '50px',
 							}}
 							onClick={() => handleLeftClick(value)}
 						>
@@ -580,7 +579,7 @@ export const CustomCalendar = () => {
 									padding: 3,
 								}}
 							>
-								<Tag icon={<SyncOutlined spin />} color="processing">
+								<Tag color="processing">
 									예정 : {numberWithCommas(speicalDay.amount)}원
 								</Tag>
 							</div>
@@ -693,7 +692,7 @@ export const CustomCalendar = () => {
 			) : (
 				<>
 					{contextHolder}
-					<div style={{ textAlign: 'center', marginBottom: 50 }}>
+					<div style={{ textAlign: 'center', marginBottom: 15, height: 50 }}>
 						<h1>{dayjs().month() + 1}월</h1>
 					</div>
 					<StyledCalendar
@@ -702,8 +701,14 @@ export const CustomCalendar = () => {
 						headerRender={() => <></>}
 						locale={locale}
 					/>
-					<div style={{ marginTop: 30 }}>
-						<Button block style={{ height: 50 }} onClick={handleReset}>
+					<div style={{ marginTop: 15 }}>
+						<Button
+							block
+							style={{ height: 45 }}
+							onClick={handleReset}
+							color="cyan"
+							variant="solid"
+						>
 							달력 초기화
 						</Button>
 					</div>

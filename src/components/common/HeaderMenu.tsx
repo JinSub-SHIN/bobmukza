@@ -15,7 +15,7 @@ const CustomHeader = styled.div`
 `
 
 const CustomFlexBox = styled.div`
-	padding: 25px;
+	padding: 20px;
 	font-size: 26px;
 `
 

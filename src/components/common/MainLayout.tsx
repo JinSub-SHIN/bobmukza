@@ -10,7 +10,7 @@ const CustomLayout = styled(Layout)`
 `
 
 const CustomContent = styled(Content)`
-	padding: 100px;
+	padding: 30px;
 `
 
 const CustomFooter = styled(Footer)`
