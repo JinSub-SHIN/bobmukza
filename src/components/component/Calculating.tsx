@@ -9,7 +9,7 @@ import { numberRegexp } from '../hook/useNumberRegexp'
 const CalculatingWrapper = styled.div`
 	padding: 5px;
 	font-size: 16px;
-	font-weight: 600;
+	font-weight: 400;
 `
 
 const StyledInput = styled(Input)`
@@ -24,11 +24,11 @@ const StyledInput = styled(Input)`
 `
 
 const StyledCard = styled(Card)`
-	min-height: 500px;
+	min-height: 400px;
 `
 
 const CalculatingContent = styled.div`
-	margin-top: 5px;
+	margin-top: 6px;
 `
 
 const CardTitleHeader = styled.div`
@@ -118,7 +118,7 @@ export const Calculating = () => {
 						<Card.Meta title={<>기본 정보</>} />
 						<CalculatingWrapper>
 							<CalculatingContent>
-								기본 제공 식대 :
+								기본 제공 식대 :&nbsp;
 								{numberWithCommas(workdayStatus.workday * 13000)}원 (
 								{workdayStatus.workday}일)
 							</CalculatingContent>

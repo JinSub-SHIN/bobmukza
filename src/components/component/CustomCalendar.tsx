@@ -693,7 +693,7 @@ export const CustomCalendar = () => {
 			) : (
 				<>
 					{contextHolder}
-					<div style={{ textAlign: 'center', marginBottom: 15, height: 50 }}>
+					<div style={{ textAlign: 'center', marginTop: 15, height: 50 }}>
 						<h1>{dayjs().month() + 1}월</h1>
 					</div>
 					<StyledCalendar

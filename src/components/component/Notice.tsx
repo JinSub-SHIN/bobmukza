@@ -1,5 +1,5 @@
-import { Button, Drawer, Tour, TourProps } from 'antd'
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { Button, Drawer } from 'antd'
+import { useState } from 'react'
 import styled from 'styled-components'
 
 const DrawerInner = styled.div`
@@ -24,29 +24,6 @@ const DrawerInnerHeader = styled.div`
 export const Notice = () => {
 	const [open, setOpen] = useState(false)
 
-	const ref = useRef<any>(null)
-
-	const [tourOpen, setTourOpen] = useState<boolean>(false)
-
-	const steps: TourProps['steps'] = [
-		{
-			title: 'Right',
-			description: 'On the right of target.',
-			placement: 'right',
-			target: () => ref.current,
-		},
-	]
-
-	const hasMounted = useRef(false)
-
-	useEffect(() => {
-		if (hasMounted.current) return
-		hasMounted.current = true
-
-		// Tour 열기
-		setTourOpen(true)
-	}, [])
-
 	const showDrawer = () => {
 		setOpen(true)
 	}
@@ -57,11 +34,18 @@ export const Notice = () => {
 
 	return (
 		<>
-			<Tour open={tourOpen} onClose={() => setTourOpen(false)} steps={steps} />
 			<div>
-				<Button onClick={showDrawer} style={{ marginBottom: 10 }} ref={ref}>
-					사용법이 궁금하다면 ?
-				</Button>
+				<div style={{ textAlign: 'center' }}>
+					<Button
+						onClick={showDrawer}
+						style={{ width: '25%', marginBottom: 10 }}
+						size="large"
+						color="purple"
+						variant="solid"
+					>
+						사용법이 궁금하다면 ?
+					</Button>
+				</div>
 				<Drawer
 					title="🍕🍟🌭🍖🍙🍕🍟🌭🍖🍙"
 					placement="left"
