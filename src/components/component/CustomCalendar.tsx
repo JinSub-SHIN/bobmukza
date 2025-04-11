@@ -169,15 +169,23 @@ export const CustomCalendar = () => {
 
 	useEffect(() => {
 		const today = dayjs()
-		const afterHolidaycount = calendarStatus.filter(
-			item =>
-				item.status === '휴가/오전반차' &&
-				dayjs(item.date).isAfter(today, 'day'),
+		const afterAllHolidaycount = calendarStatus.filter(
+			item => item.status === '휴가' && dayjs(item.date).isAfter(today, 'day'),
 		).length
 
-		const vacationCount = calendarStatus.filter(
-			item => item.status === '휴가/오전반차',
+		const afterMorningHolidaycount = calendarStatus.filter(
+			item =>
+				item.status === '오전반차' && dayjs(item.date).isAfter(today, 'day'),
 		).length
+
+		const allHolidayCount = calendarStatus.filter(
+			item => item.status === '휴가',
+		).length
+
+		const morningHolidayCount = calendarStatus.filter(
+			item => item.status === '오전반차',
+		).length
+
 		const overtimeDontEatCount = calendarStatus.filter(
 			item => item.status === '야근(식대x)',
 		).length
@@ -198,10 +206,15 @@ export const CustomCalendar = () => {
 			extraLunchCount +
 			extraLunchDinnerCount
 
+		copy.allHolidayCount = allHolidayCount
+		copy.morningHoldayCount = morningHolidayCount
+		copy.afterTodayAllHolidayCount = afterAllHolidaycount
+		copy.afterTodayMorningHoldayCount = afterMorningHolidaycount
 		copy.extraMoneyCount =
 			overtimeCount + extraLunchCount + extraLunchDinnerCount * 2
-		copy.holidayTotalCount = vacationCount
-		copy.afterTodayHolidayCount = afterHolidaycount
+		copy.holidayTotalCount = allHolidayCount + morningHolidayCount
+		copy.afterTodayHolidayCount =
+			afterAllHolidaycount + afterMorningHolidaycount
 
 		dispatch(setWorkday(copy))
 	}, [calendarStatus])
@@ -272,8 +285,13 @@ export const CustomCalendar = () => {
 			icon: <LaptopOutlined />,
 		},
 		{
-			label: '휴가/오전반차',
-			key: '휴가/오전반차',
+			label: '휴가',
+			key: '휴가',
+			icon: <HomeOutlined />,
+		},
+		{
+			label: '오전반차',
+			key: '오전반차',
 			icon: <HomeOutlined />,
 		},
 		{
@@ -544,11 +562,12 @@ export const CustomCalendar = () => {
 						>
 							{savedMenuKey &&
 								savedMenuKey !== '근무' &&
-								savedMenuKey !== '휴가/오전반차' && (
+								savedMenuKey !== '휴가' &&
+								savedMenuKey !== '오전반차' && (
 									<Tag color="volcano"> ({savedMenuKey})</Tag>
 								)}
-							{savedMenuKey && savedMenuKey === '휴가/오전반차' && (
-								<Tag color="purple"> ({savedMenuKey})</Tag>
+							{(savedMenuKey === '휴가' || savedMenuKey === '오전반차') && (
+								<Tag color="purple">({savedMenuKey})</Tag>
 							)}
 						</div>
 						{/* 기념일이면서, 해당기념일이 오늘 이후인지 확인 */}

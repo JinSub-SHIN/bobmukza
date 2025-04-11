@@ -17,6 +17,10 @@ export interface Workday {
 	nextMonthHolidayList: HolidayObj[]
 	extraWorkCount: number
 	extraMoneyCount: number
+	allHolidayCount: number
+	morningHoldayCount: number
+	afterTodayAllHolidayCount: number
+	afterTodayMorningHoldayCount: number
 	holidayTotalCount: number
 	afterTodayHolidayCount: number
 	willPayCount: number
@@ -31,6 +35,10 @@ const initialState: Workday = {
 	nextMonthHolidayList: [],
 	extraWorkCount: 0,
 	extraMoneyCount: 0,
+	allHolidayCount: 0,
+	morningHoldayCount: 0,
+	afterTodayAllHolidayCount: 0,
+	afterTodayMorningHoldayCount: 0,
 	holidayTotalCount: 0,
 	afterTodayHolidayCount: 0,
 	willPayCount: 0,

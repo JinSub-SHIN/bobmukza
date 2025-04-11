@@ -60,7 +60,8 @@ export const Calculating = () => {
 
 	const totalAmount =
 		workdayStatus.workday * 13000 -
-		workdayStatus.holidayTotalCount * 13000 +
+		workdayStatus.allHolidayCount * 13000 -
+		workdayStatus.morningHoldayCount * 10000 +
 		workdayStatus.extraMoneyCount * 10000
 
 	const remainingAmount = workdayStatus.usageAmount
@@ -101,10 +102,20 @@ export const Calculating = () => {
 									{workdayStatus.workday}일)
 								</CalculatingContent>
 								<CalculatingContent>
+									{workdayStatus.allHolidayCount === 0
+										? `휴가 차감 금액 : 0원 (0일)`
+										: `휴가 차감 금액 : -${numberWithCommas(workdayStatus.allHolidayCount * 13000)}원 (${workdayStatus.allHolidayCount}일)`}
+								</CalculatingContent>
+								<CalculatingContent>
+									{workdayStatus.allHolidayCount === 0
+										? `오전반차 차감 금액 : 0원 (0일)`
+										: `오전반차 차감 금액 : -${numberWithCommas(workdayStatus.morningHoldayCount * 10000)}원 (${workdayStatus.morningHoldayCount}일)`}
+								</CalculatingContent>
+								{/* <CalculatingContent>
 									{workdayStatus.holidayTotalCount === 0
 										? `휴가 차감 금액 : 0원 (0일)`
 										: `휴가 차감 금액 : -${numberWithCommas(workdayStatus.holidayTotalCount * 13000)}원 (${workdayStatus.holidayTotalCount}일)`}
-								</CalculatingContent>
+								</CalculatingContent> */}
 								<CalculatingContent>
 									{workdayStatus.extraMoneyCount === 0
 										? `야근 추가 식대 : 0원 (0회)`
@@ -141,10 +152,32 @@ export const Calculating = () => {
 						>
 							<CalculatingWrapper>
 								<CalculatingContent>
-									남은 근무 일수 :
-									{workdayStatus.workRemaningDay -
-										workdayStatus.afterTodayHolidayCount}
-									일
+									<Tooltip
+										title={
+											<div
+												style={{
+													display: 'flex',
+													flexDirection: 'column',
+													width: 'fit-content',
+													whiteSpace: 'nowrap',
+												}}
+											>
+												<p>당일 점심을 먹은 이후면 근무일수로 취급x</p>
+											</div>
+										}
+										color="black"
+										overlayStyle={{ maxWidth: 'none' }}
+									>
+										<span style={{ textDecoration: 'underline' }}>
+											남은 근무 일수
+										</span>
+									</Tooltip>
+									<span>
+										:
+										{workdayStatus.workRemaningDay -
+											workdayStatus.afterTodayHolidayCount}
+										일
+									</span>
 								</CalculatingContent>
 								<CalculatingContent>
 									예상 지출 등록 일수 : {workdayStatus.specialDayList.length}일
