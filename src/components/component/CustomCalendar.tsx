@@ -98,7 +98,12 @@ export const CustomCalendar = () => {
 	const error2 = () => {
 		messageApi.open({
 			type: 'error',
-			content: '당일 및 이전 지출 계획은 등록 안되요!',
+			content: (
+				<div>
+					<p>당일 및 이전 지출 계획은 등록 안되요!</p>
+					<p>지출한 금액은 고위드 이용금액 입력란에 적어주세요.</p>
+				</div>
+			),
 		})
 	}
 
@@ -705,9 +710,9 @@ export const CustomCalendar = () => {
 					<div style={{ marginTop: 15 }}>
 						<Button
 							block
-							style={{ height: 45 }}
+							style={{ height: 35 }}
 							onClick={handleReset}
-							color="cyan"
+							color="magenta"
 							variant="solid"
 						>
 							달력 초기화

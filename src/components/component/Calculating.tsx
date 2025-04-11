@@ -20,7 +20,14 @@ const StyledInput = styled(Input)`
 		font-size: 20px !important;
 	}
 
+	&.ant-input {
+		&::placeholder {
+			color: purple; /* 원하는 색상 */
+		}
+	}
+
 	margin-top: 45px;
+	opacity: 1;
 `
 
 const StyledCard = styled(Card)`
@@ -108,7 +115,7 @@ export const Calculating = () => {
 	return (
 		<>
 			<StyledInput
-				placeholder="현재 까지 사용한 금액 입력"
+				placeholder="이곳에 고위드 이용금액을 확인하고 입력하세요!"
 				onChange={handleChange}
 				value={workdayStatus.usageAmount}
 			/>
