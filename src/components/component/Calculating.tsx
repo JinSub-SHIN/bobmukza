@@ -39,6 +39,8 @@ export const Calculating = () => {
 
 	const workdayStatus = useSelector((state: RootState) => state.workdayStatus)
 
+	console.log(workdayStatus, 'workday')
+
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const copy = { ...workdayStatus }
 		const { value } = e.target
@@ -107,7 +109,7 @@ export const Calculating = () => {
 										: `휴가 차감 금액 : -${numberWithCommas(workdayStatus.allHolidayCount * 13000)}원 (${workdayStatus.allHolidayCount}일)`}
 								</CalculatingContent>
 								<CalculatingContent>
-									{workdayStatus.allHolidayCount === 0
+									{workdayStatus.morningHoldayCount === 0
 										? `오전반차 차감 금액 : 0원 (0일)`
 										: `오전반차 차감 금액 : -${numberWithCommas(workdayStatus.morningHoldayCount * 10000)}원 (${workdayStatus.morningHoldayCount}일)`}
 								</CalculatingContent>
