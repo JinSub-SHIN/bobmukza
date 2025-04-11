@@ -42,8 +42,9 @@ import { numberWithCommas } from '../hook/useNumberComma'
 
 const StyledCalendar = styled(Calendar)`
 	.ant-picker-calendar-date-content {
-		height: 60px !important;
+		height: 65px !important;
 		overflow-y: hidden !important;
+		overflow-x: hidden !important;
 	}
 
 	.ant-picker-content thead {
@@ -579,8 +580,8 @@ export const CustomCalendar = () => {
 									padding: 3,
 								}}
 							>
-								<Tag color="processing">
-									예정 : {numberWithCommas(speicalDay.amount)}원
+								<Tag color="processing" style={{ fontSize: 10 }}>
+									-{numberWithCommas(speicalDay.amount)}원
 								</Tag>
 							</div>
 						)}
@@ -687,7 +688,7 @@ export const CustomCalendar = () => {
 			{!fetchStatus ? (
 				<Skeleton.Node
 					active={true}
-					style={{ width: '90vw', height: '100vh' }}
+					style={{ width: '47vw', height: '80vh' }}
 				/>
 			) : (
 				<>

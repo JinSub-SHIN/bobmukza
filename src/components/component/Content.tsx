@@ -5,7 +5,7 @@ import { Notice } from './Notice'
 import styled from 'styled-components'
 
 const ResponsiveWrapper = styled.div`
-	@media (max-width: 1600px) {
+	@media (max-width: 1400px) {
 		display: none;
 	}
 `
@@ -13,7 +13,7 @@ const ResponsiveWrapper = styled.div`
 const MobileWrapper = styled.div`
 	display: none;
 
-	@media (max-width: 1600px) {
+	@media (max-width: 1400px) {
 		display: block;
 	}
 `
