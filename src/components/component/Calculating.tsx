@@ -224,12 +224,18 @@ export const Calculating = () => {
 										남은 평균 금액
 									</span>
 								</Tooltip>
-								<span>
-									:
-									{Number(averageAmount) >= 13000
-										? ` ${averageAmount}원😀`
-										: ` ${averageAmount}원🤢`}
-								</span>
+								{workdayStatus.workRemaningDay -
+									workdayStatus.afterTodayHolidayCount ==
+								0 ? (
+									<span> : {numberWithCommas(remainingAmount)}원</span>
+								) : (
+									<span>
+										:
+										{Number(averageAmount) >= 13000
+											? ` ${averageAmount}원😀`
+											: ` ${averageAmount}원🤢`}
+									</span>
+								)}
 							</CalculatingContent>
 						</CalculatingWrapper>
 					</GirdCard>
@@ -352,12 +358,18 @@ export const Calculating = () => {
 												남은 평균 금액
 											</span>
 										</Tooltip>
-										<span>
-											:
-											{Number(averageAmount) >= 13000
-												? ` ${averageAmount}원😀`
-												: ` ${averageAmount}원🤢`}
-										</span>
+										{workdayStatus.workRemaningDay -
+											workdayStatus.afterTodayHolidayCount ==
+										0 ? (
+											<span> : {numberWithCommas(remainingAmount)}원</span>
+										) : (
+											<span>
+												:
+												{Number(averageAmount) >= 13000
+													? ` ${averageAmount}원😀`
+													: ` ${averageAmount}원🤢`}
+											</span>
+										)}
 									</CalculatingContent>
 								</CalculatingWrapper>
 							</StyledCard>
