@@ -227,7 +227,11 @@ export const Calculating = () => {
 								{workdayStatus.workRemaningDay -
 									workdayStatus.afterTodayHolidayCount ==
 								0 ? (
-									<span> : {numberWithCommas(remainingAmount)}원</span>
+									<span>
+										{' '}
+										: {numberWithCommas(remainingAmount)}
+										{remainingAmount >= 0 ? `원😀😀😀` : `원🤢🤢🤢`}
+									</span>
 								) : (
 									<span>
 										:
@@ -361,7 +365,11 @@ export const Calculating = () => {
 										{workdayStatus.workRemaningDay -
 											workdayStatus.afterTodayHolidayCount ==
 										0 ? (
-											<span> : {numberWithCommas(remainingAmount)}원</span>
+											<span>
+												{' '}
+												: {numberWithCommas(remainingAmount)}
+												{remainingAmount >= 0 ? `원😀😀😀` : `원🤢🤢🤢`}
+											</span>
 										) : (
 											<span>
 												:
