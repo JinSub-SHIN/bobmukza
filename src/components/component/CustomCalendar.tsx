@@ -27,6 +27,7 @@ import {
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
 import {
+	HolidayObj,
 	setWorkday,
 	SpecialDay,
 	workdayReset,
@@ -143,8 +144,8 @@ export const CustomCalendar = () => {
 				copy.holidayList = nowHoliday
 				copy.nextMonthHolidayList = nextHoliday
 
-				const workday = getWeekdaysInMonth()
-				const remaningWorkday = getRemainingWorkdays()
+				const workday = getWeekdaysInMonth(nowHoliday)
+				const remaningWorkday = getRemainingWorkdays(nowHoliday)
 
 				copy.workday = workday
 				copy.workRemaningDay = remaningWorkday
@@ -167,10 +168,6 @@ export const CustomCalendar = () => {
 		}
 		loadHolidays()
 	}, [refetchStatus])
-
-	useEffect(() => {
-		console.log(workdayStatus, '업데이트확인')
-	}, [workdayStatus])
 
 	useEffect(() => {
 		const today = dayjs()
@@ -224,46 +221,41 @@ export const CustomCalendar = () => {
 		dispatch(setWorkday(copy))
 	}, [calendarStatus])
 
-	const getWeekdaysInMonth = () => {
+	const getWeekdaysInMonth = (holidayList: HolidayObj[]) => {
 		const now = dayjs()
 		const daysInMonth = now.daysInMonth()
 		let count = 0
+
 		for (let day = 1; day <= daysInMonth; day++) {
 			const date = now.date(day)
 			const dayOfWeek = date.day()
-			const isHoliday = workdayStatus.holidayList.some(
+			const isHoliday = holidayList.some(
 				holiday => holiday.locdate === date.format('YYYYMMDD'),
 			)
 			if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday) {
 				count++
 			}
 		}
-		const month = now.format('MM')
-		// 근로자의날 특수케이스추가
-		if (month === '05') {
+		if (now.format('MM') === '05') {
 			count--
 		}
 		return count
 	}
 
-	const getRemainingWorkdays = () => {
+	const getRemainingWorkdays = (holidayList: HolidayObj[]) => {
 		const now = dayjs()
 		const isBefore1PM = now.hour() < 13
-
 		const year = now.format('YYYY')
 		const month = now.format('MM')
 		const daysInMonth = now.daysInMonth()
 		let count = 0
-
 		for (let day = now.date(); day <= daysInMonth; day++) {
 			const date = dayjs(`${year}-${month}-${String(day).padStart(2, '0')}`)
 			const dayOfWeek = date.day()
 			const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-			const isHoliday = workdayStatus.holidayList.some(
+			const isHoliday = holidayList.some(
 				holiday => holiday.locdate === date.format('YYYYMMDD'),
 			)
-
-			// 오늘이면 시간 확인
 			if (day === now.date()) {
 				if (!isWeekend && !isHoliday && isBefore1PM) {
 					count++
@@ -274,12 +266,6 @@ export const CustomCalendar = () => {
 				}
 			}
 		}
-
-		// 근로자의날 특수케이스추가
-		if (month === '05') {
-			count--
-		}
-
 		return count
 	}
 

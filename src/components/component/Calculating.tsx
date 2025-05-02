@@ -65,8 +65,6 @@ export const Calculating = () => {
 
 	const workdayStatus = useSelector((state: RootState) => state.workdayStatus)
 
-	console.log(workdayStatus, 'workday')
-
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const copy = { ...workdayStatus }
 		const { value } = e.target
