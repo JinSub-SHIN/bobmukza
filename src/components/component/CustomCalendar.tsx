@@ -123,10 +123,16 @@ export const CustomCalendar = () => {
 				const holidayresponseArray = response.response.body.items.item
 					? response.response.body.items.item
 					: []
-				const holidayNextresponseArray = nextMonthResponse.response.body.items
+				let holidayNextresponseArray = nextMonthResponse.response.body.items
 					.item
 					? nextMonthResponse.response.body.items.item
 					: []
+
+				// api 에서 반환된 값이 1개 일때는 객채로 오므로,
+				// 배열로 변환해준다.
+				holidayNextresponseArray = Array.isArray(holidayNextresponseArray)
+					? holidayNextresponseArray
+					: [holidayNextresponseArray]
 
 				setFetchStatus(true)
 
@@ -239,6 +245,7 @@ export const CustomCalendar = () => {
 		if (now.format('MM') === '05') {
 			count--
 		}
+
 		return count
 	}
 
