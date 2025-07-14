@@ -5,7 +5,6 @@ import { numberWithCommas } from '../hook/useNumberComma'
 import { setWorkday } from '../../store/action/workdaySlice'
 import { Card, Col, Input, Row, Tooltip } from 'antd'
 import { numberRegexp } from '../hook/useNumberRegexp'
-import { useEffect } from 'react'
 
 const CalculatingWrapper = styled.div`
 	padding: 1.5px;
