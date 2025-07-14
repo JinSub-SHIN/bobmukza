@@ -26,7 +26,7 @@ export interface Workday {
 	willPayCount: number
 	usageAmount: number | undefined
 	specialDayList: SpecialDay[]
-	exceptionMoney: number
+	exceptionMoney: number | undefined
 }
 
 const initialState: Workday = {
@@ -45,7 +45,7 @@ const initialState: Workday = {
 	willPayCount: 0,
 	usageAmount: undefined,
 	specialDayList: [],
-	exceptionMoney: 0,
+	exceptionMoney: undefined,
 }
 
 const workdaySlice = createSlice({

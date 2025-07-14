@@ -109,7 +109,7 @@ export const Calculating = () => {
 		const { value } = e.target
 
 		if (value.length === 0) {
-			copy.exceptionMoney = 0
+			copy.exceptionMoney = undefined
 			dispatch(setWorkday(copy))
 		}
 		if (numberRegexp(value) === false) {
@@ -130,7 +130,9 @@ export const Calculating = () => {
 		workdayStatus.extraMoneyCount * 10000
 
 	const remainingAmount = workdayStatus.usageAmount
-		? totalAmount - workdayStatus.usageAmount + workdayStatus.exceptionMoney
+		? totalAmount -
+			workdayStatus.usageAmount +
+			(workdayStatus.exceptionMoney ?? 0)
 		: totalAmount
 
 	const willPayAmount = workdayStatus.specialDayList.reduce(
@@ -223,7 +225,7 @@ export const Calculating = () => {
 										반려 및 오사용 금액 :
 									</span>
 								</Tooltip>
-								{workdayStatus.usageAmount
+								{workdayStatus.exceptionMoney
 									? numberWithCommas(workdayStatus.exceptionMoney)
 									: '0'}
 								원
@@ -358,6 +360,35 @@ export const Calculating = () => {
 										현재 이용 금액 :
 										{workdayStatus.usageAmount
 											? numberWithCommas(workdayStatus.usageAmount)
+											: '0'}
+										원
+									</CalculatingContent>
+									<CalculatingContent>
+										<Tooltip
+											title={
+												<div
+													style={{
+														display: 'flex',
+														flexDirection: 'column',
+														width: 'fit-content',
+														whiteSpace: 'nowrap',
+													}}
+												>
+													<p>
+														오사용으로 다음달에 입금해야하므로, 잔액에 해당 금액
+														만큼 잔액이 증가한다.
+													</p>
+												</div>
+											}
+											color="black"
+											overlayStyle={{ maxWidth: 'none' }}
+										>
+											<span style={{ textDecoration: 'underline' }}>
+												반려 및 오사용 금액 :
+											</span>
+										</Tooltip>
+										{workdayStatus.exceptionMoney
+											? numberWithCommas(workdayStatus.exceptionMoney)
 											: '0'}
 										원
 									</CalculatingContent>
