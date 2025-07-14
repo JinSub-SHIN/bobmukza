@@ -5,10 +5,11 @@ import { numberWithCommas } from '../hook/useNumberComma'
 import { setWorkday } from '../../store/action/workdaySlice'
 import { Card, Col, Input, Row, Tooltip } from 'antd'
 import { numberRegexp } from '../hook/useNumberRegexp'
+import { useEffect } from 'react'
 
 const CalculatingWrapper = styled.div`
-	padding: 5px;
-	font-size: 16px;
+	padding: 1.5px;
+	font-size: 13px;
 	font-weight: 400;
 `
 
@@ -27,6 +28,24 @@ const StyledInput = styled(Input)`
 	}
 
 	margin-top: 45px;
+	opacity: 1;
+`
+
+const ExceptionStyledInput = styled(Input)`
+	height: 60px;
+
+	& ::placeholder {
+		color: black !important;
+		font-size: 20px !important;
+	}
+
+	&.ant-input {
+		&::placeholder {
+			color: red; /* 원하는 색상 */
+		}
+	}
+
+	margin-top: 10px;
 	opacity: 1;
 `
 
@@ -84,6 +103,27 @@ export const Calculating = () => {
 		}
 	}
 
+	const handleExceptionInputChange = (
+		e: React.ChangeEvent<HTMLInputElement>,
+	) => {
+		const copy = { ...workdayStatus }
+		const { value } = e.target
+
+		if (value.length === 0) {
+			copy.exceptionMoney = 0
+			dispatch(setWorkday(copy))
+		}
+		if (numberRegexp(value) === false) {
+			return
+		} else {
+			if (value.length > 7) {
+				return
+			}
+			copy.exceptionMoney = Number(value)
+			dispatch(setWorkday(copy))
+		}
+	}
+
 	const totalAmount =
 		workdayStatus.workday * 13000 -
 		workdayStatus.allHolidayCount * 13000 -
@@ -91,7 +131,7 @@ export const Calculating = () => {
 		workdayStatus.extraMoneyCount * 10000
 
 	const remainingAmount = workdayStatus.usageAmount
-		? totalAmount - workdayStatus.usageAmount
+		? totalAmount - workdayStatus.usageAmount + workdayStatus.exceptionMoney
 		: totalAmount
 
 	const willPayAmount = workdayStatus.specialDayList.reduce(
@@ -116,6 +156,11 @@ export const Calculating = () => {
 				placeholder="이곳에 고위드 이용금액을 확인하고 입력하세요!"
 				onChange={handleChange}
 				value={workdayStatus.usageAmount}
+			/>
+			<ExceptionStyledInput
+				placeholder="반려 및 오사용 금액이 있다면 입력하세요!"
+				onChange={handleExceptionInputChange}
+				value={workdayStatus.exceptionMoney}
 			/>
 			<div style={{ marginTop: 10, textAlign: 'center' }}>
 				<ResponsiveWrapper>
@@ -152,6 +197,35 @@ export const Calculating = () => {
 								현재 이용 금액 :
 								{workdayStatus.usageAmount
 									? numberWithCommas(workdayStatus.usageAmount)
+									: '0'}
+								원
+							</CalculatingContent>
+							<CalculatingContent>
+								<Tooltip
+									title={
+										<div
+											style={{
+												display: 'flex',
+												flexDirection: 'column',
+												width: 'fit-content',
+												whiteSpace: 'nowrap',
+											}}
+										>
+											<p>
+												오사용으로 다음달에 입금해야하므로, 잔액에 해당 금액
+												만큼 잔액이 증가한다.
+											</p>
+										</div>
+									}
+									color="black"
+									overlayStyle={{ maxWidth: 'none' }}
+								>
+									<span style={{ textDecoration: 'underline' }}>
+										반려 및 오사용 금액 :
+									</span>
+								</Tooltip>
+								{workdayStatus.usageAmount
+									? numberWithCommas(workdayStatus.exceptionMoney)
 									: '0'}
 								원
 							</CalculatingContent>
