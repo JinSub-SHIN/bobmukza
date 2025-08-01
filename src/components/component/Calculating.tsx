@@ -8,7 +8,7 @@ import { numberRegexp } from '../hook/useNumberRegexp'
 
 const CalculatingWrapper = styled.div`
 	padding: 1.5px;
-	font-size: 13px;
+	font-size: 14px;
 	font-weight: 400;
 `
 
@@ -147,9 +147,11 @@ export const Calculating = () => {
 			workdayStatus.specialDayList.length)
 	).toFixed(1)
 
-	if (workdayStatus.workday === 0) {
-		return <></>
-	}
+	console.log(workdayStatus.workday, 'workdayStatus.workday')
+
+	// if (workdayStatus.workday === 0) {
+	// 	return <></>
+	// }
 
 	return (
 		<>

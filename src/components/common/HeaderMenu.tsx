@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { styled } from 'styled-components'
 
 const CustomHeader = styled.div`
@@ -53,6 +54,8 @@ const MenuSpan = styled.span`
 `
 
 export const HeaderMenu = () => {
+	const navigate = useNavigate()
+
 	return (
 		<>
 			<CustomHeader>
@@ -61,7 +64,19 @@ export const HeaderMenu = () => {
 						<MenuWrapper>
 							<SubMenuWrapper>
 								<MenuItems>
-									<MenuSpan>🍕🍟🌭🍖🍙🍕🍟🌭🍖🍙</MenuSpan>
+									<MenuSpan onClick={() => navigate('/')}>
+										🍕🍟🌭🍖🍙🍕🍟🌭🍖🍙
+									</MenuSpan>
+								</MenuItems>
+							</SubMenuWrapper>
+							<SubMenuWrapper>
+								<MenuItems>
+									<MenuSpan
+										style={{ marginRight: '3em' }}
+										onClick={() => navigate('/test')}
+									>
+										✈️✈️✈️
+									</MenuSpan>
 								</MenuItems>
 							</SubMenuWrapper>
 						</MenuWrapper>

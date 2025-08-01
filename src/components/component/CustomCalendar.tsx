@@ -115,18 +115,29 @@ export const CustomCalendar = () => {
 				const nextMonth = now.add(1, 'month')
 				const response = await getHoliday(now.format('YYYY'), now.format('MM'))
 
+				console.log(now.format('MM'), '이번달')
+				console.log(nextMonth.format('MM'), '다음달')
+
+				console.log(response, '이번달 휴일 API 응답')
+
 				const nextMonthResponse = await getHoliday(
 					nextMonth.format('YYYY'),
 					nextMonth.format('MM'),
 				)
 
-				const holidayresponseArray = response.response.body.items.item
+				let holidayresponseArray = response.response.body.items.item
 					? response.response.body.items.item
 					: []
 				let holidayNextresponseArray = nextMonthResponse.response.body.items
 					.item
 					? nextMonthResponse.response.body.items.item
 					: []
+
+				// api 에서 반환된 값이 1개 일때는 객채로 오므로,
+				// 배열로 변환해준다.
+				holidayresponseArray = Array.isArray(holidayresponseArray)
+					? holidayresponseArray
+					: [holidayresponseArray]
 
 				// api 에서 반환된 값이 1개 일때는 객채로 오므로,
 				// 배열로 변환해준다.
