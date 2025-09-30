@@ -71,25 +71,44 @@ export const Test = () => {
 
 			setTimeout(() => {
 				if (loadoutRef.current) {
-					// 새로운 애니메이션 시작
-					loadoutRef.current.style.transition = `left ${durationTime}ms ease-out`
-					loadoutRef.current.style.left = `-${finalDiff}px`
+					// 1단계: 조금 더 느리게 시작 (70% 거리)
+					const firstDistance = Math.round(finalDiff * 0.7)
+					loadoutRef.current.style.transition = `left ${durationTime * 0.5}ms ease-out`
+					loadoutRef.current.style.left = `-${firstDistance}px`
 
 					setTimeout(() => {
-						// 승자 결정
-						const center = window.innerWidth / 2
-						const cells = loadoutRef.current?.querySelectorAll('td')
-						if (cells) {
-							cells.forEach(cell => {
-								const rect = cell.getBoundingClientRect()
-								if (rect.left < center && rect.left + 185 > center) {
-									const winnerName = cell.textContent || ''
-									setWinner(winnerName)
-								}
-							})
-						}
-						setIsRolling(false)
-					}, durationTime)
+						// 400ms 정지 구간 - 멈춰있다가 다시 움직이는 효과
+						setTimeout(() => {
+							if (loadoutRef.current) {
+								// 2단계: 앞으로 가지 말고 뒤로 갈 수도 있는 효과
+								const secondDistance = finalDiff - firstDistance
+								// 뒤로 갈 확률 30%
+								const shouldGoBack = Math.random() < 0.5
+								const finalPosition = shouldGoBack
+									? firstDistance - Math.round(secondDistance * 0.3) // 뒤로 가기
+									: finalDiff // 앞으로 가기
+
+								loadoutRef.current.style.transition = `left ${durationTime * 1.5}ms cubic-bezier(0.1, 0.1, 0.1, 0.9)`
+								loadoutRef.current.style.left = `-${finalPosition}px`
+
+								setTimeout(() => {
+									// 승자 결정
+									const center = window.innerWidth / 2
+									const cells = loadoutRef.current?.querySelectorAll('td')
+									if (cells) {
+										cells.forEach(cell => {
+											const rect = cell.getBoundingClientRect()
+											if (rect.left < center && rect.left + 185 > center) {
+												const winnerName = cell.textContent || ''
+												setWinner(winnerName)
+											}
+										})
+									}
+									setIsRolling(false)
+								}, durationTime * 1.5)
+							}
+						}, 400) // 400ms 정지
+					}, durationTime * 0.5)
 				}
 			}, 100)
 		}
