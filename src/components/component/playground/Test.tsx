@@ -24,11 +24,6 @@ export const Test = () => {
 		return shuffled
 	}
 
-	// 랜덤 숫자 생성 함수
-	const randomEx = (min: number, max: number): number => {
-		return Math.floor(Math.random() * (max - min + 1) + min)
-	}
-
 	// 롤 버튼 클릭 핸들러
 	const handleRoll = () => {
 		const lines = userInput.split('\n').filter(line => line.trim().length > 0)
@@ -66,7 +61,6 @@ export const Test = () => {
 			loadoutRef.current.style.transition = 'none'
 			loadoutRef.current.style.left = '100%'
 
-			const diff = Math.round(scrollSize / 2)
 			// 진짜 랜덤한 위치로 이동 (전체 스크롤 범위에서 랜덤)
 			const finalDiff = Math.floor(Math.random() * scrollSize) + 500
 
