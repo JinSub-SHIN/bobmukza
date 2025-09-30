@@ -86,6 +86,7 @@ export const CustomCalendar = () => {
 	const hiddenRef = useRef(null)
 	const hiddenRef2 = useRef(null)
 	const inputRef = useRef<InputRef>(null)
+	const storageMonth = localStorage.getItem('userCalendar')
 
 	const [calendarSellKey, setCalendarSellKey] = useState('')
 
@@ -107,6 +108,13 @@ export const CustomCalendar = () => {
 			),
 		})
 	}
+
+	useEffect(() => {
+		const nowDate = (dayjs().month() + 1).toString()
+		if (storageMonth !== nowDate) {
+			handleReset()
+		}
+	}, [])
 
 	useEffect(() => {
 		const fetchHoliday = async () => {
@@ -684,6 +692,7 @@ export const CustomCalendar = () => {
 	}
 
 	const handleReset = () => {
+		localStorage.setItem('userCalendar', (dayjs().month() + 1).toString())
 		dispatch(calendarReset())
 		dispatch(workdayReset())
 		setFetchStatus(false)

@@ -5,6 +5,7 @@ import { numberWithCommas } from '../hook/useNumberComma'
 import { setWorkday } from '../../store/action/workdaySlice'
 import { Card, Col, Input, Row, Tooltip } from 'antd'
 import { numberRegexp } from '../hook/useNumberRegexp'
+import dayjs from 'dayjs'
 
 const CalculatingWrapper = styled.div`
 	padding: 1.5px;
@@ -84,6 +85,8 @@ export const Calculating = () => {
 	const workdayStatus = useSelector((state: RootState) => state.workdayStatus)
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		localStorage.setItem('userCalendar', (dayjs().month() + 1).toString())
+
 		const copy = { ...workdayStatus }
 		const { value } = e.target
 
