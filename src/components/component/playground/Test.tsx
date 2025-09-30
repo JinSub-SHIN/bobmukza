@@ -100,7 +100,7 @@ export const Test = () => {
 			<div className="row">
 				<div className="col-md-6 col-md-offset-3">
 					<div className="page-header">
-						<h1>뭐 먹지??</h1>
+						<h1>🎲🎲🎲</h1>
 					</div>
 				</div>
 			</div>
@@ -275,7 +275,7 @@ export const Test = () => {
 											fontStyle: 'italic',
 										}}
 									>
-										🎉 축하합니다!
+										🎉 당첨!
 									</div>
 								</div>
 							) : (
@@ -287,7 +287,7 @@ export const Test = () => {
 										textAlign: 'center',
 									}}
 								>
-									🎲 굴러가는중...!
+									🎲 굴려 굴려!
 								</div>
 							)}
 						</div>
