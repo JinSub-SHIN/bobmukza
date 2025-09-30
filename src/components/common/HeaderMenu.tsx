@@ -75,7 +75,7 @@ export const HeaderMenu = () => {
 										style={{ marginRight: '3em' }}
 										onClick={() => navigate('/test')}
 									>
-										✈️✈️✈️
+										🎲🎲🎲
 									</MenuSpan>
 								</MenuItems>
 							</SubMenuWrapper>
