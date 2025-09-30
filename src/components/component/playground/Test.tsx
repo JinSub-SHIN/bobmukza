@@ -67,7 +67,8 @@ export const Test = () => {
 			loadoutRef.current.style.left = '100%'
 
 			const diff = Math.round(scrollSize / 2)
-			const finalDiff = randomEx(diff - 300, diff + 300)
+			// 진짜 랜덤한 위치로 이동 (전체 스크롤 범위에서 랜덤)
+			const finalDiff = Math.floor(Math.random() * scrollSize) + 500
 
 			setTimeout(() => {
 				if (loadoutRef.current) {
@@ -77,37 +78,56 @@ export const Test = () => {
 					loadoutRef.current.style.left = `-${firstDistance}px`
 
 					setTimeout(() => {
-						// 400ms 정지 구간 - 멈춰있다가 다시 움직이는 효과
-						setTimeout(() => {
-							if (loadoutRef.current) {
-								// 2단계: 앞으로 가지 말고 뒤로 갈 수도 있는 효과
-								const secondDistance = finalDiff - firstDistance
-								// 뒤로 갈 확률 30%
-								const shouldGoBack = Math.random() < 0.5
-								const finalPosition = shouldGoBack
-									? firstDistance - Math.round(secondDistance * 0.3) // 뒤로 가기
-									: finalDiff // 앞으로 가기
+						// 30% 확률로 멈췄다가 다시 돌아가기, 70% 확률로 바로 결과
+						const shouldPauseAndContinue = Math.random() < 0.3
 
-								loadoutRef.current.style.transition = `left ${durationTime * 1.5}ms cubic-bezier(0.1, 0.1, 0.1, 0.9)`
-								loadoutRef.current.style.left = `-${finalPosition}px`
+						if (shouldPauseAndContinue) {
+							// 30% 확률: 400ms 정지 후 다시 돌아가기
+							setTimeout(() => {
+								if (loadoutRef.current) {
+									// 2단계: 앞으로 가지 말고 뒤로 갈 수도 있는 효과
+									const secondDistance = finalDiff - firstDistance
+									// 뒤로 갈 확률 50%
+									const shouldGoBack = Math.random() < 0.5
+									const finalPosition = shouldGoBack
+										? firstDistance - Math.round(secondDistance * 0.3) // 뒤로 가기
+										: finalDiff // 앞으로 가기
 
-								setTimeout(() => {
-									// 승자 결정
-									const center = window.innerWidth / 2
-									const cells = loadoutRef.current?.querySelectorAll('td')
-									if (cells) {
-										cells.forEach(cell => {
-											const rect = cell.getBoundingClientRect()
-											if (rect.left < center && rect.left + 185 > center) {
-												const winnerName = cell.textContent || ''
-												setWinner(winnerName)
-											}
-										})
+									loadoutRef.current.style.transition = `left ${durationTime * 1.5}ms cubic-bezier(0.1, 0.1, 0.1, 0.9)`
+									loadoutRef.current.style.left = `-${finalPosition}px`
+
+									setTimeout(() => {
+										// 승자 결정
+										const center = window.innerWidth / 2
+										const cells = loadoutRef.current?.querySelectorAll('td')
+										if (cells) {
+											cells.forEach(cell => {
+												const rect = cell.getBoundingClientRect()
+												if (rect.left < center && rect.left + 185 > center) {
+													const winnerName = cell.textContent || ''
+													setWinner(winnerName)
+												}
+											})
+										}
+										setIsRolling(false)
+									}, durationTime * 1.5)
+								}
+							}, 400) // 400ms 정지
+						} else {
+							// 70% 확률: 바로 결과
+							const center = window.innerWidth / 2
+							const cells = loadoutRef.current?.querySelectorAll('td')
+							if (cells) {
+								cells.forEach(cell => {
+									const rect = cell.getBoundingClientRect()
+									if (rect.left < center && rect.left + 185 > center) {
+										const winnerName = cell.textContent || ''
+										setWinner(winnerName)
 									}
-									setIsRolling(false)
-								}, durationTime * 1.5)
+								})
 							}
-						}, 400) // 400ms 정지
+							setIsRolling(false)
+						}
 					}, durationTime * 0.5)
 				}
 			}, 100)
