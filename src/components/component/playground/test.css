@@ -139,18 +139,7 @@ html {
 	}
 }
 
-#log {
-	margin-top: 30px;
-	text-align: center;
-	font-size: 1.5em;
-	color: white;
-}
-
-#log span {
-	font-size: 2em;
-	font-weight: bold;
-	color: #57b3f9;
-}
+/* 기존 #log 스타일 제거 - 새로운 클래스 기반 스타일 사용 */
 
 #roll {
 	margin-top: 30px;
@@ -171,4 +160,127 @@ td {
 
 td:nth-child(even) .roller {
 	background: #0f1c5f;
+}
+
+/* 인라인 스타일을 위한 새로운 클래스들 */
+.flex-container {
+	display: flex;
+	gap: 20px;
+	justify-content: center;
+	align-items: stretch;
+	margin-top: 40px;
+}
+
+.flex-item {
+	flex: 1;
+	max-width: 400px;
+}
+
+.food-input-container {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	padding: 20px;
+	border-radius: 15px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	backdrop-filter: blur(10px);
+}
+
+.food-input-title {
+	color: white;
+	text-align: center;
+	margin-bottom: 15px;
+	font-size: 18px;
+	font-weight: bold;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.food-textarea {
+	background: rgba(255, 255, 255, 0.9);
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-radius: 10px;
+	padding: 15px;
+	font-size: 14px;
+	line-height: 1.5;
+	resize: vertical;
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
+	color: #000000;
+}
+
+.food-textarea:focus {
+	border: 2px solid #ffd700;
+	box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.food-textarea:not(:focus) {
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.food-help-text {
+	color: rgba(255, 255, 255, 0.8);
+	font-size: 12px;
+	text-align: center;
+	margin-top: 8px;
+	font-style: italic;
+}
+
+.winner-container {
+	background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+	padding: 20px;
+	border-radius: 15px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	backdrop-filter: blur(10px);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.winner-content {
+	text-align: center;
+	width: 100%;
+}
+
+.winner-title {
+	color: white;
+	font-size: 20px;
+	font-weight: bold;
+	margin-bottom: 20px;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+.winner-badge {
+	background: rgba(255, 255, 255, 0.2);
+	padding: 20px 30px;
+	border-radius: 25px;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+	display: inline-block;
+}
+
+.winner-name {
+	color: #fff;
+	font-size: 32px;
+	font-weight: bold;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+	display: block;
+}
+
+.winner-congrats {
+	color: rgba(255, 255, 255, 0.8);
+	font-size: 16px;
+	margin-top: 15px;
+	font-style: italic;
+}
+
+.waiting-message {
+	color: rgba(255, 255, 255, 0.7);
+	font-size: 16px;
+	font-style: italic;
+	text-align: center;
 }

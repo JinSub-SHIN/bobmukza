@@ -135,160 +135,36 @@ export const Test = () => {
 				</div>
 			</div>
 
-			<div
-				className="row"
-				style={{
-					display: 'flex',
-					gap: '20px',
-					justifyContent: 'center',
-					alignItems: 'stretch',
-					marginTop: '40px',
-				}}
-			>
-				<div style={{ flex: '1', maxWidth: '400px' }}>
-					<div
-						style={{
-							background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-							padding: '20px',
-							borderRadius: '15px',
-							boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-							border: '1px solid rgba(255,255,255,0.1)',
-							backdropFilter: 'blur(10px)',
-						}}
-					>
-						<h3
-							style={{
-								color: 'white',
-								textAlign: 'center',
-								marginBottom: '15px',
-								fontSize: '18px',
-								fontWeight: 'bold',
-								textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-							}}
-						>
-							🍽️ 음식 목록 입력
-						</h3>
+			<div className="row flex-container">
+				<div className="flex-item">
+					<div className="food-input-container">
+						<h3 className="food-input-title">🍽️ 음식 목록 입력</h3>
 						<textarea
-							className="form-control inputbox"
+							className="form-control food-textarea"
 							rows={8}
 							value={userInput}
 							onChange={e => setUserInput(e.target.value)}
 							placeholder="예시:&#10;김치찌개&#10;된장찌개&#10;불고기&#10;치킨&#10;피자"
-							style={{
-								background: 'rgba(255,255,255,0.9)',
-								border: '2px solid rgba(255,255,255,0.3)',
-								borderRadius: '10px',
-								padding: '15px',
-								fontSize: '14px',
-								lineHeight: '1.5',
-								resize: 'vertical',
-								boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-								transition: 'all 0.3s ease',
-								color: '#000000',
-							}}
-							onFocus={e => {
-								e.target.style.border = '2px solid #ffd700'
-								e.target.style.boxShadow = '0 0 10px rgba(255,215,0,0.3)'
-							}}
-							onBlur={e => {
-								e.target.style.border = '2px solid rgba(255,255,255,0.3)'
-								e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.1)'
-							}}
 						/>
-						<div
-							style={{
-								color: 'rgba(255,255,255,0.8)',
-								fontSize: '12px',
-								textAlign: 'center',
-								marginTop: '8px',
-								fontStyle: 'italic',
-							}}
-						>
+						<div className="food-help-text">
 							💡 각 음식을 한 줄씩 입력하세요
 						</div>
 					</div>
 				</div>
 
-				<div style={{ flex: '1', maxWidth: '400px' }}>
-					<div
-						style={{
-							background: 'linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%)',
-							padding: '20px',
-							borderRadius: '15px',
-							boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-							border: '1px solid rgba(255,255,255,0.1)',
-							backdropFilter: 'blur(10px)',
-							height: '100%',
-							display: 'flex',
-							flexDirection: 'column',
-							justifyContent: 'center',
-							alignItems: 'center',
-						}}
-					>
-						<div
-							id="log"
-							ref={logRef}
-							style={{ textAlign: 'center', width: '100%' }}
-						>
+				<div className="flex-item">
+					<div className="winner-container">
+						<div id="log" ref={logRef} className="winner-content">
 							{winner ? (
 								<div>
-									<div
-										style={{
-											color: 'white',
-											fontSize: '20px',
-											fontWeight: 'bold',
-											marginBottom: '20px',
-											textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-											textTransform: 'uppercase',
-											letterSpacing: '1px',
-										}}
-									>
-										🏆 THE WINNER IS
+									<div className="winner-title">🏆 THE WINNER IS</div>
+									<div className="winner-badge">
+										<span className="winner-name">{winner}</span>
 									</div>
-									<div
-										style={{
-											background: 'rgba(255,255,255,0.2)',
-											padding: '20px 30px',
-											borderRadius: '25px',
-											border: '2px solid rgba(255,255,255,0.3)',
-											boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-											display: 'inline-block',
-										}}
-									>
-										<span
-											style={{
-												color: '#fff',
-												fontSize: '32px',
-												fontWeight: 'bold',
-												textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-												display: 'block',
-											}}
-										>
-											{winner}
-										</span>
-									</div>
-									<div
-										style={{
-											color: 'rgba(255,255,255,0.8)',
-											fontSize: '16px',
-											marginTop: '15px',
-											fontStyle: 'italic',
-										}}
-									>
-										🎉 당첨!
-									</div>
+									<div className="winner-congrats">🎉 당첨!</div>
 								</div>
 							) : (
-								<div
-									style={{
-										color: 'rgba(255,255,255,0.7)',
-										fontSize: '16px',
-										fontStyle: 'italic',
-										textAlign: 'center',
-									}}
-								>
-									🎲 굴려 굴려!
-								</div>
+								<div className="waiting-message">🎲 굴려 굴려!</div>
 							)}
 						</div>
 					</div>
