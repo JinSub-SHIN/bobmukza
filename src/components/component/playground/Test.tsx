@@ -14,7 +14,6 @@ export const Test = () => {
 
 	const [messageApi, contextHolder] = message.useMessage()
 
-	// 배열 셔플 함수
 	const shuffleArray = (array: string[]): string[] => {
 		const shuffled = [...array]
 		for (let i = shuffled.length - 1; i > 0; i--) {
@@ -24,7 +23,6 @@ export const Test = () => {
 		return shuffled
 	}
 
-	// 롤 버튼 클릭 핸들러
 	const handleRoll = () => {
 		const lines = userInput.split('\n').filter(line => line.trim().length > 0)
 
@@ -46,7 +44,6 @@ export const Test = () => {
 		let scrollSize = 0
 		const newShuffled: string[] = []
 
-		// 여러 번 셔플하여 롤링 효과 생성
 		for (let times = 0; times < insertTimes; times++) {
 			const shuffledUsers = shuffleArray(lines)
 			newShuffled.push(...shuffledUsers)
@@ -55,18 +52,16 @@ export const Test = () => {
 
 		setShuffled(newShuffled)
 
-		// 애니메이션 시작
 		if (loadoutRef.current) {
-			// 이전 애니메이션 CSS 초기화
 			loadoutRef.current.style.transition = 'none'
 			loadoutRef.current.style.left = '100%'
 
-			// 진짜 랜덤한 위치로 이동 (전체 스크롤 범위에서 랜덤)
+			// 랜덤한 위치로 이동
 			const finalDiff = Math.floor(Math.random() * scrollSize) + 500
 
 			setTimeout(() => {
 				if (loadoutRef.current) {
-					// 1단계: 조금 더 느리게 시작 (70% 거리)
+					// 1단계
 					const firstDistance = Math.round(finalDiff * 0.7)
 					loadoutRef.current.style.transition = `left ${durationTime * 0.5}ms ease-out`
 					loadoutRef.current.style.left = `-${firstDistance}px`
@@ -84,14 +79,14 @@ export const Test = () => {
 									// 뒤로 갈 확률 50%
 									const shouldGoBack = Math.random() < 0.5
 									const finalPosition = shouldGoBack
-										? firstDistance - Math.round(secondDistance * 0.3) // 뒤로 가기
-										: finalDiff // 앞으로 가기
+										? firstDistance - Math.round(secondDistance * 0.3)
+										: finalDiff
 
 									loadoutRef.current.style.transition = `left ${durationTime * 1.5}ms cubic-bezier(0.1, 0.1, 0.1, 0.9)`
 									loadoutRef.current.style.left = `-${finalPosition}px`
 
 									setTimeout(() => {
-										// 승자 결정
+										// 결과
 										const center = window.innerWidth / 2
 										const cells = loadoutRef.current?.querySelectorAll('td')
 										if (cells) {
