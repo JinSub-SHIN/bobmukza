@@ -1,7 +1,7 @@
 import { Button, Flex, Form, Input, Watermark } from 'antd'
 import type { FormProps } from 'antd'
 import { buyTetherApi, getTetherPriceApi } from '../../../api'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import CryptoJS from 'crypto-js'
 
@@ -13,8 +13,9 @@ type FieldType = {
 }
 
 export const Coin = () => {
-	const [apiFormData, setApiFormData] = useState<FieldType>({})
+	const [_, setApiFormData] = useState<FieldType>({})
 	const [tetherPrice, setTetherPrice] = useState<number>(0)
+	const [isBuy, setIsBuy] = useState<boolean>(false)
 
 	const handleTetherPrice = () => {
 		const response: any = getTetherPriceApi()
@@ -127,8 +128,9 @@ export const Coin = () => {
 
 		buyTetherApi(params, config)
 			.then(response => {
-				console.log('API Response:', response)
-				console.log('Response Data:', response.data)
+				setIsBuy(true)
+				// console.log('API Response:', response)
+				// console.log('Response Data:', response.data)
 			})
 			.catch(error => {
 				console.error('Error calling API:', error)
@@ -164,6 +166,11 @@ export const Coin = () => {
 				<div style={{ marginTop: 50 }}>
 					<Flex gap={25}>
 						<h1>※ 테더(USDT) 거래하기</h1>
+						{isBuy && (
+							<div style={{ marginTop: 8 }}>
+								<h3> 👉 거래성공! 자세한 내역은 빗썸 어플에서 확인하세요.</h3>
+							</div>
+						)}
 					</Flex>
 				</div>
 				<Form
