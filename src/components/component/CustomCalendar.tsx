@@ -163,7 +163,6 @@ export const CustomCalendar = () => {
 
 				const workday = getWeekdaysInMonth(nowHoliday)
 				const remaningWorkday = getRemainingWorkdays(nowHoliday)
-
 				copy.workday = workday
 				copy.workRemaningDay = remaningWorkday
 

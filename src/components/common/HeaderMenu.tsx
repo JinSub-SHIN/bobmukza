@@ -78,6 +78,14 @@ export const HeaderMenu = () => {
 										🎲🎲🎲
 									</MenuSpan>
 								</MenuItems>
+								<MenuItems>
+									<MenuSpan
+										style={{ marginRight: '3em' }}
+										onClick={() => navigate('/coinApi')}
+									>
+										💎💎💎
+									</MenuSpan>
+								</MenuItems>
 							</SubMenuWrapper>
 						</MenuWrapper>
 					</MenuDiv>

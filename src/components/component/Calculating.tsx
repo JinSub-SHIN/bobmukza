@@ -150,11 +150,7 @@ export const Calculating = () => {
 			workdayStatus.specialDayList.length)
 	).toFixed(1)
 
-	console.log(workdayStatus.workday, 'workdayStatus.workday')
-
-	// if (workdayStatus.workday === 0) {
-	// 	return <></>
-	// }
+	// console.log(workdayStatus.workday, 'workdayStatus.workday')
 
 	return (
 		<>

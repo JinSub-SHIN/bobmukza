@@ -21,3 +21,24 @@ export const getHoliday = async (year: string, month: string) => {
 		throw error
 	}
 }
+
+export const getTetherPriceApi = async () => {
+	const url = 'https://api.bithumb.com/v1/ticker?markets=KRW-USDT'
+	try {
+		const response = await axios.get(url)
+		return response
+	} catch (error) {
+		throw error
+	}
+}
+
+export const buyTetherApi = async (params: any, config: any) => {
+	const url = 'https://api.bithumb.com/v1/orders'
+
+	try {
+		const response = await axios.post(url, params, config)
+		return response
+	} catch (error) {
+		throw error
+	}
+}
