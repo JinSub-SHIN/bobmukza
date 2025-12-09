@@ -1,5 +1,5 @@
 import { Button, Flex, Form, Input, Select, Watermark } from 'antd'
-import type { FormProps, SelectProps } from 'antd'
+import type { SelectProps } from 'antd'
 import { buyTetherApi, coinListApi, getTetherPriceApi } from '../../../api'
 import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
