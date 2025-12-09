@@ -27,6 +27,7 @@ export const Coin = () => {
 	const [priceValue, setPriceValue] = useState<string>()
 	const [priceCoinKeyValue, setPriceCoinKeyValue] = useState<string>()
 	const [realBuyValue, setRealBuyValue] = useState<string>()
+	const [realSellValue, setRealSellValue] = useState<string>()
 
 	useEffect(() => {
 		console.log(priceValue, priceCoinKeyValue)
@@ -41,7 +42,7 @@ export const Coin = () => {
 		} else {
 		}
 	}
-	const handleByeCoin: FormProps<FieldType>['onFinish'] = async values => {
+	const handleByeCoin = async (type: string, values: FieldType) => {
 		setApiFormData(values)
 
 		const accessKey = values.apiKey || ''
@@ -49,8 +50,8 @@ export const Coin = () => {
 
 		// Set API parameters (POST request body)
 		const params = {
-			market: realBuyValue,
-			side: 'bid',
+			market: type === 'buy' ? realBuyValue : realSellValue,
+			side: type === 'buy' ? 'bid' : 'ask',
 			volume: values.volume,
 			price: values.price,
 			ord_type: 'limit',
@@ -171,11 +172,14 @@ export const Coin = () => {
 			})
 	}, [])
 
-	const handleChange = (newValue: string, option: any) => {
+	const handleChange = (newValue: string) => {
 		setRealBuyValue(newValue)
 	}
 
-	const justSearch = (newValue: string, option: any) => {
+	const handleSellChange = (newValue: string) => {
+		setRealSellValue(newValue)
+	}
+	const justSearch = (_: string, option: any) => {
 		setPriceCoinKeyValue(option.value)
 		setPriceValue(option.label)
 		setGetCoinPrice(0)
@@ -227,7 +231,7 @@ export const Coin = () => {
 							<div>
 								<h1>
 									{' '}
-									👉 {priceValue} 현재가: {getCoinPrice}원
+									👉 {priceValue} 현재가: {getCoinPrice.toLocaleString()}원
 								</h1>
 							</div>
 						)}
@@ -238,7 +242,7 @@ export const Coin = () => {
 						<h1>※ 코인(원화마켓) 거래하기</h1>
 						{isBuy && (
 							<div style={{ marginTop: 8 }}>
-								<h3> 👉 거래성공! 자세한 내역은 빗썸 어플에서 확인하세요.</h3>
+								<h3> 👉 구매 완! 자세한 내역은 빗썸 어플에서 확인하세요.</h3>
 							</div>
 						)}
 					</Flex>
@@ -249,7 +253,7 @@ export const Coin = () => {
 					wrapperCol={{ span: 16 }}
 					style={{ maxWidth: 300, marginTop: 20 }}
 					initialValues={{ remember: true }}
-					onFinish={handleByeCoin}
+					onFinish={values => handleByeCoin('buy', values)}
 					autoComplete="off"
 				>
 					<Form.Item<FieldType>
@@ -272,6 +276,86 @@ export const Coin = () => {
 							defaultActiveFirstOption={false}
 							suffixIcon={null}
 							onChange={handleChange}
+							notFoundContent={null}
+							options={(data || []).map(d => ({
+								value: d.label,
+								label: d.value,
+							}))}
+						/>
+					</Form.Item>
+					<Form.Item<FieldType>
+						label="거래수량"
+						name="volume"
+						rules={[{ required: true }]}
+					>
+						<Input />
+					</Form.Item>
+					<Form.Item<FieldType>
+						label="주문가격"
+						name="price"
+						rules={[{ required: true }]}
+					>
+						<Input />
+					</Form.Item>
+					<Form.Item<FieldType>
+						label="API KEY"
+						name="apiKey"
+						rules={[{ required: true }]}
+					>
+						<Input />
+					</Form.Item>
+					<Form.Item<FieldType>
+						label="SECRET KEY"
+						name="secretKey"
+						rules={[{ required: true }]}
+					>
+						<Input />
+					</Form.Item>
+					<Form.Item label={null}>
+						<Button type="primary" htmlType="submit" style={{ width: 200 }}>
+							구매
+						</Button>
+					</Form.Item>
+				</Form>
+				<div style={{ marginTop: 50 }}>
+					<Flex gap={25}>
+						<h1>※ 코인(원화마켓) 판매하기</h1>
+						{isBuy && (
+							<div style={{ marginTop: 8 }}>
+								<h3> 👉 판매 완! 자세한 내역은 빗썸 어플에서 확인하세요.</h3>
+							</div>
+						)}
+					</Flex>
+				</div>
+				<Form
+					name="basic"
+					labelCol={{ span: 8 }}
+					wrapperCol={{ span: 16 }}
+					style={{ maxWidth: 300, marginTop: 20 }}
+					initialValues={{ remember: true }}
+					onFinish={values => handleByeCoin('sell', values)}
+					autoComplete="off"
+				>
+					<Form.Item<FieldType>
+						label="거래할코인"
+						name="coinName"
+						rules={[{ required: true }]}
+					>
+						<Select
+							showSearch={true}
+							value={realBuyValue}
+							optionFilterProp="children"
+							filterOption={(input, option) => {
+								const label = String(option?.label || '').toLowerCase()
+								const value = String(option?.value || '').toLowerCase()
+								const query = input.toLowerCase()
+
+								return label.includes(query) || value.includes(query)
+							}}
+							placeholder={'거래할 코인을 선택하세요'}
+							defaultActiveFirstOption={false}
+							suffixIcon={null}
+							onChange={handleSellChange}
 							notFoundContent={null}
 							options={(data || []).map(d => ({
 								value: d.label,
