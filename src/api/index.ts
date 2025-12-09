@@ -22,8 +22,8 @@ export const getHoliday = async (year: string, month: string) => {
 	}
 }
 
-export const getTetherPriceApi = async () => {
-	const url = 'https://api.bithumb.com/v1/ticker?markets=KRW-USDT'
+export const getTetherPriceApi = async (coinKey: string) => {
+	const url = `https://api.bithumb.com/v1/ticker?markets=${coinKey}`
 	try {
 		const response = await axios.get(url)
 		return response
@@ -37,6 +37,16 @@ export const buyTetherApi = async (params: any, config: any) => {
 
 	try {
 		const response = await axios.post(url, params, config)
+		return response
+	} catch (error) {
+		throw error
+	}
+}
+
+export const coinListApi = async () => {
+	const url = 'https://api.bithumb.com/v1/market/all'
+	try {
+		const response = await axios.get(url)
 		return response
 	} catch (error) {
 		throw error

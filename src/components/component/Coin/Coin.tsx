@@ -1,29 +1,47 @@
-import { Button, Flex, Form, Input, Watermark } from 'antd'
-import type { FormProps } from 'antd'
-import { buyTetherApi, getTetherPriceApi } from '../../../api'
-import { useState } from 'react'
+import { Button, Flex, Form, Input, Select, Watermark } from 'antd'
+import type { FormProps, SelectProps } from 'antd'
+import { buyTetherApi, coinListApi, getTetherPriceApi } from '../../../api'
+import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import CryptoJS from 'crypto-js'
 
 type FieldType = {
+	coinName?: string
 	volume?: string
 	price?: string
 	apiKey?: string
 	secretKey?: string
 }
 
+export interface CoinList {
+	market: string
+	korean_name: string
+	english_name: string
+}
+
 export const Coin = () => {
 	const [_, setApiFormData] = useState<FieldType>({})
-	const [tetherPrice, setTetherPrice] = useState<number>(0)
+	const [getCoinPrice, setGetCoinPrice] = useState<number>(0)
 	const [isBuy, setIsBuy] = useState<boolean>(false)
+	const [data, setData] = useState<SelectProps['options']>([])
+	const [priceValue, setPriceValue] = useState<string>()
+	const [priceCoinKeyValue, setPriceCoinKeyValue] = useState<string>()
+	const [realBuyValue, setRealBuyValue] = useState<string>()
 
-	const handleTetherPrice = () => {
-		const response: any = getTetherPriceApi()
-		response.then((res: any) => {
-			setTetherPrice(res.data[0].trade_price)
-		})
+	useEffect(() => {
+		console.log(priceValue, priceCoinKeyValue)
+	}, [priceValue, priceCoinKeyValue])
+
+	const handleCoinPrice = () => {
+		if (priceCoinKeyValue) {
+			const response: any = getTetherPriceApi(priceCoinKeyValue)
+			response.then((res: any) => {
+				setGetCoinPrice(res.data[0].trade_price)
+			})
+		} else {
+		}
 	}
-	const handleByeTether: FormProps<FieldType>['onFinish'] = async values => {
+	const handleByeCoin: FormProps<FieldType>['onFinish'] = async values => {
 		setApiFormData(values)
 
 		const accessKey = values.apiKey || ''
@@ -31,7 +49,7 @@ export const Coin = () => {
 
 		// Set API parameters (POST request body)
 		const params = {
-			market: 'KRW-USDT',
+			market: realBuyValue,
 			side: 'bid',
 			volume: values.volume,
 			price: values.price,
@@ -127,7 +145,7 @@ export const Coin = () => {
 		}
 
 		buyTetherApi(params, config)
-			.then(response => {
+			.then(_ => {
 				setIsBuy(true)
 				// console.log('API Response:', response)
 				// console.log('Response Data:', response.data)
@@ -135,6 +153,32 @@ export const Coin = () => {
 			.catch(error => {
 				console.error('Error calling API:', error)
 			})
+	}
+
+	useEffect(() => {
+		coinListApi()
+			.then(res => {
+				const data: CoinList[] = res.data
+				const converted = data.map(item => ({
+					title: item.korean_name,
+					value: item.korean_name,
+					label: item.market,
+				}))
+				setData(converted)
+			})
+			.catch(err => {
+				console.error(err)
+			})
+	}, [])
+
+	const handleChange = (newValue: string, option: any) => {
+		setRealBuyValue(newValue)
+	}
+
+	const justSearch = (newValue: string, option: any) => {
+		setPriceCoinKeyValue(option.value)
+		setPriceValue(option.label)
+		setGetCoinPrice(0)
 	}
 
 	return (
@@ -145,27 +189,53 @@ export const Coin = () => {
 				></div>
 				<div style={{ paddingTop: 0 }}>
 					<Flex gap={25}>
-						<h1>※ 테더(USDT) 현재가</h1>
+						<h1>※ 코인(원화마켓) 현재가</h1>
+						<Select
+							showSearch={true}
+							optionFilterProp="children"
+							filterOption={(input, option) => {
+								const label = String(option?.label || '').toLowerCase()
+								const value = String(option?.value || '').toLowerCase()
+								const query = input.toLowerCase()
+
+								return label.includes(query) || value.includes(query)
+							}}
+							value={priceValue}
+							size="large"
+							style={{ width: 150, marginTop: 4 }}
+							placeholder={'검색할 코인'}
+							defaultActiveFirstOption={false}
+							suffixIcon={null}
+							onChange={justSearch}
+							notFoundContent={null}
+							options={(data || []).map(d => ({
+								value: d.label,
+								label: d.value,
+							}))}
+						/>
 						<div>
 							<Button
 								type="primary"
 								size="large"
 								style={{ marginTop: 3, width: 100 }}
-								onClick={handleTetherPrice}
+								onClick={handleCoinPrice}
 							>
 								조회
 							</Button>
 						</div>
-						{tetherPrice > 0 && (
+						{getCoinPrice > 0 && (
 							<div>
-								<h1> 👉 테더(USDT) 현재가: {tetherPrice}원</h1>
+								<h1>
+									{' '}
+									👉 {priceValue} 현재가: {getCoinPrice}원
+								</h1>
 							</div>
 						)}
 					</Flex>
 				</div>
 				<div style={{ marginTop: 50 }}>
 					<Flex gap={25}>
-						<h1>※ 테더(USDT) 거래하기</h1>
+						<h1>※ 코인(원화마켓) 거래하기</h1>
 						{isBuy && (
 							<div style={{ marginTop: 8 }}>
 								<h3> 👉 거래성공! 자세한 내역은 빗썸 어플에서 확인하세요.</h3>
@@ -179,9 +249,36 @@ export const Coin = () => {
 					wrapperCol={{ span: 16 }}
 					style={{ maxWidth: 300, marginTop: 20 }}
 					initialValues={{ remember: true }}
-					onFinish={handleByeTether}
+					onFinish={handleByeCoin}
 					autoComplete="off"
 				>
+					<Form.Item<FieldType>
+						label="거래할코인"
+						name="coinName"
+						rules={[{ required: true }]}
+					>
+						<Select
+							showSearch={true}
+							value={realBuyValue}
+							optionFilterProp="children"
+							filterOption={(input, option) => {
+								const label = String(option?.label || '').toLowerCase()
+								const value = String(option?.value || '').toLowerCase()
+								const query = input.toLowerCase()
+
+								return label.includes(query) || value.includes(query)
+							}}
+							placeholder={'거래할 코인을 선택하세요'}
+							defaultActiveFirstOption={false}
+							suffixIcon={null}
+							onChange={handleChange}
+							notFoundContent={null}
+							options={(data || []).map(d => ({
+								value: d.label,
+								label: d.value,
+							}))}
+						/>
+					</Form.Item>
 					<Form.Item<FieldType>
 						label="거래수량"
 						name="volume"
