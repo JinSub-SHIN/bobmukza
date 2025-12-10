@@ -23,6 +23,7 @@ export const Coin = () => {
 	const [_, setApiFormData] = useState<FieldType>({})
 	const [getCoinPrice, setGetCoinPrice] = useState<number>(0)
 	const [isBuy, setIsBuy] = useState<boolean>(false)
+	const [isSell, setIsSell] = useState<boolean>(false)
 	const [data, setData] = useState<SelectProps['options']>([])
 	const [priceValue, setPriceValue] = useState<string>()
 	const [priceCoinKeyValue, setPriceCoinKeyValue] = useState<string>()
@@ -147,7 +148,11 @@ export const Coin = () => {
 
 		buyTetherApi(params, config)
 			.then(_ => {
-				setIsBuy(true)
+				if (type === 'buy') {
+					setIsBuy(true)
+				} else if (type === 'sell') {
+					setIsSell(true)
+				}
 				// console.log('API Response:', response)
 				// console.log('Response Data:', response.data)
 			})
@@ -320,7 +325,7 @@ export const Coin = () => {
 				<div style={{ marginTop: 50 }}>
 					<Flex gap={25}>
 						<h1>※ 코인(원화마켓) 판매하기</h1>
-						{isBuy && (
+						{isSell && (
 							<div style={{ marginTop: 8 }}>
 								<h3> 👉 판매 완! 자세한 내역은 빗썸 어플에서 확인하세요.</h3>
 							</div>
@@ -393,7 +398,7 @@ export const Coin = () => {
 					</Form.Item>
 					<Form.Item label={null}>
 						<Button type="primary" htmlType="submit" style={{ width: 200 }}>
-							구매
+							판매
 						</Button>
 					</Form.Item>
 				</Form>
