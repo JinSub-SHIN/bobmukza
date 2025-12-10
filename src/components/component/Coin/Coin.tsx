@@ -20,6 +20,8 @@ export interface CoinList {
 }
 
 export const Coin = () => {
+	const [buyForm] = Form.useForm<FieldType>()
+	const [sellForm] = Form.useForm<FieldType>()
 	const [_, setApiFormData] = useState<FieldType>({})
 	const [getCoinPrice, setGetCoinPrice] = useState<number>(0)
 	const [isBuy, setIsBuy] = useState<boolean>(false)
@@ -150,8 +152,14 @@ export const Coin = () => {
 			.then(_ => {
 				if (type === 'buy') {
 					setIsBuy(true)
+					// 거래 완료 시 구매 폼 초기화
+					buyForm.resetFields()
+					setRealBuyValue(undefined)
 				} else if (type === 'sell') {
 					setIsSell(true)
+					// 거래 완료 시 판매 폼 초기화
+					sellForm.resetFields()
+					setRealSellValue(undefined)
 				}
 				// console.log('API Response:', response)
 				// console.log('Response Data:', response.data)
@@ -253,7 +261,8 @@ export const Coin = () => {
 					</Flex>
 				</div>
 				<Form
-					name="basic"
+					form={buyForm}
+					name="buyForm"
 					labelCol={{ span: 8 }}
 					wrapperCol={{ span: 16 }}
 					style={{ maxWidth: 300, marginTop: 20 }}
@@ -333,7 +342,8 @@ export const Coin = () => {
 					</Flex>
 				</div>
 				<Form
-					name="basic"
+					form={sellForm}
+					name="sellForm"
 					labelCol={{ span: 8 }}
 					wrapperCol={{ span: 16 }}
 					style={{ maxWidth: 300, marginTop: 20 }}
@@ -348,7 +358,7 @@ export const Coin = () => {
 					>
 						<Select
 							showSearch={true}
-							value={realBuyValue}
+							value={realSellValue}
 							optionFilterProp="children"
 							filterOption={(input, option) => {
 								const label = String(option?.label || '').toLowerCase()
