@@ -2,7 +2,7 @@ import { ReactNode, useState } from 'react'
 import { Layout, FloatButton } from 'antd'
 import { styled } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
-import { HeaderMenu } from './HeaderMenu'
+import { TonsilMenu } from './TonsilMenu'
 
 const { Content, Footer } = Layout
 
@@ -11,7 +11,10 @@ const CustomLayout = styled(Layout)`
 `
 
 const CustomContent = styled(Content)`
-	padding: 30px;
+	padding: 5px;
+	margin-top: 30px;
+	position: relative;
+	min-height: calc(100vh - 200px);
 `
 
 const CustomFooter = styled(Footer)`
@@ -25,7 +28,7 @@ interface MainParams {
 	children?: ReactNode
 }
 
-const MainLayout = (params: MainParams) => {
+export const TonsilLayout = (params: MainParams) => {
 	const navigate = useNavigate()
 	const [clickCount, setClickCount] = useState(0)
 
@@ -42,7 +45,7 @@ const MainLayout = (params: MainParams) => {
 	return (
 		<>
 			<CustomLayout>
-				<HeaderMenu />
+				<TonsilMenu />
 				<CustomContent>{params.children}</CustomContent>
 				<CustomFooter>
 					<p
@@ -67,5 +70,3 @@ const MainLayout = (params: MainParams) => {
 		</>
 	)
 }
-
-export default MainLayout

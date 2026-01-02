@@ -14,7 +14,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import locale from 'antd/es/calendar/locale/ko_KR'
 import { useEffect, useRef, useState } from 'react'
-// import { getHoliday } from '../../api' // API 고장으로 인해 임시 주석 처리
+import { getHoliday } from '../../api'
 import {
 	CheckOutlined,
 	CloseOutlined,
@@ -119,19 +119,24 @@ export const CustomCalendar = () => {
 	useEffect(() => {
 		const fetchHoliday = async () => {
 			try {
-				// const now = dayjs()
-				// const nextMonth = now.add(1, 'month')
+				const now = dayjs()
+				const nextMonth = now.add(1, 'month')
 
 				// API 고장으로 인한 임시 데이터 (11월 휴일 없음)
-				// const response = await getHoliday(now.format('YYYY'), now.format('MM'))
-				// const nextMonthResponse = await getHoliday(
-				// 	nextMonth.format('YYYY'),
-				// 	nextMonth.format('MM'),
-				// )
+				const response = await getHoliday(now.format('YYYY'), now.format('MM'))
+				const nextMonthResponse = await getHoliday(
+					nextMonth.format('YYYY'),
+					nextMonth.format('MM'),
+				)
 
 				// 임시 데이터: 11월 휴일 없음
-				let holidayresponseArray: any[] = []
-				let holidayNextresponseArray: any[] = []
+				let holidayresponseArray = response.response.body.items.item
+					? response.response.body.items.item
+					: []
+				let holidayNextresponseArray = nextMonthResponse.response.body.items
+					.item
+					? nextMonthResponse.response.body.items.item
+					: []
 
 				// api 에서 반환된 값이 1개 일때는 객채로 오므로,
 				// 배열로 변환해준다.

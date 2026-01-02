@@ -3,6 +3,7 @@ import { persistReducer } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 import { workDaySliceReducer } from './action/workdaySlice'
 import { calendarSliceReducer } from './action/calendarSlice'
+import { selectedExercisesReducer } from './action/selectedExercisesSlice'
 
 const persistConfig = {
 	key: 'root',
@@ -12,6 +13,7 @@ const persistConfig = {
 const reducers = combineReducers({
 	workdayStatus: workDaySliceReducer,
 	calendarStatus: calendarSliceReducer,
+	selectedExercises: selectedExercisesReducer,
 })
 
 const persistedReducer = persistReducer(persistConfig, reducers)
