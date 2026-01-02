@@ -1,4 +1,4 @@
-import { Form, Select, InputNumber, Button, DatePicker } from 'antd'
+import { Form, Select, InputNumber, Button, DatePicker, Input } from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -155,6 +155,7 @@ type FormData = {
 	workoutEndTimeMinute: string
 	bodyPart: string[]
 	exercises: ExerciseData[]
+	review?: string
 }
 
 export const WorkOutWrite = () => {
@@ -607,16 +608,25 @@ export const WorkOutWrite = () => {
 				if (exercisesWithSets.length === 0) continue
 
 				// 1. workout_sessions에 insert (날짜+시간을 datetime 형식으로 저장)
+				const sessionInsertData: any = {
+					workout_date: workoutStartDateTime,
+					workout_end_date: workoutEndDateTime,
+					body_part: bodyPart,
+					user_id: userId,
+				}
+
+				// 리뷰가 있는 경우 userType에 따라 저장
+				if (values.review && values.review.trim()) {
+					if (isTrainer) {
+						sessionInsertData.trainer_review = values.review.trim()
+					} else {
+						sessionInsertData.user_review = values.review.trim()
+					}
+				}
+
 				const { data: sessionData, error: sessionError } = await supabase
 					.from('workout_sessions')
-					.insert([
-						{
-							workout_date: workoutStartDateTime,
-							workout_end_date: workoutEndDateTime,
-							body_part: bodyPart,
-							user_id: userId,
-						},
-					])
+					.insert([sessionInsertData])
 					.select()
 					.single()
 
@@ -1007,6 +1017,19 @@ export const WorkOutWrite = () => {
 							다른 운동 추가하기
 						</AddButton>
 					</div>
+
+					<Form.Item
+						name="review"
+						label="운동 리뷰"
+						style={{ marginTop: '24px' }}
+					>
+						<Input.TextArea
+							rows={4}
+							placeholder="오늘의 운동에 대한 리뷰를 작성해주세요 (선택사항)"
+							maxLength={500}
+							showCount
+						/>
+					</Form.Item>
 
 					<Form.Item style={{ marginTop: '8px', marginBottom: 0 }}>
 						<SubmitButton type="primary" htmlType="submit">

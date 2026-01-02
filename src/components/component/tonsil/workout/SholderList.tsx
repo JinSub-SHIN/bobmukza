@@ -8,34 +8,42 @@ const CardWrapper = styled.div<{ isSelected: boolean }>`
 	position: relative;
 	cursor: pointer;
 	transition: all 0.3s ease;
+
+	&:active {
+		transform: scale(0.98);
+	}
 `
 
 const StyledCard = styled(Card)<{ isSelected: boolean }>`
 	border-radius: 16px;
-	border: none;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	border: ${props =>
+		props.isSelected ? '2px solid #10b981' : '2px solid transparent'};
+	box-shadow: ${props =>
+		props.isSelected
+			? '0 4px 16px rgba(16, 185, 129, 0.25)'
+			: '0 4px 12px rgba(0, 0, 0, 0.08)'};
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	overflow: hidden;
 	height: 100%;
 	box-sizing: border-box;
+	position: relative;
 
 	${props =>
 		props.isSelected &&
 		`
 		.ant-card-body {
-			background: repeating-linear-gradient(
-				45deg,
-				#ffffff,
-				#ffffff 25px,
-				#f3f4f6 25px,
-				#f3f4f6 27px
-			) !important;
+			background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%) !important;
 		}
 	`}
 
 	&:hover {
 		transform: translateY(-4px);
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+		box-shadow: ${props =>
+			props.isSelected
+				? '0 8px 24px rgba(16, 185, 129, 0.35)'
+				: '0 8px 24px rgba(0, 0, 0, 0.12)'};
+		border-color: ${props => (props.isSelected ? '#10b981' : '#d1d5db')};
+		cursor: pointer;
 	}
 
 	.ant-card-head {
@@ -78,18 +86,33 @@ const NumberBadge = styled.div`
 	position: absolute;
 	top: 12px;
 	right: 12px;
-	width: 32px;
-	height: 32px;
+	width: 36px;
+	height: 36px;
 	border-radius: 50%;
 	background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 	color: white;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 16px;
-	font-weight: 700;
+	font-size: 18px;
+	font-weight: 800;
 	z-index: 10;
-	box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+	box-shadow:
+		0 4px 12px rgba(16, 185, 129, 0.4),
+		0 0 0 3px rgba(16, 185, 129, 0.1);
+	border: 2px solid rgba(255, 255, 255, 0.9);
+	animation: scaleIn 0.2s ease-out;
+
+	@keyframes scaleIn {
+		from {
+			transform: scale(0);
+			opacity: 0;
+		}
+		to {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
 `
 
 const CardContent = styled.div`

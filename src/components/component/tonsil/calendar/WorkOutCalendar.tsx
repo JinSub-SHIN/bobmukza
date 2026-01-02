@@ -1,4 +1,12 @@
-import { DatePicker, ConfigProvider, Select, Button, Tabs } from 'antd'
+import {
+	DatePicker,
+	ConfigProvider,
+	Select,
+	Button,
+	Tabs,
+	Modal,
+	Input,
+} from 'antd'
 import { styled } from 'styled-components'
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -456,6 +464,101 @@ const SetFormula = styled.span`
 	color: #666;
 `
 
+const ReviewSection = styled.div`
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 2px solid rgba(16, 185, 129, 0.1);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+`
+
+const UserReviewBubble = styled.div`
+	position: relative;
+	background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+	border-radius: 16px;
+	padding: 16px;
+	box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+
+	&::after {
+		content: '';
+		position: absolute;
+		bottom: -8px;
+		left: 24px;
+		width: 0;
+		height: 0;
+		border-left: 8px solid transparent;
+		border-right: 8px solid transparent;
+		border-top: 8px solid #bae6fd;
+	}
+`
+
+const ReviewLabel = styled.div`
+	font-size: 12px;
+	font-weight: 700;
+	color: #0369a1;
+	margin-bottom: 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+`
+
+const ReviewText = styled.div`
+	font-size: 14px;
+	color: #0c4a6e;
+	line-height: 1.6;
+	word-break: break-word;
+`
+
+const TrainerReviewContainer = styled.div`
+	background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+	border-radius: 12px;
+	padding: 16px;
+	box-shadow: 0 2px 8px rgba(217, 119, 6, 0.15);
+	border: 1px solid rgba(217, 119, 6, 0.2);
+`
+
+const TrainerReviewLabel = styled.div`
+	font-size: 12px;
+	font-weight: 700;
+	color: #92400e;
+	margin-bottom: 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+`
+
+const TrainerReviewText = styled.div<{ isEmpty?: boolean }>`
+	font-size: 14px;
+	color: #78350f;
+	line-height: 1.6;
+	word-break: break-word;
+	font-style: ${props => (props.isEmpty ? 'italic' : 'normal')};
+	opacity: ${props => (props.isEmpty ? 0.7 : 1)};
+	margin-bottom: ${props => (props.isEmpty ? '12px' : '0')};
+`
+
+const ReviewRegisterButton = styled(Button)`
+	margin-top: 12px;
+	width: 100%;
+	height: 36px;
+	background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+	border: none !important;
+	color: #fff !important;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	transition: all 0.3s ease;
+
+	&:hover,
+	&:focus,
+	&:active {
+		background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+		box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4) !important;
+		border: none !important;
+		color: #fff !important;
+		transform: translateY(-2px);
+	}
+`
+
 const DeleteButton = styled(Button)`
 	margin-top: 16px;
 	width: 100%;
@@ -512,9 +615,16 @@ export const WorkOutCalendar = () => {
 			exerciseName: string
 			sets: number
 			setsDetail: Array<{ weight: number; reps: number }>
+			userReview?: string | null
+			trainerReview?: string | null
 		}>
 	>([])
 	const [loading, setLoading] = useState(false)
+	const [reviewModalVisible, setReviewModalVisible] = useState(false)
+	const [reviewText, setReviewText] = useState('')
+	const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+		null,
+	)
 
 	// 부위 선택 핸들러
 	const handleChange = (value: string) => {
@@ -569,7 +679,9 @@ export const WorkOutCalendar = () => {
 			// 1. workout_sessions 가져오기 (workout_date와 workout_end_date를 datetime으로 조회)
 			const { data: sessions, error: sessionsError } = await supabase
 				.from('workout_sessions')
-				.select('id, workout_date, workout_end_date, body_part, user_id')
+				.select(
+					'id, workout_date, workout_end_date, body_part, user_id, user_review, trainer_review',
+				)
 				.eq('user_id', targetUserId)
 				.order('workout_date', { ascending: false })
 
@@ -663,6 +775,8 @@ export const WorkOutCalendar = () => {
 								weight: Number(set.weight),
 								reps: set.reps,
 							})),
+							userReview: session.user_review || null,
+							trainerReview: session.trainer_review || null,
 						})
 					}
 				}
@@ -777,6 +891,49 @@ export const WorkOutCalendar = () => {
 		} catch (error) {
 			console.error('삭제 중 오류:', error)
 			alert('삭제 중 오류가 발생했습니다.')
+		}
+	}
+
+	// 리뷰 등록 모달 열기
+	const handleOpenReviewModal = (sessionId: string) => {
+		setSelectedSessionId(sessionId)
+		setReviewText('')
+		setReviewModalVisible(true)
+	}
+
+	// 리뷰 등록 모달 닫기
+	const handleCloseReviewModal = () => {
+		setReviewModalVisible(false)
+		setReviewText('')
+		setSelectedSessionId(null)
+	}
+
+	// 리뷰 저장
+	const handleSaveReview = async () => {
+		if (!selectedSessionId) return
+
+		if (!reviewText.trim()) {
+			alert('리뷰를 입력해주세요.')
+			return
+		}
+
+		try {
+			const { error } = await supabase
+				.from('workout_sessions')
+				.update({ trainer_review: reviewText.trim() })
+				.eq('id', selectedSessionId)
+
+			if (error) {
+				console.error('리뷰 저장 실패:', error)
+				alert('리뷰 저장에 실패했습니다.')
+			} else {
+				alert('리뷰가 등록되었습니다.')
+				handleCloseReviewModal()
+				await fetchWorkoutData()
+			}
+		} catch (error) {
+			console.error('리뷰 저장 중 오류:', error)
+			alert('리뷰 저장 중 오류가 발생했습니다.')
 		}
 	}
 
@@ -1015,6 +1172,45 @@ export const WorkOutCalendar = () => {
 											{totalVolume.toLocaleString()}kg
 										</VolumeValue>
 									</VolumeInfo>
+
+									{/* 리뷰 섹션 */}
+									{workoutsArray.length > 0 && (
+										<ReviewSection>
+											{workoutsArray[0].userReview && (
+												<UserReviewBubble>
+													<ReviewLabel>내 리뷰</ReviewLabel>
+													<ReviewText>{workoutsArray[0].userReview}</ReviewText>
+												</UserReviewBubble>
+											)}
+											<TrainerReviewContainer>
+												<TrainerReviewLabel>트레이너 리뷰</TrainerReviewLabel>
+												{workoutsArray[0].trainerReview ? (
+													<TrainerReviewText isEmpty={false}>
+														{workoutsArray[0].trainerReview}
+													</TrainerReviewText>
+												) : (
+													<>
+														<TrainerReviewText isEmpty={true}>
+															등록되지 않았습니다.
+														</TrainerReviewText>
+														{isTrainer && (
+															<ReviewRegisterButton
+																type="primary"
+																onClick={() =>
+																	handleOpenReviewModal(
+																		workoutsArray[0].sessionId,
+																	)
+																}
+															>
+																리뷰 등록하기
+															</ReviewRegisterButton>
+														)}
+													</>
+												)}
+											</TrainerReviewContainer>
+										</ReviewSection>
+									)}
+
 									{isOwner && (
 										<DeleteButton
 											type="primary"
@@ -1056,10 +1252,64 @@ export const WorkOutCalendar = () => {
 					onChange={setActiveTab}
 					items={tabItems}
 				/>
+				<Modal
+					title="트레이너 리뷰 등록"
+					open={reviewModalVisible}
+					onOk={handleSaveReview}
+					onCancel={handleCloseReviewModal}
+					okText="등록"
+					cancelText="취소"
+					width={600}
+				>
+					<div style={{ marginBottom: '16px' }}>
+						<label
+							style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}
+						>
+							리뷰 내용
+						</label>
+						<Input.TextArea
+							rows={6}
+							placeholder="회원의 운동에 대한 리뷰를 작성해주세요"
+							value={reviewText}
+							onChange={e => setReviewText(e.target.value)}
+							maxLength={500}
+							showCount
+						/>
+					</div>
+				</Modal>
 			</>
 		)
 	}
 
 	// 일반 회원 또는 트레이너가 회원을 선택하지 않은 경우 기존 레이아웃
-	return <ConfigProvider locale={locale}>{workoutLogContent}</ConfigProvider>
+	return (
+		<ConfigProvider locale={locale}>
+			{workoutLogContent}
+			<Modal
+				title="트레이너 리뷰 등록"
+				open={reviewModalVisible}
+				onOk={handleSaveReview}
+				onCancel={handleCloseReviewModal}
+				okText="등록"
+				cancelText="취소"
+				width={600}
+			>
+				<div style={{ marginBottom: '16px' }}>
+					<label
+						style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}
+					>
+						리뷰 내용
+					</label>
+					<Input.TextArea
+						rows={6}
+						placeholder="회원의 운동에 대한 리뷰를 작성해주세요"
+						value={reviewText}
+						onChange={e => setReviewText(e.target.value)}
+						maxLength={500}
+						showCount
+					/>
+				</div>
+			</Modal>
+		</ConfigProvider>
+	)
 }
