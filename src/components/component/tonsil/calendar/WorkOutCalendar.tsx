@@ -319,21 +319,31 @@ const TimeText = styled.div`
 	gap: 6px;
 `
 
-const BodyPartTag = styled.span`
+const BodyPartTag = styled.span<{ isMain?: boolean }>`
 	display: inline-block;
 	padding: 8px 18px;
-	background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+	background: ${props =>
+		props.isMain
+			? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+			: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'};
 	color: #fff;
 	border-radius: 24px;
-	font-size: 15px;
-	font-weight: 700;
-	box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+	font-size: ${props => (props.isMain ? '15px' : '13px')};
+	font-weight: ${props => (props.isMain ? 700 : 500)};
+	box-shadow: ${props =>
+		props.isMain
+			? '0 2px 8px rgba(16, 185, 129, 0.3)'
+			: '0 2px 6px rgba(107, 114, 128, 0.2)'};
 	transition: all 0.2s ease;
 	letter-spacing: 0.3px;
+	opacity: ${props => (props.isMain ? 1 : 0.85)};
 
 	&:hover {
 		transform: scale(1.05);
-		box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+		box-shadow: ${props =>
+			props.isMain
+				? '0 4px 12px rgba(16, 185, 129, 0.4)'
+				: '0 4px 10px rgba(107, 114, 128, 0.3)'};
 	}
 
 	@media screen and (max-width: 768px) {
@@ -1199,11 +1209,24 @@ export const WorkOutCalendar = () => {
 							const totalVolume = calculateTotalVolumeForDate(
 								workouts as typeof workoutData,
 							)
-							const uniqueBodyParts = [
-								...new Set(
-									(workouts as typeof workoutData).map(w => w.bodyPart),
-								),
-							].filter(bodyPart => bodyPart !== '기타')
+							// 부위별 운동 개수 계산
+							const bodyPartCounts: Record<string, number> = {}
+							;(workouts as typeof workoutData).forEach(w => {
+								if (w.bodyPart !== '기타') {
+									bodyPartCounts[w.bodyPart] =
+										(bodyPartCounts[w.bodyPart] || 0) + 1
+								}
+							})
+
+							// 가장 많은 운동을 가진 부위 찾기
+							const sortedBodyParts = Object.entries(bodyPartCounts).sort(
+								(a, b) => b[1] - a[1],
+							)
+							const mainBodyPart =
+								sortedBodyParts.length > 0 ? sortedBodyParts[0][0] : null
+							const subBodyParts = sortedBodyParts
+								.slice(1)
+								.map(([part]) => part)
 
 							// 로그인된 사용자와 일지의 user_id 비교
 							const isOwner =
@@ -1242,10 +1265,36 @@ export const WorkOutCalendar = () => {
 													{dayjs(date).format('YYYY-MM-DD')} (
 													{dayjs(date).format('ddd')})
 												</DateText>
-												<div style={{ display: 'flex', gap: '6px' }}>
-													{uniqueBodyParts.map(bodyPart => (
-														<BodyPartTag key={bodyPart}>{bodyPart}</BodyPartTag>
-													))}
+												<div
+													style={{
+														display: 'flex',
+														gap: '6px',
+														alignItems: 'center',
+													}}
+												>
+													{mainBodyPart && (
+														<BodyPartTag isMain={true}>
+															👑 {mainBodyPart}
+														</BodyPartTag>
+													)}
+													{subBodyParts.length > 0 && (
+														<>
+															<span
+																style={{
+																	color: '#9ca3af',
+																	fontSize: '12px',
+																	margin: '0 2px',
+																}}
+															>
+																/
+															</span>
+															{subBodyParts.map(bodyPart => (
+																<BodyPartTag key={bodyPart} isMain={false}>
+																	{bodyPart}
+																</BodyPartTag>
+															))}
+														</>
+													)}
 												</div>
 											</div>
 											<TimeText>
