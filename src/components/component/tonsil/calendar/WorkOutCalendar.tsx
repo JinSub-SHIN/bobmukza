@@ -286,7 +286,7 @@ const HeaderLeft = styled.div`
 `
 
 const DateText = styled.div`
-	font-size: 18px;
+	font-size: 16px;
 	color: #1a1a1a;
 	font-weight: 800;
 	letter-spacing: -0.5px;
@@ -296,15 +296,15 @@ const DateText = styled.div`
 
 	&::before {
 		content: '💪';
-		font-size: 18px;
+		font-size: 16px;
 	}
 
 	@media screen and (max-width: 768px) {
-		font-size: 18px;
+		font-size: 14px;
 	}
 
 	@media screen and (max-width: 480px) {
-		font-size: 16px;
+		font-size: 13px;
 	}
 `
 
@@ -328,7 +328,7 @@ const BodyPartTag = styled.span<{ isMain?: boolean }>`
 			: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'};
 	color: #fff;
 	border-radius: 24px;
-	font-size: ${props => (props.isMain ? '15px' : '13px')};
+	font-size: ${props => (props.isMain ? '13px' : '12px')};
 	font-weight: ${props => (props.isMain ? 700 : 500)};
 	box-shadow: ${props =>
 		props.isMain
@@ -347,13 +347,13 @@ const BodyPartTag = styled.span<{ isMain?: boolean }>`
 	}
 
 	@media screen and (max-width: 768px) {
-		font-size: 14px;
-		padding: 6px 16px;
+		font-size: 13px;
+		padding: 4px 14px;
 	}
 
 	@media screen and (max-width: 480px) {
-		font-size: 13px;
-		padding: 5px 14px;
+		font-size: 12px;
+		padding: 3px 12px;
 	}
 `
 
@@ -1279,15 +1279,6 @@ export const WorkOutCalendar = () => {
 													)}
 													{subBodyParts.length > 0 && (
 														<>
-															<span
-																style={{
-																	color: '#9ca3af',
-																	fontSize: '12px',
-																	margin: '0 2px',
-																}}
-															>
-																/
-															</span>
 															{subBodyParts.map(bodyPart => (
 																<BodyPartTag key={bodyPart} isMain={false}>
 																	{bodyPart}
