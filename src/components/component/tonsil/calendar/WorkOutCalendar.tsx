@@ -559,6 +559,132 @@ const ReviewRegisterButton = styled(Button)`
 	}
 `
 
+const StyledModal = styled(Modal)`
+	.ant-modal-content {
+		border-radius: 16px;
+		overflow: hidden;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+	}
+
+	.ant-modal-header {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		border: none;
+		padding: 20px 24px;
+		border-radius: 16px 16px 0 0;
+	}
+
+	.ant-modal-title {
+		color: #fff;
+		font-size: 18px;
+		font-weight: 700;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
+		&::before {
+			content: '✍️';
+			font-size: 20px;
+		}
+	}
+
+	.ant-modal-close {
+		color: rgba(255, 255, 255, 0.9);
+		top: 20px;
+		right: 24px;
+
+		&:hover {
+			color: #fff;
+		}
+	}
+
+	.ant-modal-body {
+		padding: 24px;
+		background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+	}
+
+	.ant-modal-footer {
+		border-top: 1px solid rgba(16, 185, 129, 0.1);
+		padding: 16px 24px;
+		background: #fff;
+		border-radius: 0 0 16px 16px;
+	}
+`
+
+const ReviewFormLabel = styled.label`
+	display: block;
+	margin-bottom: 12px;
+	font-weight: 700;
+	font-size: 15px;
+	color: #1a1a1a;
+	letter-spacing: -0.3px;
+`
+
+const StyledTextArea = styled(Input.TextArea)`
+	border-radius: 12px;
+	border: 2px solid rgba(16, 185, 129, 0.2);
+	padding: 12px 16px;
+	font-size: 14px;
+	transition: all 0.3s ease;
+	background: #fff;
+
+	&:hover {
+		border-color: rgba(16, 185, 129, 0.4);
+	}
+
+	&:focus {
+		border-color: #10b981;
+		box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+	}
+
+	&::placeholder {
+		color: #9ca3af;
+	}
+`
+
+const ModalButtonGroup = styled.div`
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+`
+
+const CancelButton = styled(Button)`
+	border-radius: 8px;
+	font-weight: 600;
+	height: 40px;
+	padding: 0 24px;
+	border: 2px solid #e5e7eb;
+	color: #6b7280;
+	background: #fff;
+
+	&:hover,
+	&:focus {
+		border-color: #d1d5db;
+		color: #4b5563;
+		background: #f9fafb;
+	}
+`
+
+const SubmitReviewButton = styled(Button)`
+	border-radius: 8px;
+	font-weight: 600;
+	height: 40px;
+	padding: 0 24px;
+	background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+	border: none !important;
+	color: #fff !important;
+	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+
+	&:hover,
+	&:focus,
+	&:active {
+		background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+		box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4) !important;
+		border: none !important;
+		color: #fff !important;
+		transform: translateY(-1px);
+	}
+`
+
 const DeleteButton = styled(Button)`
 	margin-top: 16px;
 	width: 100%;
@@ -918,13 +1044,47 @@ export const WorkOutCalendar = () => {
 		}
 
 		try {
-			const { error } = await supabase
+			// 1. 선택된 세션의 정보 가져오기 (workout_date, workout_end_date, user_id)
+			const { data: selectedSession, error: sessionError } = await supabase
+				.from('workout_sessions')
+				.select('workout_date, workout_end_date, user_id')
+				.eq('id', selectedSessionId)
+				.single()
+
+			if (sessionError || !selectedSession) {
+				console.error('세션 조회 실패:', sessionError)
+				alert('세션 정보를 가져오는데 실패했습니다.')
+				return
+			}
+
+			// 2. 같은 날짜/시간에 저장된 모든 세션 찾기
+			const { data: relatedSessions, error: findError } = await supabase
+				.from('workout_sessions')
+				.select('id')
+				.eq('user_id', selectedSession.user_id)
+				.eq('workout_date', selectedSession.workout_date)
+				.eq('workout_end_date', selectedSession.workout_end_date)
+
+			if (findError) {
+				console.error('관련 세션 조회 실패:', findError)
+				alert('관련 세션을 찾는데 실패했습니다.')
+				return
+			}
+
+			if (!relatedSessions || relatedSessions.length === 0) {
+				alert('관련 세션을 찾을 수 없습니다.')
+				return
+			}
+
+			// 3. 모든 관련 세션에 리뷰 업데이트
+			const sessionIds = relatedSessions.map(s => s.id)
+			const { error: updateError } = await supabase
 				.from('workout_sessions')
 				.update({ trainer_review: reviewText.trim() })
-				.eq('id', selectedSessionId)
+				.in('id', sessionIds)
 
-			if (error) {
-				console.error('리뷰 저장 실패:', error)
+			if (updateError) {
+				console.error('리뷰 저장 실패:', updateError)
 				alert('리뷰 저장에 실패했습니다.')
 			} else {
 				alert('리뷰가 등록되었습니다.')
@@ -1239,7 +1399,7 @@ export const WorkOutCalendar = () => {
 			},
 			{
 				key: 'fatigue',
-				label: '신체피로도',
+				label: '신체피로도 - BETA',
 				children: <FatigueLevel />,
 			},
 		]
@@ -1252,22 +1412,16 @@ export const WorkOutCalendar = () => {
 					onChange={setActiveTab}
 					items={tabItems}
 				/>
-				<Modal
+				<StyledModal
 					title="트레이너 리뷰 등록"
 					open={reviewModalVisible}
-					onOk={handleSaveReview}
 					onCancel={handleCloseReviewModal}
-					okText="등록"
-					cancelText="취소"
 					width={600}
+					footer={null}
 				>
-					<div style={{ marginBottom: '16px' }}>
-						<label
-							style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}
-						>
-							리뷰 내용
-						</label>
-						<Input.TextArea
+					<div style={{ marginBottom: '20px' }}>
+						<ReviewFormLabel>리뷰 내용</ReviewFormLabel>
+						<StyledTextArea
 							rows={6}
 							placeholder="회원의 운동에 대한 리뷰를 작성해주세요"
 							value={reviewText}
@@ -1276,7 +1430,13 @@ export const WorkOutCalendar = () => {
 							showCount
 						/>
 					</div>
-				</Modal>
+					<ModalButtonGroup>
+						<CancelButton onClick={handleCloseReviewModal}>취소</CancelButton>
+						<SubmitReviewButton type="primary" onClick={handleSaveReview}>
+							등록하기
+						</SubmitReviewButton>
+					</ModalButtonGroup>
+				</StyledModal>
 			</>
 		)
 	}
@@ -1285,22 +1445,16 @@ export const WorkOutCalendar = () => {
 	return (
 		<ConfigProvider locale={locale}>
 			{workoutLogContent}
-			<Modal
+			<StyledModal
 				title="트레이너 리뷰 등록"
 				open={reviewModalVisible}
-				onOk={handleSaveReview}
 				onCancel={handleCloseReviewModal}
-				okText="등록"
-				cancelText="취소"
 				width={600}
+				footer={null}
 			>
-				<div style={{ marginBottom: '16px' }}>
-					<label
-						style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}
-					>
-						리뷰 내용
-					</label>
-					<Input.TextArea
+				<div style={{ marginBottom: '20px' }}>
+					<ReviewFormLabel>리뷰 내용</ReviewFormLabel>
+					<StyledTextArea
 						rows={6}
 						placeholder="회원의 운동에 대한 리뷰를 작성해주세요"
 						value={reviewText}
@@ -1309,7 +1463,13 @@ export const WorkOutCalendar = () => {
 						showCount
 					/>
 				</div>
-			</Modal>
+				<ModalButtonGroup>
+					<CancelButton onClick={handleCloseReviewModal}>취소</CancelButton>
+					<SubmitReviewButton type="primary" onClick={handleSaveReview}>
+						등록하기
+					</SubmitReviewButton>
+				</ModalButtonGroup>
+			</StyledModal>
 		</ConfigProvider>
 	)
 }

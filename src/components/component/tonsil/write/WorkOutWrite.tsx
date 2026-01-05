@@ -174,6 +174,7 @@ export const WorkOutWrite = () => {
 		Array<{ title: string; agonist?: string }>
 	>([])
 	const [loading, setLoading] = useState(false)
+	const [saving, setSaving] = useState(false)
 	const [exercises, setExercises] = useState<ExerciseData[]>([
 		{
 			exercise: '',
@@ -558,6 +559,8 @@ export const WorkOutWrite = () => {
 	}
 
 	const onFinish: FormProps<FormData>['onFinish'] = async values => {
+		// 저장 중 상태로 변경
+		setSaving(true)
 		try {
 			// querystring에서 userId 가져오기 (트레이너가 회원을 선택한 경우)
 			const userIdFromQuery = searchParams.get('userId')
@@ -725,6 +728,9 @@ export const WorkOutWrite = () => {
 		} catch (error) {
 			console.error('저장 중 오류 발생:', error)
 			alert('저장 중 오류가 발생했습니다.')
+		} finally {
+			// 저장 완료 후 로딩 상태 해제
+			setSaving(false)
 		}
 	}
 
@@ -1032,8 +1038,8 @@ export const WorkOutWrite = () => {
 					</Form.Item>
 
 					<Form.Item style={{ marginTop: '8px', marginBottom: 0 }}>
-						<SubmitButton type="primary" htmlType="submit">
-							저장하기
+						<SubmitButton type="primary" htmlType="submit" loading={saving}>
+							{saving ? '저장중입니다...' : '저장하기'}
 						</SubmitButton>
 					</Form.Item>
 				</Form>
