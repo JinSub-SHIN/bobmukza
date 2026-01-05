@@ -753,6 +753,7 @@ export const WorkOutCalendar = () => {
 			setsDetail: Array<{ weight: number; reps: number }>
 			userReview?: string | null
 			trainerReview?: string | null
+			order?: number | null
 		}>
 	>([])
 	const [loading, setLoading] = useState(false)
@@ -833,12 +834,13 @@ export const WorkOutCalendar = () => {
 				return
 			}
 
-			// 2. 각 세션에 대한 exercises 가져오기
+			// 2. 각 세션에 대한 exercises 가져오기 (order로 정렬)
 			const sessionIds = sessions.map(s => s.id)
 			const { data: exercises, error: exercisesError } = await supabase
 				.from('exercises')
-				.select('id, session_id, exercise_name, total_sets')
+				.select('id, session_id, exercise_name, total_sets, order')
 				.in('session_id', sessionIds)
+				.order('order', { ascending: true })
 
 			if (exercisesError) {
 				console.error('운동 조회 실패:', exercisesError)
@@ -870,9 +872,17 @@ export const WorkOutCalendar = () => {
 			const transformedData: typeof workoutData = []
 
 			for (const session of sessions) {
-				const sessionExercises = exercises.filter(
-					e => e.session_id === session.id,
-				)
+				const sessionExercises = exercises
+					.filter(e => e.session_id === session.id)
+					.sort((a, b) => {
+						// order가 있으면 order로 정렬, 없으면 기존 순서 유지
+						if (a.order && b.order) {
+							return a.order - b.order
+						}
+						if (a.order) return -1
+						if (b.order) return 1
+						return 0
+					})
 
 				for (const exercise of sessionExercises) {
 					const exerciseSets = sets
@@ -913,6 +923,7 @@ export const WorkOutCalendar = () => {
 							})),
 							userReview: session.user_review || null,
 							trainerReview: session.trainer_review || null,
+							order: exercise.order || null,
 						})
 					}
 				}
@@ -984,6 +995,19 @@ export const WorkOutCalendar = () => {
 				sessionMap.set(sessionKey, [])
 			}
 			sessionMap.get(sessionKey)!.push(workout)
+		}
+
+		// 각 세션 그룹 내에서 order로 정렬
+		for (const [sessionKey, workouts] of sessionMap.entries()) {
+			workouts.sort((a, b) => {
+				// order가 있으면 order로 정렬, 없으면 기존 순서 유지
+				if (a.order && b.order) {
+					return a.order - b.order
+				}
+				if (a.order) return -1
+				if (b.order) return 1
+				return 0
+			})
 		}
 
 		// Map을 객체로 변환

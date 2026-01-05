@@ -641,8 +641,9 @@ export const WorkOutWrite = () => {
 
 				const sessionId = sessionData.id
 
-				// 각 운동에 대해 저장
-				for (const exerciseData of exercisesWithSets) {
+				// 각 운동에 대해 저장 (순서 정보 포함)
+				for (let i = 0; i < exercisesWithSets.length; i++) {
+					const exerciseData = exercisesWithSets[i]
 					if (!exerciseData.exercise) continue
 
 					// 입력된 세트만 필터링 (weight와 reps가 모두 입력된 세트)
@@ -652,7 +653,12 @@ export const WorkOutWrite = () => {
 
 					if (validSets.length === 0) continue
 
-					// 2. exercises에 insert
+					// 전체 exercises 배열에서의 순서 찾기 (부위별이 아닌 전체 순서)
+					const globalOrder = exercises.findIndex(
+						ex => ex.exercise === exerciseData.exercise,
+					)
+
+					// 2. exercises에 insert (order 포함)
 					const { data: exerciseDataResult, error: exerciseError } =
 						await supabase
 							.from('exercises')
@@ -661,6 +667,7 @@ export const WorkOutWrite = () => {
 									session_id: sessionId,
 									exercise_name: exerciseData.exercise,
 									total_sets: validSets.length,
+									order: globalOrder >= 0 ? globalOrder + 1 : i + 1,
 								},
 							])
 							.select()
