@@ -446,21 +446,130 @@ const VolumeInfo = styled.div`
 	}
 `
 
+const ExerciseVolumeBadge = styled.div`
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	background: linear-gradient(
+		135deg,
+		rgba(0, 0, 0, 0.05) 0%,
+		rgba(0, 0, 0, 0.03) 100%
+	);
+	border-radius: 20px;
+	border: 1.5px solid rgba(0, 0, 0, 0.15);
+	margin-top: 10px;
+
+	@media screen and (max-width: 480px) {
+		padding: 5px 10px;
+		margin-top: 8px;
+	}
+`
+
 const VolumeLabel = styled.span`
-	font-size: 14px;
-	color: #666;
-	font-weight: 600;
+	font-size: 12px;
+	color: #333;
+	font-weight: 700;
 	letter-spacing: 0.3px;
+	text-transform: uppercase;
 `
 
 const VolumeValue = styled.span`
-	font-size: 18px;
+	font-size: 16px;
 	font-weight: 800;
-	color: #10b981;
+	color: #000;
+	letter-spacing: -0.3px;
+
+	@media screen and (max-width: 480px) {
+		font-size: 14px;
+	}
+`
+
+const TotalVolumeCard = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 18px 20px;
+	background: linear-gradient(
+		135deg,
+		rgba(0, 0, 0, 0.08) 0%,
+		rgba(0, 0, 0, 0.05) 100%
+	);
+	border-radius: 14px;
+	margin-top: 24px;
+	border: 2px solid rgba(0, 0, 0, 0.15);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+	position: relative;
+	overflow: hidden;
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 3px;
+		background: linear-gradient(
+			90deg,
+			rgba(0, 0, 0, 0.2) 0%,
+			rgba(0, 0, 0, 0.1) 100%
+		);
+	}
+
+	@media screen and (max-width: 480px) {
+		padding: 14px 16px;
+		margin-top: 20px;
+		border-radius: 12px;
+	}
+`
+
+const TotalVolumeLabel = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 15px;
+	color: #000;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+
+	&::before {
+		content: '📊';
+		font-size: 18px;
+	}
+
+	@media screen and (max-width: 480px) {
+		font-size: 14px;
+		gap: 6px;
+
+		&::before {
+			font-size: 16px;
+		}
+	}
+`
+
+const TotalVolumeValue = styled.div`
+	display: flex;
+	align-items: baseline;
+	gap: 4px;
+	font-size: 24px;
+	font-weight: 900;
+	color: #000;
 	letter-spacing: -0.5px;
 
 	@media screen and (max-width: 480px) {
-		font-size: 16px;
+		font-size: 20px;
+	}
+`
+
+const TotalVolumeUnit = styled.span`
+	font-size: 16px;
+	font-weight: 600;
+	color: #000;
+	opacity: 0.8;
+
+	@media screen and (max-width: 480px) {
+		font-size: 14px;
 	}
 `
 
@@ -1428,34 +1537,24 @@ export const WorkOutCalendar = () => {
 															)
 														})}
 													</SetsGrid>
-													<VolumeInfo style={{ marginTop: '12px' }}>
-														<VolumeLabel>볼륨:</VolumeLabel>
+													<ExerciseVolumeBadge>
+														<VolumeLabel>볼륨</VolumeLabel>
 														<VolumeValue>
 															{exerciseVolume.toLocaleString()}kg
 														</VolumeValue>
-													</VolumeInfo>
+													</ExerciseVolumeBadge>
 												</div>
 											)
 										},
 									)}
 
-									<VolumeInfo
-										style={{
-											marginTop: '20px',
-											background:
-												'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-											color: '#fff',
-											border: 'none',
-											boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
-										}}
-									>
-										<VolumeLabel style={{ color: '#fff', fontSize: '15px' }}>
-											총 볼륨:
-										</VolumeLabel>
-										<VolumeValue style={{ color: '#fff', fontSize: '20px' }}>
-											{totalVolume.toLocaleString()}kg
-										</VolumeValue>
-									</VolumeInfo>
+									<TotalVolumeCard>
+										<TotalVolumeLabel>총 볼륨</TotalVolumeLabel>
+										<TotalVolumeValue>
+											{totalVolume.toLocaleString()}
+											<TotalVolumeUnit>kg</TotalVolumeUnit>
+										</TotalVolumeValue>
+									</TotalVolumeCard>
 
 									{/* 리뷰 섹션 */}
 									{workoutsArray.length > 0 && (
