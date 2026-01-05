@@ -343,21 +343,21 @@ const TimeText = styled.div`
 
 const BodyPartTag = styled.span<{ isMain?: boolean }>`
 	display: inline-block;
-	padding: 8px 18px;
+	padding: 6px 14px;
 	background: ${props =>
 		props.isMain
 			? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
 			: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'};
 	color: #fff;
-	border-radius: 24px;
-	font-size: ${props => (props.isMain ? '13px' : '12px')};
+	border-radius: 20px;
+	font-size: ${props => (props.isMain ? '12px' : '11px')};
 	font-weight: ${props => (props.isMain ? 700 : 500)};
 	box-shadow: ${props =>
 		props.isMain
-			? '0 2px 8px rgba(16, 185, 129, 0.3)'
-			: '0 2px 6px rgba(107, 114, 128, 0.2)'};
+			? '0 2px 6px rgba(16, 185, 129, 0.25)'
+			: '0 2px 4px rgba(107, 114, 128, 0.15)'};
 	transition: all 0.2s ease;
-	letter-spacing: 0.3px;
+	letter-spacing: 0.2px;
 	opacity: ${props => (props.isMain ? 1 : 0.85)};
 	white-space: nowrap;
 
