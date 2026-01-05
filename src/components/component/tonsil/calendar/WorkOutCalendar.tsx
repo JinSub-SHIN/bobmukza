@@ -618,9 +618,9 @@ const SetDetail = styled.div<{ isFailed?: boolean }>`
 	}
 `
 
-const SetNumber = styled.span`
+const SetNumber = styled.span<{ isFailed?: boolean }>`
 	font-weight: 700;
-	color: #10b981;
+	color: ${props => (props.isFailed ? '#ef4444' : '#10b981')};
 	font-size: 12px;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
@@ -1529,7 +1529,9 @@ export const WorkOutCalendar = () => {
 															const isFailed = set.reps === 0
 															return (
 																<SetDetail key={setIndex} isFailed={isFailed}>
-																	<SetNumber>{setIndex + 1}세트</SetNumber>
+																	<SetNumber isFailed={isFailed}>
+																		{setIndex + 1}세트
+																	</SetNumber>
 																	<SetFormula isFailed={isFailed}>
 																		{set.weight}kg × {set.reps}회
 																	</SetFormula>
