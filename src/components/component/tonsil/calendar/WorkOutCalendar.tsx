@@ -1359,10 +1359,10 @@ export const WorkOutCalendar = () => {
 										style={{
 											marginTop: '20px',
 											background:
-												'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+												'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
 											color: '#fff',
 											border: 'none',
-											boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+											boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
 										}}
 									>
 										<VolumeLabel style={{ color: '#fff', fontSize: '15px' }}>
