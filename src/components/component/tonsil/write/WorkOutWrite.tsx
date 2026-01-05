@@ -16,6 +16,7 @@ import {
 	setWorkoutFormData,
 	clearWorkoutFormData,
 } from '../../../../store/action/selectedExercisesSlice'
+import { sendWorkoutLogEmail } from '../../../../api/email'
 
 const FormContainer = styled.div`
 	display: flex;
@@ -584,6 +585,10 @@ export const WorkOutWrite = () => {
 			const workoutStartDateTime = `${values.workoutDate.format('YYYY-MM-DD')} ${values.workoutTimeHour.padStart(2, '0')}:${values.workoutTimeMinute.padStart(2, '0')}`
 			const workoutEndDateTime = `${values.workoutDate.format('YYYY-MM-DD')} ${values.workoutEndTimeHour.padStart(2, '0')}:${values.workoutEndTimeMinute.padStart(2, '0')}`
 
+			// 이메일 발송을 위한 변수 (첫 번째 세션 insert 후에만 발송)
+			let emailSent = false
+			let userName = ''
+
 			// 각 부위별로 세션 생성
 			for (const bodyPart of values.bodyPart) {
 				// 해당 부위의 운동들만 필터링
@@ -640,6 +645,103 @@ export const WorkOutWrite = () => {
 				}
 
 				const sessionId = sessionData.id
+
+				// 첫 번째 세션이 성공적으로 insert된 후 트레이너에게 이메일 발송 (중복 발송 방지)
+				if (!emailSent && !isTrainer) {
+					console.log(
+						'이메일 발송 시도 - userId:',
+						userId,
+						'isTrainer:',
+						isTrainer,
+					)
+					// user_id로 users 테이블에서 회원 정보 및 담당 트레이너 조회
+					const { data: userData, error: userError } = await supabase
+						.from('users')
+						.select('user_name, with_who')
+						.eq('user_id', userId)
+						.single()
+
+					console.log('회원 정보 조회 결과:', { userData, userError })
+
+					if (!userError && userData && userData.with_who) {
+						userName = userData.user_name || '회원'
+						console.log('담당 트레이너 ID:', userData.with_who)
+
+						// 트레이너 정보 조회 (user_type이 2인 경우만)
+						const { data: trainerData, error: trainerError } = await supabase
+							.from('users')
+							.select('email, user_name, user_type')
+							.eq('user_id', userData.with_who)
+							.eq('user_type', 2)
+							.single()
+
+						console.log('트레이너 정보 조회 결과:', {
+							trainerData,
+							trainerError,
+						})
+
+						// user_type이 문자열일 수도 있으므로 Number로 변환하여 비교
+						const isTrainerType = Number(trainerData?.user_type) === 2
+						const hasValidEmail =
+							trainerData?.email && trainerData.email.trim() !== ''
+
+						console.log('조건 체크:', {
+							hasError: !!trainerError,
+							hasData: !!trainerData,
+							hasEmail: hasValidEmail,
+							email: trainerData?.email,
+							userType: trainerData?.user_type,
+							userTypeNumber: Number(trainerData?.user_type),
+							isTrainerType,
+						})
+
+						if (
+							!trainerError &&
+							trainerData &&
+							hasValidEmail &&
+							isTrainerType
+						) {
+							// 이메일 발송
+							const workoutTime =
+								values.workoutTimeHour && values.workoutTimeMinute
+									? `${values.workoutTimeHour.padStart(2, '0')}:${values.workoutTimeMinute.padStart(2, '0')}`
+									: null
+							const workoutDate = values.workoutDate.format('YYYY-MM-DD')
+
+							console.log('이메일 발송 시작:', {
+								email: trainerData.email,
+								userName,
+								workoutDate,
+								workoutTime,
+							})
+
+							const emailResult = await sendWorkoutLogEmail(
+								trainerData.email,
+								userName,
+								workoutDate,
+								workoutTime,
+							)
+
+							console.log('이메일 발송 결과:', emailResult)
+							emailSent = true
+						} else {
+							console.log('이메일 발송 조건 불만족:', {
+								hasError: !!trainerError,
+								hasData: !!trainerData,
+								hasEmail: trainerData?.email,
+								userType: trainerData?.user_type,
+							})
+						}
+					} else {
+						console.log('회원 정보 또는 담당 트레이너 없음:', {
+							hasError: !!userError,
+							hasData: !!userData,
+							hasWithWho: userData?.with_who,
+						})
+					}
+				} else {
+					console.log('이메일 발송 건너뜀:', { emailSent, isTrainer })
+				}
 
 				// 각 운동에 대해 저장 (순서 정보 포함)
 				for (let i = 0; i < exercisesWithSets.length; i++) {

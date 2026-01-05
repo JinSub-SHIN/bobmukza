@@ -998,7 +998,7 @@ export const WorkOutCalendar = () => {
 		}
 
 		// 각 세션 그룹 내에서 order로 정렬
-		for (const [sessionKey, workouts] of sessionMap.entries()) {
+		for (const [_, workouts] of sessionMap.entries()) {
 			workouts.sort((a, b) => {
 				// order가 있으면 order로 정렬, 없으면 기존 순서 유지
 				if (a.order && b.order) {
