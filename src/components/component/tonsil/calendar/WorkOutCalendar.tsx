@@ -1203,7 +1203,7 @@ export const WorkOutCalendar = () => {
 								...new Set(
 									(workouts as typeof workoutData).map(w => w.bodyPart),
 								),
-							]
+							].filter(bodyPart => bodyPart !== '기타')
 
 							// 로그인된 사용자와 일지의 user_id 비교
 							const isOwner =
