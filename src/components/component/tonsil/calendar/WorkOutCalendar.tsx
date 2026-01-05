@@ -208,15 +208,16 @@ const CardsContainer = styled.div`
 
 	@media screen and (max-width: 768px) {
 		grid-template-columns: 1fr;
-		gap: 16px;
-		padding: 20px;
-		margin-top: 20px;
+		gap: 12px;
+		padding: 12px;
+		margin-top: 16px;
 	}
 
 	@media screen and (max-width: 480px) {
-		padding: 16px;
-		gap: 14px;
-		margin-top: 16px;
+		padding: 8px;
+		gap: 10px;
+		margin-top: 12px;
+		background: #f5f5f5;
 	}
 `
 
@@ -251,13 +252,19 @@ const WorkoutCard = styled.div`
 	}
 
 	@media screen and (max-width: 768px) {
-		padding: 20px;
-		border-radius: 14px;
+		padding: 16px;
+		border-radius: 12px;
+		box-shadow:
+			0 2px 8px rgba(0, 0, 0, 0.06),
+			0 1px 2px rgba(0, 0, 0, 0.03);
 	}
 
 	@media screen and (max-width: 480px) {
-		padding: 16px;
-		border-radius: 12px;
+		padding: 12px;
+		border-radius: 10px;
+		box-shadow:
+			0 2px 6px rgba(0, 0, 0, 0.05),
+			0 1px 2px rgba(0, 0, 0, 0.02);
 	}
 `
 
@@ -271,13 +278,15 @@ const CardHeader = styled.div`
 	width: 100%;
 
 	@media screen and (max-width: 768px) {
-		margin-bottom: 16px;
-		padding-bottom: 12px;
+		margin-bottom: 14px;
+		padding-bottom: 10px;
+		border-bottom-width: 1.5px;
 	}
 
 	@media screen and (max-width: 480px) {
-		margin-bottom: 14px;
-		padding-bottom: 10px;
+		margin-bottom: 12px;
+		padding-bottom: 8px;
+		border-bottom-width: 1px;
 	}
 `
 
@@ -293,6 +302,7 @@ const DateText = styled.div`
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	line-height: 1.4;
 
 	&::before {
 		content: '💪';
@@ -300,11 +310,16 @@ const DateText = styled.div`
 	}
 
 	@media screen and (max-width: 768px) {
-		font-size: 14px;
+		font-size: 15px;
 	}
 
 	@media screen and (max-width: 480px) {
-		font-size: 13px;
+		font-size: 14px;
+		gap: 6px;
+
+		&::before {
+			font-size: 14px;
+		}
 	}
 `
 
@@ -317,6 +332,13 @@ const TimeText = styled.div`
 	display: flex;
 	align-items: center;
 	gap: 6px;
+	line-height: 1.4;
+
+	@media screen and (max-width: 480px) {
+		font-size: 14px;
+		margin-top: 6px;
+		gap: 4px;
+	}
 `
 
 const BodyPartTag = styled.span<{ isMain?: boolean }>`
@@ -337,6 +359,7 @@ const BodyPartTag = styled.span<{ isMain?: boolean }>`
 	transition: all 0.2s ease;
 	letter-spacing: 0.3px;
 	opacity: ${props => (props.isMain ? 1 : 0.85)};
+	white-space: nowrap;
 
 	&:hover {
 		transform: scale(1.05);
@@ -347,13 +370,14 @@ const BodyPartTag = styled.span<{ isMain?: boolean }>`
 	}
 
 	@media screen and (max-width: 768px) {
-		font-size: 13px;
-		padding: 4px 14px;
+		font-size: 12px;
+		padding: 5px 12px;
 	}
 
 	@media screen and (max-width: 480px) {
-		font-size: 12px;
-		padding: 3px 12px;
+		font-size: 11px;
+		padding: 4px 10px;
+		letter-spacing: 0.2px;
 	}
 `
 
@@ -371,17 +395,19 @@ const ExerciseName = styled.h3`
 	border-radius: 10px;
 	border-left: 4px solid #10b981;
 	letter-spacing: -0.3px;
+	line-height: 1.3;
 
 	@media screen and (max-width: 768px) {
-		font-size: 18px;
-		margin-bottom: 14px;
-		padding: 10px 14px;
+		font-size: 17px;
+		margin-bottom: 12px;
+		padding: 10px 12px;
 	}
 
 	@media screen and (max-width: 480px) {
-		font-size: 16px;
-		margin-bottom: 12px;
-		padding: 8px 12px;
+		font-size: 15px;
+		margin-bottom: 10px;
+		padding: 8px 10px;
+		border-left: 3px solid #10b981;
 	}
 `
 
@@ -438,40 +464,71 @@ const VolumeValue = styled.span`
 	}
 `
 
-const SetDetail = styled.div`
-	display: flex;
-	align-items: center;
+const SetsGrid = styled.div`
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
 	gap: 8px;
+	margin-bottom: 12px;
+
+	@media screen and (max-width: 480px) {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 6px;
+		margin-bottom: 10px;
+	}
+`
+
+const SetDetail = styled.div<{ isFailed?: boolean }>`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
 	font-size: 15px;
 	color: #333;
-	margin-bottom: 8px;
-	padding: 8px 12px;
-	background: #fafbfc;
+	padding: 10px 8px;
+	background: ${props => (props.isFailed ? '#fef2f2' : '#fafbfc')};
 	border-radius: 8px;
-	border-left: 3px solid #10b981;
+	border: 2px solid ${props => (props.isFailed ? '#ef4444' : '#10b981')};
 	transition: all 0.2s ease;
+	text-align: center;
+	position: relative;
 
 	&:hover {
-		background: #ecfdf5;
-		transform: translateX(4px);
+		background: ${props => (props.isFailed ? '#fee2e2' : '#ecfdf5')};
+		transform: translateY(-2px);
+		box-shadow: ${props =>
+			props.isFailed
+				? '0 2px 8px rgba(239, 68, 68, 0.3)'
+				: '0 2px 8px rgba(16, 185, 129, 0.2)'};
 	}
 
 	@media screen and (max-width: 480px) {
-		font-size: 14px;
-		margin-bottom: 6px;
-		padding: 6px 10px;
+		font-size: 13px;
+		padding: 8px 6px;
+		gap: 3px;
 	}
 `
 
 const SetNumber = styled.span`
 	font-weight: 700;
 	color: #10b981;
-	min-width: 35px;
-	font-size: 16px;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+
+	@media screen and (max-width: 480px) {
+		font-size: 11px;
+	}
 `
 
-const SetFormula = styled.span`
-	color: #666;
+const SetFormula = styled.span<{ isFailed?: boolean }>`
+	color: ${props => (props.isFailed ? '#dc2626' : '#1a1a1a')};
+	font-weight: 600;
+	font-size: 16px;
+
+	@media screen and (max-width: 480px) {
+		font-size: 14px;
+	}
 `
 
 const ReviewSection = styled.div`
@@ -1358,16 +1415,19 @@ export const WorkOutCalendar = () => {
 												>
 													<ExerciseName>{workout.exerciseName}</ExerciseName>
 													<SetsInfo>세트수: {workout.sets}세트</SetsInfo>
-													<div>
-														{workout.setsDetail.map((set, setIndex) => (
-															<SetDetail key={setIndex}>
-																<SetNumber>{setIndex + 1}세트:</SetNumber>
-																<SetFormula>
-																	{set.weight}kg × {set.reps}회
-																</SetFormula>
-															</SetDetail>
-														))}
-													</div>
+													<SetsGrid>
+														{workout.setsDetail.map((set, setIndex) => {
+															const isFailed = set.reps === 0
+															return (
+																<SetDetail key={setIndex} isFailed={isFailed}>
+																	<SetNumber>{setIndex + 1}세트</SetNumber>
+																	<SetFormula isFailed={isFailed}>
+																		{set.weight}kg × {set.reps}회
+																	</SetFormula>
+																</SetDetail>
+															)
+														})}
+													</SetsGrid>
 													<VolumeInfo style={{ marginTop: '12px' }}>
 														<VolumeLabel>볼륨:</VolumeLabel>
 														<VolumeValue>
