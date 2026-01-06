@@ -20,7 +20,6 @@ import {
 	clearExercises,
 	clearWorkoutFormData,
 } from '../../../../store/action/selectedExercisesSlice'
-import { FatigueLevel } from './FatigueLevel'
 import { supabase } from '../../../database/supabase'
 import { DeleteOutlined } from '@ant-design/icons'
 
@@ -431,39 +430,51 @@ const SetsInfo = styled.div`
 const ExerciseVolumeBadge = styled.div`
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
-	padding: 6px 12px;
+	gap: 8px;
+	padding: 10px 16px;
 	background: linear-gradient(
 		135deg,
-		rgba(0, 0, 0, 0.05) 0%,
-		rgba(0, 0, 0, 0.03) 100%
+		rgba(16, 185, 129, 0.1) 0%,
+		rgba(16, 185, 129, 0.05) 100%
 	);
-	border-radius: 20px;
-	border: 1.5px solid rgba(0, 0, 0, 0.15);
-	margin-top: 10px;
+	border-radius: 12px;
+	border: 2px solid rgba(16, 185, 129, 0.2);
+	margin-top: 12px;
+	box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+	transition: all 0.3s ease;
+
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+		border-color: rgba(16, 185, 129, 0.3);
+	}
 
 	@media screen and (max-width: 480px) {
-		padding: 5px 10px;
-		margin-top: 8px;
+		padding: 8px 12px;
+		margin-top: 10px;
+		gap: 6px;
 	}
 `
 
 const VolumeLabel = styled.span`
-	font-size: 12px;
-	color: #333;
-	font-weight: 700;
-	letter-spacing: 0.3px;
+	font-size: 11px;
+	color: #10b981;
+	font-weight: 800;
+	letter-spacing: 0.5px;
 	text-transform: uppercase;
+	opacity: 0.9;
 `
 
 const VolumeValue = styled.span`
-	font-size: 16px;
-	font-weight: 800;
-	color: #000;
-	letter-spacing: -0.3px;
+	font-size: 18px;
+	font-weight: 900;
+	color: #1a1a1a;
+	letter-spacing: -0.5px;
+	font-family:
+		-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
 	@media screen and (max-width: 480px) {
-		font-size: 14px;
+		font-size: 16px;
 	}
 `
 
@@ -541,6 +552,79 @@ const TotalVolumeValue = styled.div`
 
 	@media screen and (max-width: 480px) {
 		font-size: 12px;
+	}
+`
+
+const VolumeComparison = styled.div`
+	margin-top: 10px;
+	padding: 10px 14px;
+	border-radius: 10px;
+	font-size: 13px;
+	font-weight: 700;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: linear-gradient(
+		135deg,
+		rgba(16, 185, 129, 0.15) 0%,
+		rgba(16, 185, 129, 0.08) 100%
+	);
+	color: #059669;
+	border: 2px solid rgba(16, 185, 129, 0.25);
+	box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
+	transition: all 0.3s ease;
+	position: relative;
+	overflow: hidden;
+
+	&::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 4px;
+		background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+	}
+
+	&.decrease {
+		background: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.15) 0%,
+			rgba(239, 68, 68, 0.08) 100%
+		);
+		color: #dc2626;
+		border-color: rgba(239, 68, 68, 0.25);
+		box-shadow: 0 2px 6px rgba(239, 68, 68, 0.1);
+
+		&::before {
+			background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+		}
+	}
+
+	&.increase {
+		background: linear-gradient(
+			135deg,
+			rgba(16, 185, 129, 0.15) 0%,
+			rgba(16, 185, 129, 0.08) 100%
+		);
+		color: #059669;
+		border-color: rgba(16, 185, 129, 0.25);
+		box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
+
+		&::before {
+			background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+		}
+	}
+
+	&:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+	}
+
+	@media screen and (max-width: 480px) {
+		font-size: 12px;
+		padding: 8px 12px;
+		gap: 5px;
 	}
 `
 
@@ -1167,6 +1251,51 @@ export const WorkOutCalendar = () => {
 		return parts.length > 0 ? parts.join(' + ') : '0kg'
 	}
 
+	// 이전 같은 운동 찾기 및 변화율 계산
+	const getPreviousWorkoutComparison = (
+		currentWorkout: (typeof workoutData)[0],
+		currentDate: string,
+		allWorkoutData: typeof workoutData,
+	) => {
+		// 현재 날짜보다 이전의 같은 운동 이름을 가진 운동 찾기
+		const currentDateObj = dayjs(currentDate)
+		const previousWorkouts = allWorkoutData.filter(workout => {
+			const workoutDateObj = dayjs(workout.date)
+			return (
+				workout.exerciseName === currentWorkout.exerciseName &&
+				workoutDateObj.isBefore(currentDateObj, 'day')
+			)
+		})
+
+		if (previousWorkouts.length === 0) {
+			return null
+		}
+
+		// 가장 최근 운동 찾기
+		const mostRecentPrevious = previousWorkouts.sort((a, b) => {
+			const dateA = dayjs(a.date)
+			const dateB = dayjs(b.date)
+			return dateB.valueOf() - dateA.valueOf()
+		})[0]
+
+		const currentVolume = calculateVolume(currentWorkout.setsDetail)
+		const previousVolume = calculateVolume(mostRecentPrevious.setsDetail)
+
+		if (previousVolume === 0) {
+			return null
+		}
+
+		const changePercent =
+			((currentVolume - previousVolume) / previousVolume) * 100
+
+		return {
+			previousVolume,
+			currentVolume,
+			changePercent,
+			previousDate: mostRecentPrevious.date,
+		}
+	}
+
 	// 부위 매핑 (영어 -> 한국어)
 	const bodyPartMap: Record<string, string> = {
 		chest: '가슴',
@@ -1551,6 +1680,11 @@ export const WorkOutCalendar = () => {
 										(workout, workoutIndex) => {
 											const exerciseVolume = calculateVolume(workout.setsDetail)
 											const workoutsArray = workouts as typeof workoutData
+											const comparison = getPreviousWorkoutComparison(
+												workout,
+												date,
+												workoutData,
+											)
 											return (
 												<div
 													key={workoutIndex}
@@ -1607,19 +1741,61 @@ export const WorkOutCalendar = () => {
 															)
 														})}
 													</SetsGrid>
-													<ExerciseVolumeBadge>
-														<VolumeLabel>
-															{workout.exerciseAgonist === '유산소'
-																? '유산소'
-																: '볼륨'}
-														</VolumeLabel>
-														<VolumeValue>
-															{formatExerciseVolume(
-																exerciseVolume,
-																workout.exerciseAgonist === '유산소',
-															)}
-														</VolumeValue>
-													</ExerciseVolumeBadge>
+													<div
+														style={{
+															display: 'flex',
+															flexDirection: 'column',
+															gap: '8px',
+														}}
+													>
+														<ExerciseVolumeBadge>
+															<VolumeLabel>
+																{workout.exerciseAgonist === '유산소'
+																	? '유산소'
+																	: '볼륨'}
+															</VolumeLabel>
+															<VolumeValue>
+																{formatExerciseVolume(
+																	exerciseVolume,
+																	workout.exerciseAgonist === '유산소',
+																)}
+															</VolumeValue>
+														</ExerciseVolumeBadge>
+														{comparison && (
+															<VolumeComparison
+																className={
+																	comparison.changePercent > 0
+																		? 'increase'
+																		: comparison.changePercent < 0
+																			? 'decrease'
+																			: ''
+																}
+															>
+																<span style={{ fontSize: '16px' }}>
+																	{comparison.changePercent > 0 ? '📈' : '📉'}
+																</span>
+																<span>
+																	이전 운동(
+																	{dayjs(comparison.previousDate).format('M/D')}
+																	) 대비{' '}
+																	<strong
+																		style={{
+																			fontSize: '14px',
+																			fontWeight: 800,
+																		}}
+																	>
+																		{Math.abs(comparison.changePercent).toFixed(
+																			1,
+																		)}
+																		%
+																	</strong>
+																	{comparison.changePercent > 0
+																		? ' 상승'
+																		: ' 하락'}
+																</span>
+															</VolumeComparison>
+														)}
+													</div>
 												</div>
 											)
 										},
@@ -1693,11 +1869,6 @@ export const WorkOutCalendar = () => {
 				key: 'workout',
 				label: '운동일지',
 				children: workoutLogContent,
-			},
-			{
-				key: 'fatigue',
-				label: '신체피로도 - BETA',
-				children: <FatigueLevel />,
 			},
 		]
 
