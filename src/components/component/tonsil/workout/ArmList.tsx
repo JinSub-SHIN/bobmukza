@@ -1,4 +1,4 @@
-import { Card, List, Tag, Space, Input } from 'antd'
+import { Card, List, Tag, Space, Input, Spin } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import { useState, useMemo, useEffect } from 'react'
 import { styled } from 'styled-components'
@@ -229,6 +229,68 @@ const SearchInput = styled(Input)`
 	}
 `
 
+const LoadingContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 80px 20px;
+	gap: 20px;
+	min-height: 400px;
+
+	.ant-spin {
+		.ant-spin-dot {
+			font-size: 48px;
+		}
+	}
+
+	.ant-spin-dot-item {
+		background-color: #10b981;
+		width: 20px;
+		height: 20px;
+	}
+
+	@media screen and (max-width: 768px) {
+		padding: 60px 16px;
+		gap: 16px;
+		min-height: 300px;
+
+		.ant-spin {
+			.ant-spin-dot {
+				font-size: 40px;
+			}
+		}
+
+		.ant-spin-dot-item {
+			width: 16px;
+			height: 16px;
+		}
+	}
+`
+
+const LoadingText = styled.div`
+	font-size: 20px;
+	font-weight: 700;
+	color: #1a1a1a;
+	letter-spacing: -0.3px;
+	margin-top: 8px;
+
+	@media screen and (max-width: 768px) {
+		font-size: 18px;
+	}
+`
+
+const LoadingSubText = styled.div`
+	font-size: 14px;
+	color: #666;
+	font-weight: 500;
+	opacity: 0.8;
+
+	@media screen and (max-width: 768px) {
+		font-size: 13px;
+	}
+`
+
 type ExerciseData = {
 	title: string
 	antagonist?: string
@@ -324,7 +386,13 @@ export const ArmList = ({
 	}, [selectedFilter, data, selectMode, searchText])
 
 	if (loading) {
-		return <div>로딩 중...</div>
+		return (
+			<LoadingContainer>
+				<Spin size="large" />
+				<LoadingText>운동 목록을 불러오는 중...</LoadingText>
+				<LoadingSubText>잠시만 기다려주세요</LoadingSubText>
+			</LoadingContainer>
+		)
 	}
 
 	return (

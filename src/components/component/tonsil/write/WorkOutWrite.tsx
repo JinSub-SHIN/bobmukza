@@ -1,4 +1,12 @@
-import { Form, Select, InputNumber, Button, DatePicker, Input } from 'antd'
+import {
+	Form,
+	Select,
+	InputNumber,
+	Button,
+	DatePicker,
+	Input,
+	Spin,
+} from 'antd'
 import dayjs, { Dayjs } from 'dayjs'
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -115,6 +123,81 @@ const DeleteButton = styled(Button)`
 		color: #dc2626;
 		border-color: #dc2626;
 		background: #fee2e2;
+	}
+`
+
+const ExerciseLoadingContainer = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 16px;
+	background: linear-gradient(
+		135deg,
+		rgba(16, 185, 129, 0.08) 0%,
+		rgba(16, 185, 129, 0.03) 100%
+	);
+	border-radius: 8px;
+	border: 1px solid rgba(16, 185, 129, 0.2);
+	box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+
+	.ant-spin {
+		.ant-spin-dot-item {
+			background-color: #10b981;
+		}
+	}
+
+	span {
+		color: #10b981;
+		font-weight: 600;
+		font-size: 14px;
+		letter-spacing: -0.2px;
+	}
+
+	@media screen and (max-width: 480px) {
+		padding: 12px 14px;
+		gap: 10px;
+
+		span {
+			font-size: 13px;
+		}
+	}
+`
+
+const StyledSelect = styled(Select)`
+	width: 100%;
+
+	.ant-select-selector {
+		border-radius: 8px;
+		border: 1px solid #e2e8f0;
+		transition: all 0.3s ease;
+	}
+
+	&:hover .ant-select-selector {
+		border-color: #10b981;
+	}
+
+	&.ant-select-focused .ant-select-selector {
+		border-color: #10b981;
+		box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+	}
+
+	/* 로딩 스피너 스타일 개선 */
+	.ant-select-selection-placeholder {
+		color: #999;
+	}
+
+	.ant-select-arrow {
+		.anticon-loading {
+			color: #10b981;
+			font-size: 16px;
+		}
+	}
+
+	/* 로딩 중일 때 스타일 */
+	&.ant-select-loading {
+		.ant-select-selector {
+			border-color: #10b981;
+		}
 	}
 `
 
@@ -1217,34 +1300,41 @@ export const WorkOutWrite = () => {
 
 							<FormItem>
 								<Label>운동 종목</Label>
-								<Select
-									showSearch
-									placeholder={
-										selectedBodyParts.length > 0
-											? '운동 종목을 선택하거나 검색하세요'
-											: '먼저 운동 부위를 선택해주세요'
-									}
-									disabled={
-										selectedBodyParts.length === 0 ||
-										loading ||
-										(selectedExercises.length > 0 &&
-											selectedExercises.some(
-												se => se.title === exerciseData.exercise,
-											))
-									}
-									loading={loading}
-									value={exerciseData.exercise || undefined}
-									onChange={value => updateExercise(exerciseIndex, value)}
-									options={exerciseList.map(ex => ({
-										value: ex.title,
-										label: ex.title,
-									}))}
-									filterOption={(input, option) =>
-										(option?.label ?? '')
-											.toLowerCase()
-											.includes(input.toLowerCase())
-									}
-								/>
+								{loading && selectedBodyParts.length > 0 ? (
+									<ExerciseLoadingContainer>
+										<Spin size="small" />
+										<span>운동 목록을 불러오는 중...</span>
+									</ExerciseLoadingContainer>
+								) : (
+									<StyledSelect
+										showSearch
+										placeholder={
+											selectedBodyParts.length > 0
+												? '운동 종목을 선택하거나 검색하세요'
+												: '먼저 운동 부위를 선택해주세요'
+										}
+										disabled={
+											selectedBodyParts.length === 0 ||
+											(selectedExercises.length > 0 &&
+												selectedExercises.some(
+													se => se.title === exerciseData.exercise,
+												))
+										}
+										value={exerciseData.exercise || undefined}
+										onChange={value =>
+											updateExercise(exerciseIndex, value as string)
+										}
+										options={exerciseList.map(ex => ({
+											value: ex.title,
+											label: ex.title,
+										}))}
+										filterOption={(input, option) =>
+											(option?.label ?? '')
+												.toLowerCase()
+												.includes(input.toLowerCase())
+										}
+									/>
+								)}
 							</FormItem>
 
 							<FormItem>

@@ -6,6 +6,7 @@ import {
 	Tabs,
 	Modal,
 	Input,
+	Spin,
 } from 'antd'
 import { styled } from 'styled-components'
 import { useState, useMemo, useEffect, useCallback } from 'react'
@@ -217,6 +218,69 @@ const CardsContainer = styled.div`
 		gap: 10px;
 		margin-top: 12px;
 		background: #f5f5f5;
+	}
+`
+
+const LoadingContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 80px 20px;
+	gap: 20px;
+	min-height: 400px;
+	grid-column: 1 / -1;
+
+	.ant-spin {
+		.ant-spin-dot {
+			font-size: 48px;
+		}
+	}
+
+	.ant-spin-dot-item {
+		background-color: #10b981;
+		width: 20px;
+		height: 20px;
+	}
+
+	@media screen and (max-width: 768px) {
+		padding: 60px 16px;
+		gap: 16px;
+		min-height: 300px;
+
+		.ant-spin {
+			.ant-spin-dot {
+				font-size: 40px;
+			}
+		}
+
+		.ant-spin-dot-item {
+			width: 16px;
+			height: 16px;
+		}
+	}
+`
+
+const LoadingText = styled.div`
+	font-size: 20px;
+	font-weight: 700;
+	color: #1a1a1a;
+	letter-spacing: -0.3px;
+	margin-top: 8px;
+
+	@media screen and (max-width: 768px) {
+		font-size: 18px;
+	}
+`
+
+const LoadingSubText = styled.div`
+	font-size: 14px;
+	color: #666;
+	font-weight: 500;
+	opacity: 0.8;
+
+	@media screen and (max-width: 768px) {
+		font-size: 13px;
 	}
 `
 
@@ -1625,9 +1689,11 @@ export const WorkOutCalendar = () => {
 
 			<CardsContainer>
 				{loading ? (
-					<div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-						로딩 중...
-					</div>
+					<LoadingContainer>
+						<Spin size="large" />
+						<LoadingText>운동 일지를 불러오는 중...</LoadingText>
+						<LoadingSubText>잠시만 기다려주세요</LoadingSubText>
+					</LoadingContainer>
 				) : Object.keys(groupedBySession).length === 0 ? (
 					<div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
 						저장된 운동 일지가 없습니다.
