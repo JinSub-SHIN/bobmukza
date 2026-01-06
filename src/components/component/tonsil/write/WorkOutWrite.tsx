@@ -141,6 +141,7 @@ const SubmitButton = styled(Button)`
 type SetData = {
 	weight: number | null
 	reps: number | null
+	minutes: number | null
 }
 
 type ExerciseData = {
@@ -172,7 +173,7 @@ export const WorkOutWrite = () => {
 	)
 	const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([])
 	const [exerciseList, setExerciseList] = useState<
-		Array<{ title: string; agonist?: string }>
+		Array<{ title: string; agonist?: string; type?: string }>
 	>([])
 	const [loading, setLoading] = useState(false)
 	const [saving, setSaving] = useState(false)
@@ -180,9 +181,9 @@ export const WorkOutWrite = () => {
 		{
 			exercise: '',
 			sets: [
-				{ weight: null, reps: null },
-				{ weight: null, reps: null },
-				{ weight: null, reps: null },
+				{ weight: null, reps: null, minutes: null },
+				{ weight: null, reps: null, minutes: null },
+				{ weight: null, reps: null, minutes: null },
 			],
 		},
 	])
@@ -243,9 +244,9 @@ export const WorkOutWrite = () => {
 				(exercise: SelectedExercise) => ({
 					exercise: exercise.title,
 					sets: [
-						{ weight: null, reps: null },
-						{ weight: null, reps: null },
-						{ weight: null, reps: null },
+						{ weight: null, reps: null, minutes: null },
+						{ weight: null, reps: null, minutes: null },
+						{ weight: null, reps: null, minutes: null },
 					],
 				}),
 			)
@@ -258,8 +259,40 @@ export const WorkOutWrite = () => {
 	// 운동 목록이 로드되고 초기화가 완료되면 선택한 운동들을 설정
 	useEffect(() => {
 		if (isInitialized && exerciseList.length > 0) {
+			// 유산소 운동의 세트를 1개로 조정
+			const adjustedExercises = exercises.map(ex => {
+				if (!ex.exercise) return ex
+				const exerciseInfo = exerciseList.find(item => item.title === ex.exercise)
+				const isCardio = exerciseInfo?.agonist === '유산소'
+				
+				if (isCardio && ex.sets.length > 1) {
+					// 유산소인데 세트가 1개보다 많으면 1개로 조정
+					return {
+						...ex,
+						sets: [{ weight: null, reps: null, minutes: null }],
+					}
+				} else if (!isCardio && ex.sets.length === 1 && ex.sets[0].weight === null && ex.sets[0].reps === null && ex.sets[0].minutes === null) {
+					// 유산소가 아닌데 세트가 1개만 있고 모두 null이면 3개로 조정
+					return {
+						...ex,
+						sets: [
+							{ weight: null, reps: null, minutes: null },
+							{ weight: null, reps: null, minutes: null },
+							{ weight: null, reps: null, minutes: null },
+						],
+					}
+				}
+				return ex
+			})
+			
+			// 조정된 exercises가 기존과 다르면 업데이트
+			if (JSON.stringify(adjustedExercises) !== JSON.stringify(exercises)) {
+				setExercises(adjustedExercises)
+				saveFormDataToRedux(adjustedExercises)
+			}
+			
 			// 현재 exercises에 있는 운동 이름들
-			const existingExerciseNames = exercises
+			const existingExerciseNames = adjustedExercises
 				.map(ex => ex.exercise)
 				.filter(name => name !== '')
 
@@ -281,14 +314,22 @@ export const WorkOutWrite = () => {
 			// 새로운 운동이 있으면 추가
 			if (newExercises.length > 0) {
 				const exercisesToAdd: ExerciseData[] = newExercises.map(
-					(exercise: SelectedExercise) => ({
-						exercise: exercise.title,
-						sets: [
-							{ weight: null, reps: null },
-							{ weight: null, reps: null },
-							{ weight: null, reps: null },
-						],
-					}),
+					(exercise: SelectedExercise) => {
+						// 운동 종목 정보 확인
+						const exerciseInfo = exerciseList.find(ex => ex.title === exercise.title)
+						const isCardio = exerciseInfo?.agonist === '유산소'
+						
+						return {
+							exercise: exercise.title,
+							sets: isCardio
+								? [{ weight: null, reps: null, minutes: null }]
+								: [
+									{ weight: null, reps: null, minutes: null },
+									{ weight: null, reps: null, minutes: null },
+									{ weight: null, reps: null, minutes: null },
+								],
+						}
+					},
 				)
 
 				// 기존 exercises에 새로운 운동들 추가
@@ -346,14 +387,22 @@ export const WorkOutWrite = () => {
 			// 처음 초기화할 때만 전체 설정
 			if (existingExerciseNames.length === 0 && selectedExercises.length > 0) {
 				const initialExercises: ExerciseData[] = selectedExercises.map(
-					(exercise: SelectedExercise) => ({
-						exercise: exercise.title,
-						sets: [
-							{ weight: null, reps: null },
-							{ weight: null, reps: null },
-							{ weight: null, reps: null },
-						],
-					}),
+					(exercise: SelectedExercise) => {
+						// 운동 종목 정보 확인
+						const exerciseInfo = exerciseList.find(ex => ex.title === exercise.title)
+						const isCardio = exerciseInfo?.agonist === '유산소'
+						
+						return {
+							exercise: exercise.title,
+							sets: isCardio
+								? [{ weight: null, reps: null, minutes: null }]
+								: [
+									{ weight: null, reps: null, minutes: null },
+									{ weight: null, reps: null, minutes: null },
+									{ weight: null, reps: null, minutes: null },
+								],
+						}
+					},
 				)
 
 				setExercises(initialExercises)
@@ -374,7 +423,7 @@ export const WorkOutWrite = () => {
 				// 여러 부위에 대해 OR 조건으로 운동 목록 가져오기
 				const { data, error } = await supabase
 					.from('workoutList')
-					.select('title, agonist')
+					.select('title, agonist, type')
 					.in('agonist', selectedBodyParts)
 
 				if (error) {
@@ -406,9 +455,9 @@ export const WorkOutWrite = () => {
 					{
 						exercise: '',
 						sets: [
-							{ weight: null, reps: null },
-							{ weight: null, reps: null },
-							{ weight: null, reps: null },
+							{ weight: null, reps: null, minutes: null },
+							{ weight: null, reps: null, minutes: null },
+							{ weight: null, reps: null, minutes: null },
 						],
 					},
 				])
@@ -489,6 +538,7 @@ export const WorkOutWrite = () => {
 			sets: ex.sets.map(set => ({
 				weight: set.weight,
 				reps: set.reps,
+				minutes: set.minutes,
 			})),
 		}))
 
@@ -506,9 +556,26 @@ export const WorkOutWrite = () => {
 	// 운동 종목 변경
 	const updateExercise = (exerciseIndex: number, exerciseName: string) => {
 		const newExercises = [...exercises]
+		
+		// 운동 종목 정보 확인
+		const exerciseInfo = exerciseList.find(ex => ex.title === exerciseName)
+		const isCardio = exerciseInfo?.agonist === '유산소'
+		
+		// 유산소인 경우 세트를 1개만 유지, 아닌 경우 기존 세트 유지
+		const setsToKeep = isCardio 
+			? [{ weight: null, reps: null, minutes: null }]
+			: newExercises[exerciseIndex].sets.length > 0
+			? newExercises[exerciseIndex].sets
+			: [
+				{ weight: null, reps: null, minutes: null },
+				{ weight: null, reps: null, minutes: null },
+				{ weight: null, reps: null, minutes: null },
+			]
+		
 		newExercises[exerciseIndex] = {
 			...newExercises[exerciseIndex],
 			exercise: exerciseName,
+			sets: setsToKeep,
 		}
 		setExercises(newExercises)
 		// Redux에 저장
@@ -518,7 +585,7 @@ export const WorkOutWrite = () => {
 	// 세트 추가
 	const addSet = (exerciseIndex: number) => {
 		const newExercises = [...exercises]
-		newExercises[exerciseIndex].sets.push({ weight: null, reps: null })
+		newExercises[exerciseIndex].sets.push({ weight: null, reps: null, minutes: null })
 		setExercises(newExercises)
 		// Redux에 저장
 		saveFormDataToRedux(newExercises)
@@ -541,7 +608,7 @@ export const WorkOutWrite = () => {
 	const updateSet = (
 		exerciseIndex: number,
 		setIndex: number,
-		field: 'weight' | 'reps',
+		field: 'weight' | 'reps' | 'minutes',
 		value: number | null,
 	) => {
 		const newExercises = [...exercises]
@@ -557,6 +624,26 @@ export const WorkOutWrite = () => {
 		setTimeout(() => {
 			saveFormDataToRedux(newExercises)
 		}, 0)
+	}
+
+	// 운동의 입력 타입 확인 (유산소: minutes, 맨몸: reps만, 일반: weight x reps)
+	const getExerciseInputType = (exerciseName: string) => {
+		if (!exerciseName) return 'normal'
+		const exerciseInfo = exerciseList.find(ex => ex.title === exerciseName)
+		if (!exerciseInfo) return 'normal'
+		
+		// 유산소인 경우
+		if (exerciseInfo.agonist === '유산소') {
+			return 'cardio' // minutes만 입력
+		}
+		
+		// 맨몸인 경우
+		if (exerciseInfo.type === '맨몸') {
+			return 'bodyweight' // reps만 입력
+		}
+		
+		// 일반적인 경우
+		return 'normal' // weight x reps 입력
 	}
 
 	const onFinish: FormProps<FormData>['onFinish'] = async values => {
@@ -607,9 +694,23 @@ export const WorkOutWrite = () => {
 
 				// 입력된 세트가 있는 운동만 확인
 				const exercisesWithSets = exercisesForBodyPart.filter(ex => {
-					const validSets = ex.sets.filter(
-						set => set.weight !== null && set.reps !== null,
-					)
+					const exerciseInfo = exerciseList.find(item => item.title === ex.exercise)
+					const inputType = exerciseInfo?.agonist === '유산소' 
+						? 'cardio' 
+						: exerciseInfo?.type === '맨몸' 
+						? 'bodyweight' 
+						: 'normal'
+					
+					let validSets
+					if (inputType === 'cardio') {
+						validSets = ex.sets.filter(set => set.minutes !== null)
+					} else if (inputType === 'bodyweight') {
+						validSets = ex.sets.filter(set => set.reps !== null)
+					} else {
+						validSets = ex.sets.filter(
+							set => set.weight !== null && set.reps !== null,
+						)
+					}
 					return validSets.length > 0
 				})
 
@@ -748,10 +849,25 @@ export const WorkOutWrite = () => {
 					const exerciseData = exercisesWithSets[i]
 					if (!exerciseData.exercise) continue
 
-					// 입력된 세트만 필터링 (weight와 reps가 모두 입력된 세트)
-					const validSets = exerciseData.sets.filter(
-						set => set.weight !== null && set.reps !== null,
-					)
+					// 운동의 입력 타입 확인
+					const exerciseInfo = exerciseList.find(item => item.title === exerciseData.exercise)
+					const inputType = exerciseInfo?.agonist === '유산소' 
+						? 'cardio' 
+						: exerciseInfo?.type === '맨몸' 
+						? 'bodyweight' 
+						: 'normal'
+					
+					// 입력된 세트만 필터링 (타입에 따라 다르게)
+					let validSets
+					if (inputType === 'cardio') {
+						validSets = exerciseData.sets.filter(set => set.minutes !== null)
+					} else if (inputType === 'bodyweight') {
+						validSets = exerciseData.sets.filter(set => set.reps !== null)
+					} else {
+						validSets = exerciseData.sets.filter(
+							set => set.weight !== null && set.reps !== null,
+						)
+					}
 
 					if (validSets.length === 0) continue
 
@@ -784,12 +900,36 @@ export const WorkOutWrite = () => {
 					const exerciseId = exerciseDataResult.id
 
 					// 3. exercise_sets에 insert
-					const setsToInsert = validSets.map((set, index) => ({
-						exercise_id: exerciseId,
-						set_order: index + 1,
-						weight: set.weight!,
-						reps: set.reps!,
-					}))
+					const setsToInsert = validSets.map((set, index) => {
+						if (inputType === 'cardio') {
+							// 유산소: minutes만 저장, weight와 reps는 null 또는 0
+							return {
+								exercise_id: exerciseId,
+								set_order: index + 1,
+								weight: 0,
+								reps: 0,
+								minutes: set.minutes!,
+							}
+						} else if (inputType === 'bodyweight') {
+							// 맨몸: reps만 저장, weight는 0
+							return {
+								exercise_id: exerciseId,
+								set_order: index + 1,
+								weight: 0,
+								reps: set.reps!,
+								minutes: null,
+							}
+						} else {
+							// 일반: weight와 reps 저장
+							return {
+								exercise_id: exerciseId,
+								set_order: index + 1,
+								weight: set.weight!,
+								reps: set.reps!,
+								minutes: null,
+							}
+						}
+					})
 
 					const { error: setsError } = await supabase
 						.from('exercise_sets')
@@ -815,9 +955,9 @@ export const WorkOutWrite = () => {
 				{
 					exercise: '',
 					sets: [
-						{ weight: null, reps: null },
-						{ weight: null, reps: null },
-						{ weight: null, reps: null },
+						{ weight: null, reps: null, minutes: null },
+						{ weight: null, reps: null, minutes: null },
+						{ weight: null, reps: null, minutes: null },
 					],
 				},
 			])
@@ -1072,45 +1212,78 @@ export const WorkOutWrite = () => {
 							<FormItem>
 								<Label>세트 정보</Label>
 								<SetsContainer>
-									{exerciseData.sets.map((set, setIndex) => (
-										<SetItem key={setIndex}>
-											<SetLabel>{setIndex + 1}세트</SetLabel>
-											<InputGroup>
-												<InputNumber
-													placeholder="무게"
-													min={0}
-													step={0.5}
-													value={set.weight}
-													onChange={value =>
-														updateSet(exerciseIndex, setIndex, 'weight', value)
-													}
-													style={{ flex: 1 }}
-													addonAfter="kg"
-												/>
-												<span style={{ color: '#666' }}>×</span>
-												<InputNumber
-													placeholder="횟수"
-													min={0}
-													value={set.reps}
-													onChange={value =>
-														updateSet(exerciseIndex, setIndex, 'reps', value)
-													}
-													style={{ flex: 1 }}
-													addonAfter="회"
-												/>
-											</InputGroup>
-											{exerciseData.sets.length > 1 && (
-												<DeleteButton
-													type="default"
-													icon={<DeleteOutlined />}
-													onClick={() => removeSet(exerciseIndex, setIndex)}
-													danger
-												>
-													삭제
-												</DeleteButton>
-											)}
-										</SetItem>
-									))}
+									{exerciseData.sets.map((set, setIndex) => {
+										const inputType = getExerciseInputType(exerciseData.exercise)
+										return (
+											<SetItem key={setIndex}>
+												<SetLabel>{setIndex + 1}세트</SetLabel>
+												<InputGroup>
+													{inputType === 'cardio' ? (
+														// 유산소: 분만 입력
+														<InputNumber
+															placeholder="운동 시간"
+															min={0}
+															step={1}
+															value={set.minutes}
+															onChange={value =>
+																updateSet(exerciseIndex, setIndex, 'minutes', value)
+															}
+															style={{ flex: 1 }}
+															addonAfter="분"
+														/>
+													) : inputType === 'bodyweight' ? (
+														// 맨몸: 횟수만 입력
+														<InputNumber
+															placeholder="횟수"
+															min={0}
+															value={set.reps}
+															onChange={value =>
+																updateSet(exerciseIndex, setIndex, 'reps', value)
+															}
+															style={{ flex: 1 }}
+															addonAfter="회"
+														/>
+													) : (
+														// 일반: 무게 x 횟수
+														<>
+															<InputNumber
+																placeholder="무게"
+																min={0}
+																step={0.5}
+																value={set.weight}
+																onChange={value =>
+																	updateSet(exerciseIndex, setIndex, 'weight', value)
+																}
+																style={{ flex: 1 }}
+																addonAfter="kg"
+															/>
+															<span style={{ color: '#666' }}>×</span>
+															<InputNumber
+																placeholder="횟수"
+																min={0}
+																value={set.reps}
+																onChange={value =>
+																	updateSet(exerciseIndex, setIndex, 'reps', value)
+																}
+																style={{ flex: 1 }}
+																addonAfter="회"
+															/>
+														</>
+													)}
+												</InputGroup>
+												{exerciseData.sets.length > 1 && (
+													<DeleteButton
+														type="default"
+														icon={<DeleteOutlined />}
+														onClick={() => removeSet(exerciseIndex, setIndex)}
+														danger
+													>
+														삭제
+													</DeleteButton>
+												)}
+											</SetItem>
+										)
+									})}
 								</SetsContainer>
 								<AddButton
 									type="primary"

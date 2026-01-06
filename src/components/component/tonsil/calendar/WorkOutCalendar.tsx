@@ -428,24 +428,6 @@ const SetsInfo = styled.div`
 	}
 `
 
-const VolumeInfo = styled.div`
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	padding: 16px;
-	background: linear-gradient(135deg, #f6f8fb 0%, #e9ecef 100%);
-	border-radius: 12px;
-	margin-top: 16px;
-	border: 1px solid rgba(16, 185, 129, 0.1);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-	@media screen and (max-width: 480px) {
-		padding: 12px;
-		margin-top: 12px;
-	}
-`
-
 const ExerciseVolumeBadge = styled.div`
 	display: inline-flex;
 	align-items: center;
@@ -559,17 +541,6 @@ const TotalVolumeValue = styled.div`
 
 	@media screen and (max-width: 480px) {
 		font-size: 20px;
-	}
-`
-
-const TotalVolumeUnit = styled.span`
-	font-size: 16px;
-	font-weight: 600;
-	color: #000;
-	opacity: 0.8;
-
-	@media screen and (max-width: 480px) {
-		font-size: 14px;
 	}
 `
 
@@ -916,10 +887,16 @@ export const WorkOutCalendar = () => {
 			bodyPart: string
 			exerciseName: string
 			sets: number
-			setsDetail: Array<{ weight: number; reps: number }>
+			setsDetail: Array<{
+				weight: number
+				reps: number
+				minutes?: number | null
+			}>
 			userReview?: string | null
 			trainerReview?: string | null
 			order?: number | null
+			exerciseType?: string
+			exerciseAgonist?: string
 		}>
 	>([])
 	const [loading, setLoading] = useState(false)
@@ -1024,7 +1001,7 @@ export const WorkOutCalendar = () => {
 			const exerciseIds = exercises.map(e => e.id)
 			const { data: sets, error: setsError } = await supabase
 				.from('exercise_sets')
-				.select('exercise_id, set_order, weight, reps')
+				.select('exercise_id, set_order, weight, reps, minutes')
 				.in('exercise_id', exerciseIds)
 				.order('set_order', { ascending: true })
 
@@ -1032,6 +1009,29 @@ export const WorkOutCalendar = () => {
 				console.error('세트 조회 실패:', setsError)
 				setLoading(false)
 				return
+			}
+
+			// 3-1. 운동 종목 정보 가져오기 (type과 agonist 확인용)
+			const exerciseNames = Array.from(
+				new Set(exercises.map(e => e.exercise_name)),
+			)
+			const { data: exerciseInfoList } = await supabase
+				.from('workoutList')
+				.select('title, type, agonist')
+				.in('title', exerciseNames)
+
+			// 운동 이름을 키로 하는 맵 생성
+			const exerciseInfoMap = new Map<
+				string,
+				{ type?: string; agonist?: string }
+			>()
+			if (exerciseInfoList) {
+				exerciseInfoList.forEach(info => {
+					exerciseInfoMap.set(info.title, {
+						type: info.type,
+						agonist: info.agonist,
+					})
+				})
 			}
 
 			// 4. 데이터 변환
@@ -1074,6 +1074,9 @@ export const WorkOutCalendar = () => {
 							? workoutEndDateTime.format('HH:mm')
 							: session.workout_end_date?.split(' ')[1]?.substring(0, 5) || null
 
+						// 운동 종목 정보 가져오기
+						const exerciseInfo = exerciseInfoMap.get(exercise.exercise_name)
+
 						transformedData.push({
 							sessionId: session.id,
 							userId: session.user_id,
@@ -1086,10 +1089,13 @@ export const WorkOutCalendar = () => {
 							setsDetail: exerciseSets.map(set => ({
 								weight: Number(set.weight),
 								reps: set.reps,
+								minutes: set.minutes,
 							})),
 							userReview: session.user_review || null,
 							trainerReview: session.trainer_review || null,
 							order: exercise.order || null,
+							exerciseType: exerciseInfo?.type,
+							exerciseAgonist: exerciseInfo?.agonist,
 						})
 					}
 				}
@@ -1108,9 +1114,57 @@ export const WorkOutCalendar = () => {
 		fetchWorkoutData()
 	}, [fetchWorkoutData])
 
-	// 볼륨 계산 함수
-	const calculateVolume = (setsDetail: { weight: number; reps: number }[]) => {
-		return setsDetail.reduce((total, set) => total + set.weight * set.reps, 0)
+	// 볼륨 계산 함수 (일반 운동: kg, 유산소: minutes)
+	const calculateVolume = (
+		setsDetail: Array<{
+			weight: number
+			reps: number
+			minutes?: number | null
+		}>,
+	) => {
+		return setsDetail.reduce((total, set) => {
+			// minutes가 있으면 (유산소) minutes 합계 반환
+			if (set.minutes !== null && set.minutes !== undefined) {
+				return total + (set.minutes || 0)
+			}
+			// 일반적인 경우 weight * reps
+			return total + set.weight * set.reps
+		}, 0)
+	}
+
+	// 볼륨을 문자열로 포맷팅 (개별 운동용)
+	const formatExerciseVolume = (volume: number, isCardio: boolean) => {
+		if (isCardio) {
+			return `${volume.toLocaleString()}분`
+		}
+		return `${volume.toLocaleString()}kg`
+	}
+
+	// 총 볼륨을 문자열로 포맷팅 (여러 운동 합산용)
+	const formatTotalVolume = (workouts: typeof workoutData) => {
+		let totalKg = 0
+		let totalMinutes = 0
+
+		workouts.forEach(workout => {
+			const isCardio = workout.exerciseAgonist === '유산소'
+			const volume = calculateVolume(workout.setsDetail)
+
+			if (isCardio) {
+				totalMinutes += volume
+			} else {
+				totalKg += volume
+			}
+		})
+
+		const parts: string[] = []
+		if (totalKg > 0) {
+			parts.push(`${totalKg.toLocaleString()}kg`)
+		}
+		if (totalMinutes > 0) {
+			parts.push(`유산소 ${totalMinutes.toLocaleString()}분`)
+		}
+
+		return parts.length > 0 ? parts.join(' + ') : '0kg'
 	}
 
 	// 부위 매핑 (영어 -> 한국어)
@@ -1184,13 +1238,6 @@ export const WorkOutCalendar = () => {
 
 		return result
 	}, [filteredData])
-
-	// 날짜별 총 볼륨 계산
-	const calculateTotalVolumeForDate = (workouts: typeof workoutData) => {
-		return workouts.reduce((total, workout) => {
-			return total + calculateVolume(workout.setsDetail)
-		}, 0)
-	}
 
 	// 운동 일지 삭제 함수 (여러 세션 ID를 받을 수 있음)
 	const handleDeleteWorkout = async (sessionIds: string[]) => {
@@ -1396,7 +1443,7 @@ export const WorkOutCalendar = () => {
 							const sessionIds = [
 								...new Set(workoutsArray.map(w => w.sessionId)),
 							]
-							const totalVolume = calculateTotalVolumeForDate(
+							const totalVolumeText = formatTotalVolume(
 								workouts as typeof workoutData,
 							)
 							// 부위별 운동 개수 계산
@@ -1526,23 +1573,51 @@ export const WorkOutCalendar = () => {
 													<SetsInfo>세트수: {workout.sets}세트</SetsInfo>
 													<SetsGrid>
 														{workout.setsDetail.map((set, setIndex) => {
-															const isFailed = set.reps === 0
+															// 운동 타입 확인
+															const isCardio =
+																workout.exerciseAgonist === '유산소'
+															const isBodyweight =
+																workout.exerciseType === '맨몸'
+
+															// 실패 여부 확인 (유산소는 minutes가 0, 맨몸/일반은 reps가 0)
+															const isFailed = isCardio
+																? set.minutes === 0 || set.minutes === null
+																: set.reps === 0
+
 															return (
 																<SetDetail key={setIndex} isFailed={isFailed}>
 																	<SetNumber isFailed={isFailed}>
 																		{setIndex + 1}세트
 																	</SetNumber>
 																	<SetFormula isFailed={isFailed}>
-																		{set.weight}kg × {set.reps}회
+																		{isCardio ? (
+																			// 유산소: 분만 표시
+																			<>{set.minutes || 0}분</>
+																		) : isBodyweight ? (
+																			// 맨몸: 횟수만 표시
+																			<>{set.reps}회</>
+																		) : (
+																			// 일반: 무게 × 횟수
+																			<>
+																				{set.weight}kg × {set.reps}회
+																			</>
+																		)}
 																	</SetFormula>
 																</SetDetail>
 															)
 														})}
 													</SetsGrid>
 													<ExerciseVolumeBadge>
-														<VolumeLabel>볼륨</VolumeLabel>
+														<VolumeLabel>
+															{workout.exerciseAgonist === '유산소'
+																? '유산소'
+																: '볼륨'}
+														</VolumeLabel>
 														<VolumeValue>
-															{exerciseVolume.toLocaleString()}kg
+															{formatExerciseVolume(
+																exerciseVolume,
+																workout.exerciseAgonist === '유산소',
+															)}
 														</VolumeValue>
 													</ExerciseVolumeBadge>
 												</div>
@@ -1552,10 +1627,7 @@ export const WorkOutCalendar = () => {
 
 									<TotalVolumeCard>
 										<TotalVolumeLabel>총 볼륨</TotalVolumeLabel>
-										<TotalVolumeValue>
-											{totalVolume.toLocaleString()}
-											<TotalVolumeUnit>kg</TotalVolumeUnit>
-										</TotalVolumeValue>
+										<TotalVolumeValue>{totalVolumeText}</TotalVolumeValue>
 									</TotalVolumeCard>
 
 									{/* 리뷰 섹션 */}
