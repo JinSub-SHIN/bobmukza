@@ -534,13 +534,13 @@ const TotalVolumeValue = styled.div`
 	display: flex;
 	align-items: baseline;
 	gap: 4px;
-	font-size: 24px;
-	font-weight: 900;
+	font-size: 14px;
+	font-weight: 700;
 	color: #000;
-	letter-spacing: -0.5px;
+	letter-spacing: -0.3px;
 
 	@media screen and (max-width: 480px) {
-		font-size: 20px;
+		font-size: 12px;
 	}
 `
 

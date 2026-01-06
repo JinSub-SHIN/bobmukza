@@ -223,7 +223,23 @@ export const WorkOutWrite = () => {
 
 			// 운동 및 세트 정보 복원
 			if (workoutFormData.exercises.length > 0) {
-				setExercises(workoutFormData.exercises)
+				// minutes 필드가 없는 경우를 대비해 변환
+				const restoredExercises: ExerciseData[] = workoutFormData.exercises.map(
+					ex => ({
+						exercise: ex.exercise,
+						sets: ex.sets.map(set => {
+							const setWithMinutes = set as SetData & {
+								minutes?: number | null
+							}
+							return {
+								weight: set.weight,
+								reps: set.reps,
+								minutes: setWithMinutes.minutes ?? null,
+							}
+						}),
+					}),
+				)
+				setExercises(restoredExercises)
 			}
 
 			setIsInitialized(true)
@@ -262,16 +278,24 @@ export const WorkOutWrite = () => {
 			// 유산소 운동의 세트를 1개로 조정
 			const adjustedExercises = exercises.map(ex => {
 				if (!ex.exercise) return ex
-				const exerciseInfo = exerciseList.find(item => item.title === ex.exercise)
+				const exerciseInfo = exerciseList.find(
+					item => item.title === ex.exercise,
+				)
 				const isCardio = exerciseInfo?.agonist === '유산소'
-				
+
 				if (isCardio && ex.sets.length > 1) {
 					// 유산소인데 세트가 1개보다 많으면 1개로 조정
 					return {
 						...ex,
 						sets: [{ weight: null, reps: null, minutes: null }],
 					}
-				} else if (!isCardio && ex.sets.length === 1 && ex.sets[0].weight === null && ex.sets[0].reps === null && ex.sets[0].minutes === null) {
+				} else if (
+					!isCardio &&
+					ex.sets.length === 1 &&
+					ex.sets[0].weight === null &&
+					ex.sets[0].reps === null &&
+					ex.sets[0].minutes === null
+				) {
 					// 유산소가 아닌데 세트가 1개만 있고 모두 null이면 3개로 조정
 					return {
 						...ex,
@@ -284,13 +308,13 @@ export const WorkOutWrite = () => {
 				}
 				return ex
 			})
-			
+
 			// 조정된 exercises가 기존과 다르면 업데이트
 			if (JSON.stringify(adjustedExercises) !== JSON.stringify(exercises)) {
 				setExercises(adjustedExercises)
 				saveFormDataToRedux(adjustedExercises)
 			}
-			
+
 			// 현재 exercises에 있는 운동 이름들
 			const existingExerciseNames = adjustedExercises
 				.map(ex => ex.exercise)
@@ -316,18 +340,20 @@ export const WorkOutWrite = () => {
 				const exercisesToAdd: ExerciseData[] = newExercises.map(
 					(exercise: SelectedExercise) => {
 						// 운동 종목 정보 확인
-						const exerciseInfo = exerciseList.find(ex => ex.title === exercise.title)
+						const exerciseInfo = exerciseList.find(
+							ex => ex.title === exercise.title,
+						)
 						const isCardio = exerciseInfo?.agonist === '유산소'
-						
+
 						return {
 							exercise: exercise.title,
 							sets: isCardio
 								? [{ weight: null, reps: null, minutes: null }]
 								: [
-									{ weight: null, reps: null, minutes: null },
-									{ weight: null, reps: null, minutes: null },
-									{ weight: null, reps: null, minutes: null },
-								],
+										{ weight: null, reps: null, minutes: null },
+										{ weight: null, reps: null, minutes: null },
+										{ weight: null, reps: null, minutes: null },
+									],
 						}
 					},
 				)
@@ -389,18 +415,20 @@ export const WorkOutWrite = () => {
 				const initialExercises: ExerciseData[] = selectedExercises.map(
 					(exercise: SelectedExercise) => {
 						// 운동 종목 정보 확인
-						const exerciseInfo = exerciseList.find(ex => ex.title === exercise.title)
+						const exerciseInfo = exerciseList.find(
+							ex => ex.title === exercise.title,
+						)
 						const isCardio = exerciseInfo?.agonist === '유산소'
-						
+
 						return {
 							exercise: exercise.title,
 							sets: isCardio
 								? [{ weight: null, reps: null, minutes: null }]
 								: [
-									{ weight: null, reps: null, minutes: null },
-									{ weight: null, reps: null, minutes: null },
-									{ weight: null, reps: null, minutes: null },
-								],
+										{ weight: null, reps: null, minutes: null },
+										{ weight: null, reps: null, minutes: null },
+										{ weight: null, reps: null, minutes: null },
+									],
 						}
 					},
 				)
@@ -556,22 +584,22 @@ export const WorkOutWrite = () => {
 	// 운동 종목 변경
 	const updateExercise = (exerciseIndex: number, exerciseName: string) => {
 		const newExercises = [...exercises]
-		
+
 		// 운동 종목 정보 확인
 		const exerciseInfo = exerciseList.find(ex => ex.title === exerciseName)
 		const isCardio = exerciseInfo?.agonist === '유산소'
-		
+
 		// 유산소인 경우 세트를 1개만 유지, 아닌 경우 기존 세트 유지
-		const setsToKeep = isCardio 
+		const setsToKeep = isCardio
 			? [{ weight: null, reps: null, minutes: null }]
 			: newExercises[exerciseIndex].sets.length > 0
-			? newExercises[exerciseIndex].sets
-			: [
-				{ weight: null, reps: null, minutes: null },
-				{ weight: null, reps: null, minutes: null },
-				{ weight: null, reps: null, minutes: null },
-			]
-		
+				? newExercises[exerciseIndex].sets
+				: [
+						{ weight: null, reps: null, minutes: null },
+						{ weight: null, reps: null, minutes: null },
+						{ weight: null, reps: null, minutes: null },
+					]
+
 		newExercises[exerciseIndex] = {
 			...newExercises[exerciseIndex],
 			exercise: exerciseName,
@@ -585,7 +613,11 @@ export const WorkOutWrite = () => {
 	// 세트 추가
 	const addSet = (exerciseIndex: number) => {
 		const newExercises = [...exercises]
-		newExercises[exerciseIndex].sets.push({ weight: null, reps: null, minutes: null })
+		newExercises[exerciseIndex].sets.push({
+			weight: null,
+			reps: null,
+			minutes: null,
+		})
 		setExercises(newExercises)
 		// Redux에 저장
 		saveFormDataToRedux(newExercises)
@@ -631,17 +663,17 @@ export const WorkOutWrite = () => {
 		if (!exerciseName) return 'normal'
 		const exerciseInfo = exerciseList.find(ex => ex.title === exerciseName)
 		if (!exerciseInfo) return 'normal'
-		
+
 		// 유산소인 경우
 		if (exerciseInfo.agonist === '유산소') {
 			return 'cardio' // minutes만 입력
 		}
-		
+
 		// 맨몸인 경우
 		if (exerciseInfo.type === '맨몸') {
 			return 'bodyweight' // reps만 입력
 		}
-		
+
 		// 일반적인 경우
 		return 'normal' // weight x reps 입력
 	}
@@ -694,13 +726,16 @@ export const WorkOutWrite = () => {
 
 				// 입력된 세트가 있는 운동만 확인
 				const exercisesWithSets = exercisesForBodyPart.filter(ex => {
-					const exerciseInfo = exerciseList.find(item => item.title === ex.exercise)
-					const inputType = exerciseInfo?.agonist === '유산소' 
-						? 'cardio' 
-						: exerciseInfo?.type === '맨몸' 
-						? 'bodyweight' 
-						: 'normal'
-					
+					const exerciseInfo = exerciseList.find(
+						item => item.title === ex.exercise,
+					)
+					const inputType =
+						exerciseInfo?.agonist === '유산소'
+							? 'cardio'
+							: exerciseInfo?.type === '맨몸'
+								? 'bodyweight'
+								: 'normal'
+
 					let validSets
 					if (inputType === 'cardio') {
 						validSets = ex.sets.filter(set => set.minutes !== null)
@@ -850,13 +885,16 @@ export const WorkOutWrite = () => {
 					if (!exerciseData.exercise) continue
 
 					// 운동의 입력 타입 확인
-					const exerciseInfo = exerciseList.find(item => item.title === exerciseData.exercise)
-					const inputType = exerciseInfo?.agonist === '유산소' 
-						? 'cardio' 
-						: exerciseInfo?.type === '맨몸' 
-						? 'bodyweight' 
-						: 'normal'
-					
+					const exerciseInfo = exerciseList.find(
+						item => item.title === exerciseData.exercise,
+					)
+					const inputType =
+						exerciseInfo?.agonist === '유산소'
+							? 'cardio'
+							: exerciseInfo?.type === '맨몸'
+								? 'bodyweight'
+								: 'normal'
+
 					// 입력된 세트만 필터링 (타입에 따라 다르게)
 					let validSets
 					if (inputType === 'cardio') {
@@ -1130,9 +1168,9 @@ export const WorkOutWrite = () => {
 											{
 												exercise: '',
 												sets: [
-													{ weight: null, reps: null },
-													{ weight: null, reps: null },
-													{ weight: null, reps: null },
+													{ weight: null, reps: null, minutes: null },
+													{ weight: null, reps: null, minutes: null },
+													{ weight: null, reps: null, minutes: null },
 												],
 											},
 										])
@@ -1213,7 +1251,9 @@ export const WorkOutWrite = () => {
 								<Label>세트 정보</Label>
 								<SetsContainer>
 									{exerciseData.sets.map((set, setIndex) => {
-										const inputType = getExerciseInputType(exerciseData.exercise)
+										const inputType = getExerciseInputType(
+											exerciseData.exercise,
+										)
 										return (
 											<SetItem key={setIndex}>
 												<SetLabel>{setIndex + 1}세트</SetLabel>
@@ -1226,7 +1266,12 @@ export const WorkOutWrite = () => {
 															step={1}
 															value={set.minutes}
 															onChange={value =>
-																updateSet(exerciseIndex, setIndex, 'minutes', value)
+																updateSet(
+																	exerciseIndex,
+																	setIndex,
+																	'minutes',
+																	value,
+																)
 															}
 															style={{ flex: 1 }}
 															addonAfter="분"
@@ -1238,7 +1283,12 @@ export const WorkOutWrite = () => {
 															min={0}
 															value={set.reps}
 															onChange={value =>
-																updateSet(exerciseIndex, setIndex, 'reps', value)
+																updateSet(
+																	exerciseIndex,
+																	setIndex,
+																	'reps',
+																	value,
+																)
 															}
 															style={{ flex: 1 }}
 															addonAfter="회"
@@ -1252,7 +1302,12 @@ export const WorkOutWrite = () => {
 																step={0.5}
 																value={set.weight}
 																onChange={value =>
-																	updateSet(exerciseIndex, setIndex, 'weight', value)
+																	updateSet(
+																		exerciseIndex,
+																		setIndex,
+																		'weight',
+																		value,
+																	)
 																}
 																style={{ flex: 1 }}
 																addonAfter="kg"
@@ -1263,7 +1318,12 @@ export const WorkOutWrite = () => {
 																min={0}
 																value={set.reps}
 																onChange={value =>
-																	updateSet(exerciseIndex, setIndex, 'reps', value)
+																	updateSet(
+																		exerciseIndex,
+																		setIndex,
+																		'reps',
+																		value,
+																	)
 																}
 																style={{ flex: 1 }}
 																addonAfter="회"
