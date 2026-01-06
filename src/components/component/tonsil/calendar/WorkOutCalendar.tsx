@@ -555,6 +555,57 @@ const TotalVolumeValue = styled.div`
 	}
 `
 
+const OneRMBadge = styled.div`
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	background: linear-gradient(
+		135deg,
+		rgba(99, 102, 241, 0.1) 0%,
+		rgba(99, 102, 241, 0.05) 100%
+	);
+	border-radius: 12px;
+	border: 2px solid rgba(99, 102, 241, 0.2);
+	margin-top: 8px;
+	box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+	transition: all 0.3s ease;
+
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+		border-color: rgba(99, 102, 241, 0.3);
+	}
+
+	@media screen and (max-width: 480px) {
+		padding: 8px 12px;
+		margin-top: 6px;
+		gap: 6px;
+	}
+`
+
+const OneRMLabel = styled.span`
+	font-size: 11px;
+	color: #6366f1;
+	font-weight: 800;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	opacity: 0.9;
+`
+
+const OneRMValue = styled.span`
+	font-size: 18px;
+	font-weight: 900;
+	color: #1a1a1a;
+	letter-spacing: -0.5px;
+	font-family:
+		-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+	@media screen and (max-width: 480px) {
+		font-size: 16px;
+	}
+`
+
 const VolumeComparison = styled.div`
 	margin-top: 10px;
 	padding: 10px 14px;
@@ -1224,6 +1275,31 @@ export const WorkOutCalendar = () => {
 		return `${volume.toLocaleString()}kg`
 	}
 
+	// Epley 공식을 사용한 1RM 계산: 1RM = 무게 × (1 + 반복 횟수 / 30)
+	const calculateOneRM = (
+		setsDetail: Array<{
+			weight: number
+			reps: number
+			minutes?: number | null
+		}>,
+	) => {
+		// 유산소나 맨몸 운동은 1RM 계산 불가
+		const validSets = setsDetail.filter(
+			set => set.weight > 0 && set.reps > 0 && !set.minutes,
+		)
+
+		if (validSets.length === 0) {
+			return null
+		}
+
+		// 각 세트의 1RM 계산 후 가장 높은 값 반환
+		const oneRMs = validSets.map(set => {
+			return set.weight * (1 + set.reps / 30)
+		})
+
+		return Math.max(...oneRMs)
+	}
+
 	// 총 볼륨을 문자열로 포맷팅 (여러 운동 합산용)
 	const formatTotalVolume = (workouts: typeof workoutData) => {
 		let totalKg = 0
@@ -1748,19 +1824,50 @@ export const WorkOutCalendar = () => {
 															gap: '8px',
 														}}
 													>
-														<ExerciseVolumeBadge>
-															<VolumeLabel>
-																{workout.exerciseAgonist === '유산소'
-																	? '유산소'
-																	: '볼륨'}
-															</VolumeLabel>
-															<VolumeValue>
-																{formatExerciseVolume(
-																	exerciseVolume,
-																	workout.exerciseAgonist === '유산소',
-																)}
-															</VolumeValue>
-														</ExerciseVolumeBadge>
+														{(() => {
+															const isCardio =
+																workout.exerciseAgonist === '유산소'
+															const isBodyweight =
+																workout.exerciseType === '맨몸'
+
+															// 맨몸 운동은 볼륨 표시하지 않음
+															if (isBodyweight) {
+																return null
+															}
+
+															return (
+																<ExerciseVolumeBadge>
+																	<VolumeLabel>
+																		{isCardio ? '유산소' : '볼륨'}
+																	</VolumeLabel>
+																	<VolumeValue>
+																		{formatExerciseVolume(
+																			exerciseVolume,
+																			isCardio,
+																		)}
+																	</VolumeValue>
+																</ExerciseVolumeBadge>
+															)
+														})()}
+														{(() => {
+															const oneRM = calculateOneRM(workout.setsDetail)
+															const isCardio =
+																workout.exerciseAgonist === '유산소'
+															const isBodyweight =
+																workout.exerciseType === '맨몸'
+
+															if (oneRM && !isCardio && !isBodyweight) {
+																return (
+																	<OneRMBadge>
+																		<OneRMLabel>1RM</OneRMLabel>
+																		<OneRMValue>
+																			{Math.round(oneRM).toLocaleString()}kg
+																		</OneRMValue>
+																	</OneRMBadge>
+																)
+															}
+															return null
+														})()}
 														{comparison && (
 															<VolumeComparison
 																className={
