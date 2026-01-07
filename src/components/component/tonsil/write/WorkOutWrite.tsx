@@ -260,6 +260,16 @@ export const WorkOutWrite = () => {
 	>([])
 	const [loading, setLoading] = useState(false)
 	const [saving, setSaving] = useState(false)
+
+	// Select 드롭다운이 열릴 때 body 스크롤 방지
+	const handleDropdownVisibleChange = (open: boolean) => {
+		if (open) {
+			document.body.style.overflow = 'hidden'
+		} else {
+			document.body.style.overflow = ''
+		}
+	}
+
 	const [exercises, setExercises] = useState<ExerciseData[]>([
 		{
 			exercise: '',
@@ -1148,6 +1158,13 @@ export const WorkOutWrite = () => {
 									onChange={() => {
 										setTimeout(() => saveFormDataToRedux(), 100)
 									}}
+									onDropdownVisibleChange={handleDropdownVisibleChange}
+									getPopupContainer={trigger => trigger.parentElement || document.body}
+									dropdownStyle={{
+										maxHeight: '200px',
+										overflowY: 'auto',
+									}}
+									virtual={false}
 								>
 									{Array.from({ length: 24 }, (_, i) => (
 										<Select.Option key={i} value={String(i).padStart(2, '0')}>
@@ -1167,6 +1184,13 @@ export const WorkOutWrite = () => {
 									onChange={() => {
 										setTimeout(() => saveFormDataToRedux(), 100)
 									}}
+									onDropdownVisibleChange={handleDropdownVisibleChange}
+									getPopupContainer={trigger => trigger.parentElement || document.body}
+									dropdownStyle={{
+										maxHeight: '200px',
+										overflowY: 'auto',
+									}}
+									virtual={false}
 								>
 									{Array.from({ length: 6 }, (_, i) => {
 										const minute = i * 10
@@ -1196,6 +1220,13 @@ export const WorkOutWrite = () => {
 									onChange={() => {
 										setTimeout(() => saveFormDataToRedux(), 100)
 									}}
+									onDropdownVisibleChange={handleDropdownVisibleChange}
+									getPopupContainer={trigger => trigger.parentElement || document.body}
+									dropdownStyle={{
+										maxHeight: '200px',
+										overflowY: 'auto',
+									}}
+									virtual={false}
 								>
 									{Array.from({ length: 24 }, (_, i) => (
 										<Select.Option key={i} value={String(i).padStart(2, '0')}>
@@ -1215,6 +1246,13 @@ export const WorkOutWrite = () => {
 									onChange={() => {
 										setTimeout(() => saveFormDataToRedux(), 100)
 									}}
+									onDropdownVisibleChange={handleDropdownVisibleChange}
+									getPopupContainer={trigger => trigger.parentElement || document.body}
+									dropdownStyle={{
+										maxHeight: '200px',
+										overflowY: 'auto',
+									}}
+									virtual={false}
 								>
 									{Array.from({ length: 6 }, (_, i) => {
 										const minute = i * 10

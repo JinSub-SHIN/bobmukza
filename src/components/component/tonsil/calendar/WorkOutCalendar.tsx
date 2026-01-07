@@ -22,7 +22,17 @@ import {
 	clearWorkoutFormData,
 } from '../../../../store/action/selectedExercisesSlice'
 import { supabase } from '../../../database/supabase'
-import { DeleteOutlined } from '@ant-design/icons'
+import { DeleteOutlined, LineChartOutlined } from '@ant-design/icons'
+import {
+	LineChart,
+	Line,
+	XAxis,
+	YAxis,
+	CartesianGrid,
+	Tooltip,
+	Legend,
+	ResponsiveContainer,
+} from 'recharts'
 
 // dayjs 한국어 locale 설정
 dayjs.locale('ko')
@@ -35,6 +45,9 @@ const PageTitle = styled.h1`
 	color: #333;
 	padding-bottom: 16px;
 	border-bottom: 2px solid #e5e7eb;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
 
 	@media screen and (max-width: 768px) {
 		font-size: 24px;
@@ -84,6 +97,13 @@ const StyledTabs = styled(Tabs)`
 	}
 `
 
+const MainContainer = styled.div`
+	width: 100%;
+	max-width: 100vw;
+	overflow-x: hidden;
+	box-sizing: border-box;
+`
+
 const FormContainer = styled.div`
 	display: flex;
 	flex-direction: column;
@@ -93,6 +113,9 @@ const FormContainer = styled.div`
 	background: #fff;
 	border-radius: 8px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
 
 	@media screen and (max-width: 768px) {
 		padding: 16px;
@@ -205,6 +228,10 @@ const CardsContainer = styled.div`
 	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 	border-radius: 12px;
 	box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	overflow-x: hidden;
 
 	@media screen and (max-width: 768px) {
 		grid-template-columns: 1fr;
@@ -619,26 +646,51 @@ const TotalVolumeValue = styled.div`
 	}
 `
 
-const OneRMBadge = styled.div`
+const OneRMBadge = styled.div<{ isPersonalBest?: boolean }>`
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
 	padding: 10px 16px;
-	background: linear-gradient(
-		135deg,
-		rgba(99, 102, 241, 0.1) 0%,
-		rgba(99, 102, 241, 0.05) 100%
-	);
+	background: ${props =>
+		props.isPersonalBest
+			? 'linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 193, 7, 0.1) 100%)'
+			: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)'};
 	border-radius: 12px;
-	border: 2px solid rgba(99, 102, 241, 0.2);
+	border: ${props =>
+		props.isPersonalBest
+			? '3px solid #ffd700'
+			: '2px solid rgba(99, 102, 241, 0.2)'};
 	margin-top: 8px;
-	box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+	box-shadow: ${props =>
+		props.isPersonalBest
+			? '0 4px 16px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.1)'
+			: '0 2px 8px rgba(99, 102, 241, 0.1)'};
 	transition: all 0.3s ease;
+	position: relative;
+	overflow: hidden;
+
+	${props =>
+		props.isPersonalBest &&
+		`
+		&::before {
+			content: '🏆';
+			position: absolute;
+			top: -5px;
+			right: -5px;
+			font-size: 24px;
+			opacity: 0.3;
+			transform: rotate(15deg);
+		}
+	`}
 
 	&:hover {
 		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-		border-color: rgba(99, 102, 241, 0.3);
+		box-shadow: ${props =>
+			props.isPersonalBest
+				? '0 6px 20px rgba(255, 215, 0, 0.4), inset 0 0 20px rgba(255, 215, 0, 0.15)'
+				: '0 4px 12px rgba(99, 102, 241, 0.15)'};
+		border-color: ${props =>
+			props.isPersonalBest ? '#ffed4e' : 'rgba(99, 102, 241, 0.3)'};
 	}
 
 	@media screen and (max-width: 480px) {
@@ -1104,6 +1156,10 @@ export const WorkOutCalendar = () => {
 	const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
 		null,
 	)
+	const [graphModalVisible, setGraphModalVisible] = useState(false)
+	const [selectedExerciseName, setSelectedExerciseName] = useState<
+		string | null
+	>(null)
 
 	// 부위 선택 핸들러
 	const handleChange = (value: string) => {
@@ -1364,6 +1420,39 @@ export const WorkOutCalendar = () => {
 		return Math.max(...oneRMs)
 	}
 
+	// 해당 운동의 개인 최고 기록인지 확인
+	const isPersonalBest = (
+		currentWorkout: {
+			exerciseName: string
+			setsDetail: Array<{
+				weight: number
+				reps: number
+				minutes?: number | null
+			}>
+			date: string
+		},
+		allWorkouts: typeof workoutData,
+	) => {
+		const currentOneRM = calculateOneRM(currentWorkout.setsDetail)
+		if (!currentOneRM) return false
+
+		// 같은 운동 이름의 모든 기록 찾기
+		const sameExerciseWorkouts = allWorkouts.filter(
+			workout => workout.exerciseName === currentWorkout.exerciseName,
+		)
+
+		// 각 기록의 1RM 계산
+		const allOneRMs = sameExerciseWorkouts
+			.map(workout => calculateOneRM(workout.setsDetail))
+			.filter((rm): rm is number => rm !== null)
+
+		if (allOneRMs.length === 0) return false
+
+		// 현재 1RM이 최고 기록인지 확인
+		const maxOneRM = Math.max(...allOneRMs)
+		return currentOneRM >= maxOneRM
+	}
+
 	// 총 볼륨을 문자열로 포맷팅 (여러 운동 합산용)
 	const formatTotalVolume = (workouts: typeof workoutData) => {
 		let totalKg = 0
@@ -1434,6 +1523,29 @@ export const WorkOutCalendar = () => {
 			changePercent,
 			previousDate: mostRecentPrevious.date,
 		}
+	}
+
+	// 그래프 데이터 생성
+	const getGraphData = (exerciseName: string) => {
+		if (!exerciseName) return []
+
+		// 같은 운동 이름의 모든 기록 찾기 (날짜순 정렬)
+		const sameExerciseWorkouts = workoutData
+			.filter(workout => workout.exerciseName === exerciseName)
+			.sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
+
+		// 그래프 데이터 생성
+		return sameExerciseWorkouts.map(workout => {
+			const volume = calculateVolume(workout.setsDetail)
+			const oneRM = calculateOneRM(workout.setsDetail)
+
+			return {
+				date: dayjs(workout.date).format('MM/DD'),
+				fullDate: workout.date,
+				volume: volume || 0,
+				oneRM: oneRM ? Math.round(oneRM) : null,
+			}
+		})
 	}
 
 	// 부위 매핑 (영어 -> 한국어)
@@ -1845,7 +1957,32 @@ export const WorkOutCalendar = () => {
 																: 'none',
 													}}
 												>
-													<ExerciseName>{workout.exerciseName}</ExerciseName>
+													<div
+														style={{
+															display: 'flex',
+															justifyContent: 'space-between',
+															alignItems: 'center',
+															marginBottom: '8px',
+														}}
+													>
+														<ExerciseName>{workout.exerciseName}</ExerciseName>
+														<Button
+															type="text"
+															icon={<LineChartOutlined />}
+															size="small"
+															onClick={() => {
+																setSelectedExerciseName(workout.exerciseName)
+																setGraphModalVisible(true)
+															}}
+															style={{
+																color: '#10b981',
+																fontSize: '14px',
+																padding: '4px 8px',
+															}}
+														>
+															그래프
+														</Button>
+													</div>
 													<SetsInfo>세트수: {workout.sets}세트</SetsInfo>
 													<SetsGrid>
 														{workout.setsDetail.map((set, setIndex) => {
@@ -1923,12 +2060,26 @@ export const WorkOutCalendar = () => {
 																workout.exerciseType === '맨몸'
 
 															if (oneRM && !isCardio && !isBodyweight) {
+																const personalBest = isPersonalBest(
+																	workout,
+																	workoutData,
+																)
 																return (
-																	<OneRMBadge>
+																	<OneRMBadge isPersonalBest={personalBest}>
 																		<OneRMLabel>1RM</OneRMLabel>
 																		<OneRMValue>
 																			{Math.round(oneRM).toLocaleString()}kg
 																		</OneRMValue>
+																		{personalBest && (
+																			<span
+																				style={{
+																					marginLeft: '4px',
+																					fontSize: '14px',
+																				}}
+																			>
+																				🏆
+																			</span>
+																		)}
 																	</OneRMBadge>
 																)
 															}
@@ -2046,7 +2197,7 @@ export const WorkOutCalendar = () => {
 		]
 
 		return (
-			<>
+			<MainContainer>
 				<PageTitle>{decodeURIComponent(selectedUserName)} 회원님💪</PageTitle>
 				<StyledTabs
 					activeKey={activeTab}
@@ -2078,39 +2229,351 @@ export const WorkOutCalendar = () => {
 						</SubmitReviewButton>
 					</ModalButtonGroup>
 				</StyledModal>
-			</>
+
+				{/* 그래프 모달 */}
+				<Modal
+					title={
+						<div style={{ fontSize: '20px', fontWeight: 700 }}>
+							{selectedExerciseName} 기록 분석
+						</div>
+					}
+					open={graphModalVisible}
+					onCancel={() => {
+						setGraphModalVisible(false)
+						setSelectedExerciseName(null)
+					}}
+					width={window.innerWidth <= 768 ? '95%' : 900}
+					footer={null}
+					style={{ top: 20 }}
+					styles={{
+						body: {
+							maxWidth: '100vw',
+							overflowX: 'hidden',
+						},
+					}}
+				>
+					{selectedExerciseName && (
+						<div style={{ padding: '20px 0' }}>
+							{(() => {
+								const graphData = getGraphData(selectedExerciseName)
+								const volumeData = graphData.filter(
+									(d: { volume: number }) => d.volume > 0,
+								)
+								const oneRMData = graphData.filter(
+									(d: { oneRM: number | null }) => d.oneRM !== null,
+								)
+
+								return (
+									<>
+										{/* 볼륨 그래프 */}
+										{volumeData.length > 0 && (
+											<div style={{ marginBottom: '40px' }}>
+												<h3
+													style={{
+														fontSize: '18px',
+														fontWeight: 700,
+														marginBottom: '20px',
+														color: '#1a1a1a',
+													}}
+												>
+													볼륨 추이
+												</h3>
+												<ResponsiveContainer width="100%" height={300}>
+													<LineChart data={volumeData}>
+														<CartesianGrid
+															strokeDasharray="3 3"
+															stroke="#e5e7eb"
+														/>
+														<XAxis dataKey="date" stroke="#666" fontSize={12} />
+														<YAxis
+															stroke="#666"
+															fontSize={12}
+															label={{
+																value: '볼륨 (kg)',
+																angle: -90,
+																position: 'insideLeft',
+															}}
+														/>
+														<Tooltip
+															contentStyle={{
+																backgroundColor: '#fff',
+																border: '1px solid #e5e7eb',
+																borderRadius: '8px',
+															}}
+														/>
+														<Legend />
+														<Line
+															type="monotone"
+															dataKey="volume"
+															stroke="#10b981"
+															strokeWidth={3}
+															dot={{ fill: '#10b981', r: 5 }}
+															activeDot={{ r: 7 }}
+															name="볼륨 (kg)"
+														/>
+													</LineChart>
+												</ResponsiveContainer>
+											</div>
+										)}
+
+										{/* 1RM 그래프 */}
+										{oneRMData.length > 0 && (
+											<div>
+												<h3
+													style={{
+														fontSize: '18px',
+														fontWeight: 700,
+														marginBottom: '20px',
+														color: '#1a1a1a',
+													}}
+												>
+													1RM 추이
+												</h3>
+												<ResponsiveContainer width="100%" height={300}>
+													<LineChart data={oneRMData}>
+														<CartesianGrid
+															strokeDasharray="3 3"
+															stroke="#e5e7eb"
+														/>
+														<XAxis dataKey="date" stroke="#666" fontSize={12} />
+														<YAxis
+															stroke="#666"
+															fontSize={12}
+															label={{
+																value: '1RM (kg)',
+																angle: -90,
+																position: 'insideLeft',
+															}}
+														/>
+														<Tooltip
+															contentStyle={{
+																backgroundColor: '#fff',
+																border: '1px solid #e5e7eb',
+																borderRadius: '8px',
+															}}
+														/>
+														<Legend />
+														<Line
+															type="monotone"
+															dataKey="oneRM"
+															stroke="#6366f1"
+															strokeWidth={3}
+															dot={{ fill: '#6366f1', r: 5 }}
+															activeDot={{ r: 7 }}
+															name="1RM (kg)"
+														/>
+													</LineChart>
+												</ResponsiveContainer>
+											</div>
+										)}
+
+										{volumeData.length === 0 && oneRMData.length === 0 && (
+											<div
+												style={{
+													textAlign: 'center',
+													padding: '40px',
+													color: '#666',
+												}}
+											>
+												표시할 데이터가 없습니다.
+											</div>
+										)}
+									</>
+								)
+							})()}
+						</div>
+					)}
+				</Modal>
+			</MainContainer>
 		)
 	}
 
 	// 일반 회원 또는 트레이너가 회원을 선택하지 않은 경우 기존 레이아웃
 	return (
-		<ConfigProvider locale={locale}>
-			{workoutLogContent}
-			<StyledModal
-				title="트레이너 리뷰 등록"
-				open={reviewModalVisible}
-				onCancel={handleCloseReviewModal}
-				width={600}
-				footer={null}
-			>
-				<div style={{ marginBottom: '20px' }}>
-					<ReviewFormLabel>리뷰 내용</ReviewFormLabel>
-					<StyledTextArea
-						rows={6}
-						placeholder="회원의 운동에 대한 리뷰를 작성해주세요"
-						value={reviewText}
-						onChange={e => setReviewText(e.target.value)}
-						maxLength={500}
-						showCount
-					/>
-				</div>
-				<ModalButtonGroup>
-					<CancelButton onClick={handleCloseReviewModal}>취소</CancelButton>
-					<SubmitReviewButton type="primary" onClick={handleSaveReview}>
-						등록하기
-					</SubmitReviewButton>
-				</ModalButtonGroup>
-			</StyledModal>
-		</ConfigProvider>
+		<MainContainer>
+			<ConfigProvider locale={locale}>
+				{workoutLogContent}
+				<StyledModal
+					title="트레이너 리뷰 등록"
+					open={reviewModalVisible}
+					onCancel={handleCloseReviewModal}
+					width={600}
+					footer={null}
+				>
+					<div style={{ marginBottom: '20px' }}>
+						<ReviewFormLabel>리뷰 내용</ReviewFormLabel>
+						<StyledTextArea
+							rows={6}
+							placeholder="회원의 운동에 대한 리뷰를 작성해주세요"
+							value={reviewText}
+							onChange={e => setReviewText(e.target.value)}
+							maxLength={500}
+							showCount
+						/>
+					</div>
+					<ModalButtonGroup>
+						<CancelButton onClick={handleCloseReviewModal}>취소</CancelButton>
+						<SubmitReviewButton type="primary" onClick={handleSaveReview}>
+							등록하기
+						</SubmitReviewButton>
+					</ModalButtonGroup>
+				</StyledModal>
+
+				{/* 그래프 모달 */}
+				<Modal
+					title={
+						<div style={{ fontSize: '20px', fontWeight: 700 }}>
+							{selectedExerciseName} 기록 분석
+						</div>
+					}
+					open={graphModalVisible}
+					onCancel={() => {
+						setGraphModalVisible(false)
+						setSelectedExerciseName(null)
+					}}
+					width={window.innerWidth <= 768 ? '95%' : 900}
+					footer={null}
+					style={{ top: 20 }}
+					styles={{
+						body: {
+							maxWidth: '100vw',
+							overflowX: 'hidden',
+						},
+					}}
+				>
+					{selectedExerciseName && (
+						<div style={{ padding: '20px 0' }}>
+							{(() => {
+								const graphData = getGraphData(selectedExerciseName)
+								const volumeData = graphData.filter(
+									(d: { volume: number }) => d.volume > 0,
+								)
+								const oneRMData = graphData.filter(
+									(d: { oneRM: number | null }) => d.oneRM !== null,
+								)
+
+								return (
+									<>
+										{/* 볼륨 그래프 */}
+										{volumeData.length > 0 && (
+											<div style={{ marginBottom: '40px' }}>
+												<h3
+													style={{
+														fontSize: '18px',
+														fontWeight: 700,
+														marginBottom: '20px',
+														color: '#1a1a1a',
+													}}
+												>
+													볼륨 추이
+												</h3>
+												<ResponsiveContainer width="100%" height={300}>
+													<LineChart data={volumeData}>
+														<CartesianGrid
+															strokeDasharray="3 3"
+															stroke="#e5e7eb"
+														/>
+														<XAxis dataKey="date" stroke="#666" fontSize={12} />
+														<YAxis
+															stroke="#666"
+															fontSize={12}
+															label={{
+																value: '볼륨 (kg)',
+																angle: -90,
+																position: 'insideLeft',
+															}}
+														/>
+														<Tooltip
+															contentStyle={{
+																backgroundColor: '#fff',
+																border: '1px solid #e5e7eb',
+																borderRadius: '8px',
+															}}
+														/>
+														<Legend />
+														<Line
+															type="monotone"
+															dataKey="volume"
+															stroke="#10b981"
+															strokeWidth={3}
+															dot={{ fill: '#10b981', r: 5 }}
+															activeDot={{ r: 7 }}
+															name="볼륨 (kg)"
+														/>
+													</LineChart>
+												</ResponsiveContainer>
+											</div>
+										)}
+
+										{/* 1RM 그래프 */}
+										{oneRMData.length > 0 && (
+											<div>
+												<h3
+													style={{
+														fontSize: '18px',
+														fontWeight: 700,
+														marginBottom: '20px',
+														color: '#1a1a1a',
+													}}
+												>
+													1RM 추이
+												</h3>
+												<ResponsiveContainer width="100%" height={300}>
+													<LineChart data={oneRMData}>
+														<CartesianGrid
+															strokeDasharray="3 3"
+															stroke="#e5e7eb"
+														/>
+														<XAxis dataKey="date" stroke="#666" fontSize={12} />
+														<YAxis
+															stroke="#666"
+															fontSize={12}
+															label={{
+																value: '1RM (kg)',
+																angle: -90,
+																position: 'insideLeft',
+															}}
+														/>
+														<Tooltip
+															contentStyle={{
+																backgroundColor: '#fff',
+																border: '1px solid #e5e7eb',
+																borderRadius: '8px',
+															}}
+														/>
+														<Legend />
+														<Line
+															type="monotone"
+															dataKey="oneRM"
+															stroke="#6366f1"
+															strokeWidth={3}
+															dot={{ fill: '#6366f1', r: 5 }}
+															activeDot={{ r: 7 }}
+															name="1RM (kg)"
+														/>
+													</LineChart>
+												</ResponsiveContainer>
+											</div>
+										)}
+
+										{volumeData.length === 0 && oneRMData.length === 0 && (
+											<div
+												style={{
+													textAlign: 'center',
+													padding: '40px',
+													color: '#666',
+												}}
+											>
+												표시할 데이터가 없습니다.
+											</div>
+										)}
+									</>
+								)
+							})()}
+						</div>
+					)}
+				</Modal>
+			</ConfigProvider>
+		</MainContainer>
 	)
 }
