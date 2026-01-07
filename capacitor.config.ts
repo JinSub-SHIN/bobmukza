@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-	appId: 'com.bobmukza.app',
-	appName: 'Bobmukza',
+	appId: 'workout.app',
+	appName: 'Workout',
 	webDir: 'dist',
 	server: {
 		androidScheme: 'https',
@@ -20,4 +20,3 @@ const config: CapacitorConfig = {
 }
 
 export default config
-
