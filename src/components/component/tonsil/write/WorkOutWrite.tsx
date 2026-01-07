@@ -170,6 +170,15 @@ const StyledSelect = styled(Select)`
 		border-radius: 8px;
 		border: 1px solid #e2e8f0;
 		transition: all 0.3s ease;
+		font-size: 16px !important; /* 모바일에서 화면 확대 방지 */
+	}
+
+	.ant-select-selection-item {
+		font-size: 16px !important;
+	}
+
+	.ant-select-selection-placeholder {
+		font-size: 16px !important;
 	}
 
 	&:hover .ant-select-selector {
@@ -264,9 +273,24 @@ export const WorkOutWrite = () => {
 	// Select 드롭다운이 열릴 때 body 스크롤 방지
 	const handleDropdownVisibleChange = (open: boolean) => {
 		if (open) {
+			// 현재 스크롤 위치 저장
+			const scrollY = window.scrollY
+			document.body.style.position = 'fixed'
+			document.body.style.top = `-${scrollY}px`
+			document.body.style.width = '100%'
 			document.body.style.overflow = 'hidden'
+			document.documentElement.style.overflow = 'hidden'
 		} else {
+			// 스크롤 위치 복원
+			const scrollY = document.body.style.top
+			document.body.style.position = ''
+			document.body.style.top = ''
+			document.body.style.width = ''
 			document.body.style.overflow = ''
+			document.documentElement.style.overflow = ''
+			if (scrollY) {
+				window.scrollTo(0, parseInt(scrollY || '0') * -1)
+			}
 		}
 	}
 
@@ -1159,12 +1183,20 @@ export const WorkOutWrite = () => {
 										setTimeout(() => saveFormDataToRedux(), 100)
 									}}
 									onDropdownVisibleChange={handleDropdownVisibleChange}
-									getPopupContainer={trigger => trigger.parentElement || document.body}
+									getPopupContainer={trigger => {
+										// Form.Item의 부모 요소를 찾아서 그 안에 렌더링
+										let parent = trigger.parentElement
+										while (parent && !parent.classList.contains('ant-form-item')) {
+											parent = parent.parentElement
+										}
+										return parent || document.body
+									}}
 									dropdownStyle={{
-										maxHeight: '200px',
+										maxHeight: '400px',
 										overflowY: 'auto',
 									}}
 									virtual={false}
+									dropdownMatchSelectWidth={false}
 								>
 									{Array.from({ length: 24 }, (_, i) => (
 										<Select.Option key={i} value={String(i).padStart(2, '0')}>
@@ -1185,12 +1217,20 @@ export const WorkOutWrite = () => {
 										setTimeout(() => saveFormDataToRedux(), 100)
 									}}
 									onDropdownVisibleChange={handleDropdownVisibleChange}
-									getPopupContainer={trigger => trigger.parentElement || document.body}
+									getPopupContainer={trigger => {
+										// Form.Item의 부모 요소를 찾아서 그 안에 렌더링
+										let parent = trigger.parentElement
+										while (parent && !parent.classList.contains('ant-form-item')) {
+											parent = parent.parentElement
+										}
+										return parent || document.body
+									}}
 									dropdownStyle={{
-										maxHeight: '200px',
+										maxHeight: '400px',
 										overflowY: 'auto',
 									}}
 									virtual={false}
+									dropdownMatchSelectWidth={false}
 								>
 									{Array.from({ length: 6 }, (_, i) => {
 										const minute = i * 10
@@ -1221,12 +1261,20 @@ export const WorkOutWrite = () => {
 										setTimeout(() => saveFormDataToRedux(), 100)
 									}}
 									onDropdownVisibleChange={handleDropdownVisibleChange}
-									getPopupContainer={trigger => trigger.parentElement || document.body}
+									getPopupContainer={trigger => {
+										// Form.Item의 부모 요소를 찾아서 그 안에 렌더링
+										let parent = trigger.parentElement
+										while (parent && !parent.classList.contains('ant-form-item')) {
+											parent = parent.parentElement
+										}
+										return parent || document.body
+									}}
 									dropdownStyle={{
-										maxHeight: '200px',
+										maxHeight: '400px',
 										overflowY: 'auto',
 									}}
 									virtual={false}
+									dropdownMatchSelectWidth={false}
 								>
 									{Array.from({ length: 24 }, (_, i) => (
 										<Select.Option key={i} value={String(i).padStart(2, '0')}>
@@ -1247,12 +1295,20 @@ export const WorkOutWrite = () => {
 										setTimeout(() => saveFormDataToRedux(), 100)
 									}}
 									onDropdownVisibleChange={handleDropdownVisibleChange}
-									getPopupContainer={trigger => trigger.parentElement || document.body}
+									getPopupContainer={trigger => {
+										// Form.Item의 부모 요소를 찾아서 그 안에 렌더링
+										let parent = trigger.parentElement
+										while (parent && !parent.classList.contains('ant-form-item')) {
+											parent = parent.parentElement
+										}
+										return parent || document.body
+									}}
 									dropdownStyle={{
-										maxHeight: '200px',
+										maxHeight: '400px',
 										overflowY: 'auto',
 									}}
 									virtual={false}
+									dropdownMatchSelectWidth={false}
 								>
 									{Array.from({ length: 6 }, (_, i) => {
 										const minute = i * 10
@@ -1401,7 +1457,7 @@ export const WorkOutWrite = () => {
 																	value,
 																)
 															}
-															style={{ flex: 1 }}
+															style={{ flex: 1, fontSize: '16px' }}
 															addonAfter="분"
 														/>
 													) : inputType === 'bodyweight' ? (
@@ -1418,7 +1474,7 @@ export const WorkOutWrite = () => {
 																	value,
 																)
 															}
-															style={{ flex: 1 }}
+															style={{ flex: 1, fontSize: '16px' }}
 															addonAfter="회"
 														/>
 													) : (
@@ -1437,7 +1493,7 @@ export const WorkOutWrite = () => {
 																		value,
 																	)
 																}
-																style={{ flex: 1 }}
+																style={{ flex: 1, fontSize: '16px' }}
 																addonAfter="kg"
 															/>
 															<span style={{ color: '#666' }}>×</span>
@@ -1453,7 +1509,7 @@ export const WorkOutWrite = () => {
 																		value,
 																	)
 																}
-																style={{ flex: 1 }}
+																style={{ flex: 1, fontSize: '16px' }}
 																addonAfter="회"
 															/>
 														</>

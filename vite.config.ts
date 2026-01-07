@@ -8,4 +8,7 @@ export default defineConfig({
 		port: 5173, // 포트 번호 (필요 시 변경 가능)
 	},
 	plugins: [react()],
+	build: {
+		outDir: 'dist',
+	},
 })

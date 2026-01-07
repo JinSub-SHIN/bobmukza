@@ -3,14 +3,27 @@
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
+	"engines": {
+		"node": ">=22.0.0",
+		"npm": ">=10.0.0"
+	},
 	"scripts": {
 		"dev": "vite",
 		"build": "tsc -b && vite build",
 		"lint": "eslint .",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"cap:add": "npx cap add",
+		"cap:sync": "npx cap sync",
+		"cap:open": "npx cap open",
+		"cap:android": "npx cap open android",
+		"cap:ios": "npx cap open ios"
 	},
 	"dependencies": {
 		"@ant-design/icons": "^5.6.1",
+		"@capacitor/android": "^8.0.0",
+		"@capacitor/cli": "^8.0.0",
+		"@capacitor/core": "^8.0.0",
+		"@capacitor/ios": "^8.0.0",
 		"@emailjs/browser": "^4.4.1",
 		"@reduxjs/toolkit": "^2.6.1",
 		"@supabase/supabase-js": "^2.89.0",
