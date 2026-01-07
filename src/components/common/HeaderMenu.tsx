@@ -6,6 +6,9 @@ const CustomHeader = styled.div`
 	background-color: #000000;
 	color: white;
 	z-index: 100;
+	/* iOS Safe Area 대응 */
+	padding-top: env(safe-area-inset-top);
+	position: relative;
 
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
