@@ -13,9 +13,10 @@ const CustomHeader = styled.div`
 	z-index: 100;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-	/* iOS Safe Area 대응 */
-	padding-top: env(safe-area-inset-top);
 	position: relative;
+	/* iOS Safe Area 대응 - 배경색이 전체 영역을 덮도록 */
+	padding-top: env(safe-area-inset-top);
+	margin-top: calc(-1 * env(safe-area-inset-top, 0px));
 
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
