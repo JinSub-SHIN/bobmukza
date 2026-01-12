@@ -1151,6 +1151,8 @@ export const WorkOutCalendar = () => {
 		}>
 	>([])
 	const [loading, setLoading] = useState(false)
+	const [loadingMore, setLoadingMore] = useState(false)
+	const [hasMore, setHasMore] = useState(true)
 	const [reviewModalVisible, setReviewModalVisible] = useState(false)
 	const [reviewText, setReviewText] = useState('')
 	const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
@@ -1203,171 +1205,319 @@ export const WorkOutCalendar = () => {
 	}
 
 	// 데이터베이스에서 운동 데이터 불러오기 함수
-	const fetchWorkoutData = useCallback(async () => {
-		if (!targetUserId) {
-			setWorkoutData([])
-			return
-		}
-
-		setLoading(true)
-		try {
-			// 1. workout_sessions 가져오기 (workout_date와 workout_end_date를 datetime으로 조회)
-			const { data: sessions, error: sessionsError } = await supabase
-				.from('workout_sessions')
-				.select(
-					'id, workout_date, workout_end_date, body_part, user_id, user_review, trainer_review',
-				)
-				.eq('user_id', targetUserId)
-				.order('workout_date', { ascending: false })
-
-			if (sessionsError) {
-				console.error('세션 조회 실패:', sessionsError)
-				setLoading(false)
-				return
-			}
-
-			if (!sessions || sessions.length === 0) {
+	const fetchWorkoutData = useCallback(
+		async (isInitialLoad = false) => {
+			if (!targetUserId) {
 				setWorkoutData([])
-				setLoading(false)
 				return
 			}
 
-			// 2. 각 세션에 대한 exercises 가져오기 (order로 정렬)
-			const sessionIds = sessions.map(s => s.id)
-			const { data: exercises, error: exercisesError } = await supabase
-				.from('exercises')
-				.select('id, session_id, exercise_name, total_sets, order')
-				.in('session_id', sessionIds)
-				.order('order', { ascending: true })
-
-			if (exercisesError) {
-				console.error('운동 조회 실패:', exercisesError)
-				setLoading(false)
-				return
+			// 초기 로드인 경우
+			if (isInitialLoad) {
+				setLoading(true)
+				setHasMore(true)
+			} else {
+				setLoadingMore(true)
 			}
 
-			if (!exercises || exercises.length === 0) {
-				setWorkoutData([])
-				setLoading(false)
-				return
-			}
+			try {
+				let query = supabase
+					.from('workout_sessions')
+					.select(
+						'id, workout_date, workout_end_date, body_part, user_id, user_review, trainer_review',
+					)
+					.eq('user_id', targetUserId)
+					.order('workout_date', { ascending: false })
 
-			// 3. 각 exercise에 대한 exercise_sets 가져오기
-			const exerciseIds = exercises.map(e => e.id)
-			const { data: sets, error: setsError } = await supabase
-				.from('exercise_sets')
-				.select('exercise_id, set_order, weight, reps, minutes')
-				.in('exercise_id', exerciseIds)
-				.order('set_order', { ascending: true })
+				// 초기 로드인 경우 최근 3일만 필터링
+				if (isInitialLoad) {
+					const threeDaysAgo = dayjs()
+						.subtract(3, 'day')
+						.startOf('day')
+						.toISOString()
+					query = query.gte('workout_date', threeDaysAgo)
+				} else {
+					// 추가 로드: 이미 가져온 데이터의 가장 오래된 날짜 이전 3일 가져오기
+					if (workoutData.length > 0) {
+						// 가장 오래된 날짜 찾기
+						const oldestDate = workoutData
+							.map(item => dayjs(item.date))
+							.sort((a, b) => a.valueOf() - b.valueOf())[0]
 
-			if (setsError) {
-				console.error('세트 조회 실패:', setsError)
-				setLoading(false)
-				return
-			}
+						if (oldestDate) {
+							// 가장 오래된 날짜 이전 3일
+							const endDate = oldestDate
+								.subtract(1, 'day')
+								.endOf('day')
+								.toISOString()
+							const startDate = oldestDate
+								.subtract(3, 'day')
+								.startOf('day')
+								.toISOString()
 
-			// 3-1. 운동 종목 정보 가져오기 (type과 agonist 확인용)
-			const exerciseNames = Array.from(
-				new Set(exercises.map(e => e.exercise_name)),
-			)
-			const { data: exerciseInfoList } = await supabase
-				.from('workoutList')
-				.select('title, type, agonist')
-				.in('title', exerciseNames)
-
-			// 운동 이름을 키로 하는 맵 생성
-			const exerciseInfoMap = new Map<
-				string,
-				{ type?: string; agonist?: string }
-			>()
-			if (exerciseInfoList) {
-				exerciseInfoList.forEach(info => {
-					exerciseInfoMap.set(info.title, {
-						type: info.type,
-						agonist: info.agonist,
-					})
-				})
-			}
-
-			// 4. 데이터 변환
-			const transformedData: typeof workoutData = []
-
-			for (const session of sessions) {
-				const sessionExercises = exercises
-					.filter(e => e.session_id === session.id)
-					.sort((a, b) => {
-						// order가 있으면 order로 정렬, 없으면 기존 순서 유지
-						if (a.order && b.order) {
-							return a.order - b.order
+							query = query
+								.gte('workout_date', startDate)
+								.lte('workout_date', endDate)
+						} else {
+							setHasMore(false)
+							setLoadingMore(false)
+							return
 						}
-						if (a.order) return -1
-						if (b.order) return 1
-						return 0
-					})
-
-				for (const exercise of sessionExercises) {
-					const exerciseSets = sets
-						.filter(s => s.exercise_id === exercise.id)
-						.sort((a, b) => a.set_order - b.set_order)
-
-					if (exerciseSets.length > 0) {
-						// workout_date에서 날짜와 시간 추출
-						const workoutDateTime = session.workout_date
-							? dayjs(session.workout_date)
-							: null
-						const workoutEndDateTime = session.workout_end_date
-							? dayjs(session.workout_end_date)
-							: null
-
-						const date = workoutDateTime
-							? workoutDateTime.format('YYYY-MM-DD')
-							: session.workout_date?.split(' ')[0] || ''
-						const time = workoutDateTime
-							? workoutDateTime.format('HH:mm')
-							: session.workout_date?.split(' ')[1]?.substring(0, 5) || null
-						const endTime = workoutEndDateTime
-							? workoutEndDateTime.format('HH:mm')
-							: session.workout_end_date?.split(' ')[1]?.substring(0, 5) || null
-
-						// 운동 종목 정보 가져오기
-						const exerciseInfo = exerciseInfoMap.get(exercise.exercise_name)
-
-						transformedData.push({
-							sessionId: session.id,
-							userId: session.user_id,
-							date: date,
-							time: time,
-							endTime: endTime,
-							bodyPart: session.body_part,
-							exerciseName: exercise.exercise_name,
-							sets: exercise.total_sets,
-							setsDetail: exerciseSets.map(set => ({
-								weight: Number(set.weight),
-								reps: set.reps,
-								minutes: set.minutes,
-							})),
-							userReview: session.user_review || null,
-							trainerReview: session.trainer_review || null,
-							order: exercise.order || null,
-							exerciseType: exerciseInfo?.type,
-							exerciseAgonist: exerciseInfo?.agonist,
-						})
+					} else {
+						setHasMore(false)
+						setLoadingMore(false)
+						return
 					}
 				}
-			}
 
-			setWorkoutData(transformedData)
-		} catch (error) {
-			console.error('데이터 로딩 중 오류:', error)
-		} finally {
-			setLoading(false)
-		}
+				const { data: sessions, error: sessionsError } = await query
+
+				if (sessionsError) {
+					console.error('세션 조회 실패:', sessionsError)
+					if (isInitialLoad) {
+						setLoading(false)
+					} else {
+						setLoadingMore(false)
+					}
+					return
+				}
+
+				if (!sessions || sessions.length === 0) {
+					if (isInitialLoad) {
+						setWorkoutData([])
+						setLoading(false)
+					} else {
+						setHasMore(false)
+						setLoadingMore(false)
+					}
+					return
+				}
+
+				// 2. 각 세션에 대한 exercises 가져오기 (order로 정렬)
+				const sessionIds = sessions.map(s => s.id)
+				const { data: exercises, error: exercisesError } = await supabase
+					.from('exercises')
+					.select('id, session_id, exercise_name, total_sets, order')
+					.in('session_id', sessionIds)
+					.order('order', { ascending: true })
+
+				if (exercisesError) {
+					console.error('운동 조회 실패:', exercisesError)
+					if (isInitialLoad) {
+						setLoading(false)
+					} else {
+						setLoadingMore(false)
+					}
+					return
+				}
+
+				if (!exercises || exercises.length === 0) {
+					if (isInitialLoad) {
+						setWorkoutData([])
+						setLoading(false)
+					} else {
+						setHasMore(false)
+						setLoadingMore(false)
+					}
+					return
+				}
+
+				// 3. 각 exercise에 대한 exercise_sets 가져오기
+				const exerciseIds = exercises.map(e => e.id)
+				const { data: sets, error: setsError } = await supabase
+					.from('exercise_sets')
+					.select('exercise_id, set_order, weight, reps, minutes')
+					.in('exercise_id', exerciseIds)
+					.order('set_order', { ascending: true })
+
+				if (setsError) {
+					console.error('세트 조회 실패:', setsError)
+					if (isInitialLoad) {
+						setLoading(false)
+					} else {
+						setLoadingMore(false)
+					}
+					return
+				}
+
+				// 3-1. 운동 종목 정보 가져오기 (type과 agonist 확인용)
+				const exerciseNames = Array.from(
+					new Set(exercises.map(e => e.exercise_name)),
+				)
+				const { data: exerciseInfoList } = await supabase
+					.from('workoutList')
+					.select('title, type, agonist')
+					.in('title', exerciseNames)
+
+				// 운동 이름을 키로 하는 맵 생성
+				const exerciseInfoMap = new Map<
+					string,
+					{ type?: string; agonist?: string }
+				>()
+				if (exerciseInfoList) {
+					exerciseInfoList.forEach(info => {
+						exerciseInfoMap.set(info.title, {
+							type: info.type,
+							agonist: info.agonist,
+						})
+					})
+				}
+
+				// 4. 데이터 변환
+				const transformedData: typeof workoutData = []
+
+				// 초기 로드가 아닌 경우 기존 데이터에 추가
+				const existingData = isInitialLoad ? [] : workoutData
+
+				for (const session of sessions) {
+					const sessionExercises = exercises
+						.filter(e => e.session_id === session.id)
+						.sort((a, b) => {
+							// order가 있으면 order로 정렬, 없으면 기존 순서 유지
+							if (a.order && b.order) {
+								return a.order - b.order
+							}
+							if (a.order) return -1
+							if (b.order) return 1
+							return 0
+						})
+
+					for (const exercise of sessionExercises) {
+						const exerciseSets = sets
+							.filter(s => s.exercise_id === exercise.id)
+							.sort((a, b) => a.set_order - b.set_order)
+
+						if (exerciseSets.length > 0) {
+							// workout_date에서 날짜와 시간 추출
+							const workoutDateTime = session.workout_date
+								? dayjs(session.workout_date)
+								: null
+							const workoutEndDateTime = session.workout_end_date
+								? dayjs(session.workout_end_date)
+								: null
+
+							const date = workoutDateTime
+								? workoutDateTime.format('YYYY-MM-DD')
+								: session.workout_date?.split(' ')[0] || ''
+							const time = workoutDateTime
+								? workoutDateTime.format('HH:mm')
+								: session.workout_date?.split(' ')[1]?.substring(0, 5) || null
+							const endTime = workoutEndDateTime
+								? workoutEndDateTime.format('HH:mm')
+								: session.workout_end_date?.split(' ')[1]?.substring(0, 5) ||
+									null
+
+							// 운동 종목 정보 가져오기
+							const exerciseInfo = exerciseInfoMap.get(exercise.exercise_name)
+
+							transformedData.push({
+								sessionId: session.id,
+								userId: session.user_id,
+								date: date,
+								time: time,
+								endTime: endTime,
+								bodyPart: session.body_part,
+								exerciseName: exercise.exercise_name,
+								sets: exercise.total_sets,
+								setsDetail: exerciseSets.map(set => ({
+									weight: Number(set.weight),
+									reps: set.reps,
+									minutes: set.minutes,
+								})),
+								userReview: session.user_review || null,
+								trainerReview: session.trainer_review || null,
+								order: exercise.order || null,
+								exerciseType: exerciseInfo?.type,
+								exerciseAgonist: exerciseInfo?.agonist,
+							})
+						}
+					}
+				}
+
+				// 초기 로드인 경우 교체, 아닌 경우 추가
+				if (isInitialLoad) {
+					setWorkoutData(transformedData)
+				} else {
+					// 중복 제거 (같은 sessionId가 이미 있으면 제외)
+					const existingSessionIds = new Set(
+						existingData.map(item => item.sessionId),
+					)
+					const newData = transformedData.filter(
+						item => !existingSessionIds.has(item.sessionId),
+					)
+					setWorkoutData([...existingData, ...newData])
+				}
+
+				// 더 가져올 데이터가 있는지 확인
+				if (transformedData.length === 0) {
+					setHasMore(false)
+				} else {
+					// 가장 오래된 날짜 확인
+					const allDates = isInitialLoad
+						? transformedData.map(item => item.date)
+						: [
+								...existingData.map(item => item.date),
+								...transformedData.map(item => item.date),
+							]
+
+					const oldestDate = allDates
+						.map(date => dayjs(date))
+						.sort((a, b) => a.valueOf() - b.valueOf())[0]
+
+					// 가장 오래된 날짜 이전에 데이터가 더 있는지 확인
+					if (oldestDate) {
+						const { count } = await supabase
+							.from('workout_sessions')
+							.select('*', { count: 'exact', head: true })
+							.eq('user_id', targetUserId)
+							.lt('workout_date', oldestDate.startOf('day').toISOString())
+
+						if (count === 0 || count === null) {
+							setHasMore(false)
+						}
+					} else {
+						setHasMore(false)
+					}
+				}
+			} catch (error) {
+				console.error('데이터 로딩 중 오류:', error)
+			} finally {
+				if (isInitialLoad) {
+					setLoading(false)
+				} else {
+					setLoadingMore(false)
+				}
+			}
+		},
+		[targetUserId, workoutData],
+	)
+
+	// 초기 데이터 로드
+	useEffect(() => {
+		fetchWorkoutData(true)
 	}, [targetUserId])
 
-	// 데이터베이스에서 운동 데이터 불러오기
+	// 스크롤 이벤트 핸들러
+	const handleScroll = useCallback(() => {
+		if (loading || loadingMore || !hasMore) return
+
+		const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+		const windowHeight = window.innerHeight
+		const documentHeight = document.documentElement.scrollHeight
+
+		// 하단 200px 이내에 도달하면 추가 데이터 로드
+		if (scrollTop + windowHeight >= documentHeight - 200) {
+			fetchWorkoutData(false)
+		}
+	}, [loading, loadingMore, hasMore, fetchWorkoutData])
+
+	// 스크롤 이벤트 리스너 등록
 	useEffect(() => {
-		fetchWorkoutData()
-	}, [fetchWorkoutData])
+		window.addEventListener('scroll', handleScroll)
+		return () => {
+			window.removeEventListener('scroll', handleScroll)
+		}
+	}, [handleScroll])
 
 	// 볼륨 계산 함수 (일반 운동: kg, 유산소: minutes)
 	const calculateVolume = (
@@ -1639,8 +1789,8 @@ export const WorkOutCalendar = () => {
 				return
 			}
 
-			// 삭제 성공 시 데이터 다시 불러오기
-			await fetchWorkoutData()
+			// 삭제 성공 시 데이터 다시 불러오기 (초기 로드)
+			await fetchWorkoutData(true)
 			alert('운동 일지가 삭제되었습니다.')
 		} catch (error) {
 			console.error('삭제 중 오류:', error)
@@ -1717,7 +1867,7 @@ export const WorkOutCalendar = () => {
 			} else {
 				alert('리뷰가 등록되었습니다.')
 				handleCloseReviewModal()
-				await fetchWorkoutData()
+				await fetchWorkoutData(true)
 			}
 		} catch (error) {
 			console.error('리뷰 저장 중 오류:', error)
@@ -2182,6 +2332,46 @@ export const WorkOutCalendar = () => {
 							)
 						})
 				)}
+				{loadingMore && (
+					<div
+						style={{
+							gridColumn: '1 / -1',
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+							justifyContent: 'center',
+							padding: '40px 20px',
+							gap: '16px',
+						}}
+					>
+						<Spin size="large" />
+						<div
+							style={{
+								fontSize: '16px',
+								fontWeight: 600,
+								color: '#666',
+							}}
+						>
+							추가 일지를 불러오는 중...
+						</div>
+					</div>
+				)}
+				{!hasMore &&
+					!loading &&
+					!loadingMore &&
+					Object.keys(groupedBySession).length > 0 && (
+						<div
+							style={{
+								gridColumn: '1 / -1',
+								textAlign: 'center',
+								padding: '20px',
+								color: '#999',
+								fontSize: '14px',
+							}}
+						>
+							모든 일지를 불러왔습니다.
+						</div>
+					)}
 			</CardsContainer>
 		</>
 	)
