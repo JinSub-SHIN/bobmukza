@@ -54,7 +54,7 @@ const StyledCard = styled(Card)<{ isSelected: boolean }>`
 	}
 
 	.ant-card-body {
-		padding: 20px;
+		padding: 0;
 		background: #ffffff;
 	}
 
@@ -70,24 +70,25 @@ const StyledCard = styled(Card)<{ isSelected: boolean }>`
 		}
 
 		.ant-card-body {
-			padding: 16px;
+			padding: 0;
 		}
 	}
 `
 
 const NumberBadge = styled.div`
 	position: absolute;
-	top: 12px;
-	right: 12px;
-	width: 36px;
-	height: 36px;
+	top: 50%;
+	right: 8px;
+	transform: translateY(-50%);
+	width: 28px;
+	height: 28px;
 	border-radius: 50%;
 	background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 	color: white;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
+	font-size: 14px;
 	font-weight: 800;
 	z-index: 10;
 	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4), 0 0 0 3px rgba(16, 185, 129, 0.1);
@@ -96,13 +97,20 @@ const NumberBadge = styled.div`
 	
 	@keyframes scaleIn {
 		from {
-			transform: scale(0);
+			transform: translateY(-50%) scale(0);
 			opacity: 0;
 		}
 		to {
-			transform: scale(1);
+			transform: translateY(-50%) scale(1);
 			opacity: 1;
 		}
+	}
+
+	@media screen and (max-width: 768px) {
+		right: 6px;
+		width: 24px;
+		height: 24px;
+		font-size: 12px;
 	}
 `
 
@@ -470,25 +478,7 @@ export const RatList = ({
 								<StyledCard
 									title={item.title}
 									isSelected={isSelected && selectMode}
-								>
-									<CardContent>
-										{item.antagonist && (
-											<InfoRow>
-												<InfoLabel>길항근</InfoLabel>
-												<InfoValue>{item.antagonist}</InfoValue>
-											</InfoRow>
-										)}
-										{item.synergist && (
-											<InfoRow>
-												<InfoLabel>협력근</InfoLabel>
-												<InfoValue>{item.synergist}</InfoValue>
-											</InfoRow>
-										)}
-										{!item.antagonist && !item.synergist && (
-											<EmptyInfo>등록한 정보가 없습니다</EmptyInfo>
-										)}
-									</CardContent>
-								</StyledCard>
+								/>
 							</CardWrapper>
 						</List.Item>
 					)
