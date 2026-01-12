@@ -1283,9 +1283,184 @@ export const WorkOutCalendar = () => {
 				}
 
 				if (!sessions || sessions.length === 0) {
+					// 초기 로드인데 최근 3일 내 데이터가 없으면 전체 데이터 가져오기
 					if (isInitialLoad) {
-						setWorkoutData([])
+						const allSessionsQuery = supabase
+							.from('workout_sessions')
+							.select(
+								'id, workout_date, workout_end_date, body_part, user_id, user_review, trainer_review',
+							)
+							.eq('user_id', targetUserId)
+							.order('workout_date', { ascending: false })
+							.limit(10) // 최대 10개만 가져오기
+
+						const { data: allSessions, error: allSessionsError } =
+							await allSessionsQuery
+
+						if (allSessionsError) {
+							console.error('전체 세션 조회 실패:', allSessionsError)
+							setWorkoutData([])
+							setLoading(false)
+							return
+						}
+
+						if (!allSessions || allSessions.length === 0) {
+							setWorkoutData([])
+							setLoading(false)
+							return
+						}
+
+						// 전체 세션으로 다시 처리
+						const allSessionIds = allSessions.map(s => s.id)
+						const { data: allExercises, error: allExercisesError } =
+							await supabase
+								.from('exercises')
+								.select('id, session_id, exercise_name, total_sets, order')
+								.in('session_id', allSessionIds)
+								.order('order', { ascending: true })
+
+						if (allExercisesError) {
+							console.error('운동 조회 실패:', allExercisesError)
+							setLoading(false)
+							return
+						}
+
+						if (!allExercises || allExercises.length === 0) {
+							setWorkoutData([])
+							setLoading(false)
+							return
+						}
+
+						const allExerciseIds = allExercises.map(e => e.id)
+						const { data: allSets, error: allSetsError } = await supabase
+							.from('exercise_sets')
+							.select('exercise_id, set_order, weight, reps, minutes')
+							.in('exercise_id', allExerciseIds)
+							.order('set_order', { ascending: true })
+
+						if (allSetsError) {
+							console.error('세트 조회 실패:', allSetsError)
+							setLoading(false)
+							return
+						}
+
+						const allExerciseNames = Array.from(
+							new Set(allExercises.map(e => e.exercise_name)),
+						)
+						const { data: allExerciseInfoList } = await supabase
+							.from('workoutList')
+							.select('title, type, agonist')
+							.in('title', allExerciseNames)
+
+						const allExerciseInfoMap = new Map<
+							string,
+							{ type?: string; agonist?: string }
+						>()
+						if (allExerciseInfoList) {
+							allExerciseInfoList.forEach(info => {
+								allExerciseInfoMap.set(info.title, {
+									type: info.type,
+									agonist: info.agonist,
+								})
+							})
+						}
+
+						const allTransformedData: typeof workoutData = []
+
+						for (const session of allSessions) {
+							const sessionExercises = allExercises
+								.filter(e => e.session_id === session.id)
+								.sort((a, b) => {
+									if (a.order && b.order) {
+										return a.order - b.order
+									}
+									if (a.order) return -1
+									if (b.order) return 1
+									return 0
+								})
+
+							for (const exercise of sessionExercises) {
+								const exerciseSets = allSets
+									.filter(s => s.exercise_id === exercise.id)
+									.sort((a, b) => a.set_order - b.set_order)
+
+								if (exerciseSets.length > 0) {
+									const workoutDateTime = session.workout_date
+										? dayjs(session.workout_date)
+										: null
+									const workoutEndDateTime = session.workout_end_date
+										? dayjs(session.workout_end_date)
+										: null
+
+									const date = workoutDateTime
+										? workoutDateTime.format('YYYY-MM-DD')
+										: session.workout_date?.split(' ')[0] || ''
+									const time = workoutDateTime
+										? workoutDateTime.format('HH:mm')
+										: session.workout_date?.split(' ')[1]?.substring(0, 5) ||
+											null
+									const endTime = workoutEndDateTime
+										? workoutEndDateTime.format('HH:mm')
+										: session.workout_end_date
+												?.split(' ')[1]
+												?.substring(0, 5) || null
+
+									const exerciseInfo = allExerciseInfoMap.get(
+										exercise.exercise_name,
+									)
+
+									allTransformedData.push({
+										sessionId: session.id,
+										userId: session.user_id,
+										date: date,
+										time: time,
+										endTime: endTime,
+										bodyPart: session.body_part,
+										exerciseName: exercise.exercise_name,
+										sets: exercise.total_sets,
+										setsDetail: exerciseSets.map(set => ({
+											weight: Number(set.weight),
+											reps: set.reps,
+											minutes: set.minutes,
+										})),
+										userReview: session.user_review || null,
+										trainerReview: session.trainer_review || null,
+										order: exercise.order || null,
+										exerciseType: exerciseInfo?.type,
+										exerciseAgonist: exerciseInfo?.agonist,
+									})
+								}
+							}
+						}
+
+						setWorkoutData(allTransformedData)
+
+						// hasMore 확인
+						if (allTransformedData.length > 0) {
+							const allDates = allTransformedData.map(item => item.date)
+							const oldestDate = allDates
+								.map(date => dayjs(date))
+								.sort((a, b) => a.valueOf() - b.valueOf())[0]
+
+							if (oldestDate) {
+								const { count } = await supabase
+									.from('workout_sessions')
+									.select('*', { count: 'exact', head: true })
+									.eq('user_id', targetUserId)
+									.lt('workout_date', oldestDate.startOf('day').toISOString())
+
+								if (count === 0 || count === null) {
+									setHasMore(false)
+								}
+							} else {
+								setHasMore(false)
+							}
+						} else {
+							setHasMore(false)
+						}
+
 						setLoading(false)
+						return
 					} else {
 						setHasMore(false)
 						setLoadingMore(false)
