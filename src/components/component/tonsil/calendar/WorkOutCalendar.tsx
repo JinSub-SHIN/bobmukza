@@ -2423,7 +2423,12 @@ export const WorkOutCalendar = () => {
 				{/* 그래프 모달 */}
 				<Modal
 					title={
-						<div style={{ fontSize: '20px', fontWeight: 700 }}>
+						<div
+							style={{
+								fontSize: window.innerWidth <= 768 ? '16px' : '20px',
+								fontWeight: 700,
+							}}
+						>
 							{selectedExerciseName} 기록 분석
 						</div>
 					}
@@ -2432,18 +2437,23 @@ export const WorkOutCalendar = () => {
 						setGraphModalVisible(false)
 						setSelectedExerciseName(null)
 					}}
-					width={window.innerWidth <= 768 ? '95%' : 900}
+					width={window.innerWidth <= 768 ? '90%' : 900}
 					footer={null}
-					style={{ top: 20 }}
+					centered
 					styles={{
 						body: {
 							maxWidth: '100vw',
 							overflowX: 'hidden',
+							padding: window.innerWidth <= 768 ? '12px' : '24px',
 						},
 					}}
 				>
 					{selectedExerciseName && (
-						<div style={{ padding: '20px 0' }}>
+						<div
+							style={{
+								padding: window.innerWidth <= 768 ? '10px 0' : '20px 0',
+							}}
+						>
 							{(() => {
 								const graphData = getGraphData(selectedExerciseName)
 								const volumeData = graphData.filter(
@@ -2452,36 +2462,45 @@ export const WorkOutCalendar = () => {
 								const oneRMData = graphData.filter(
 									(d: { oneRM: number | null }) => d.oneRM !== null,
 								)
+								const isMobile = window.innerWidth <= 768
 
 								return (
 									<>
 										{/* 볼륨 그래프 */}
 										{volumeData.length > 0 && (
-											<div style={{ marginBottom: '40px' }}>
+											<div style={{ marginBottom: isMobile ? '24px' : '40px' }}>
 												<h3
 													style={{
-														fontSize: '18px',
+														fontSize: isMobile ? '16px' : '18px',
 														fontWeight: 700,
-														marginBottom: '20px',
+														marginBottom: isMobile ? '12px' : '20px',
 														color: '#1a1a1a',
 													}}
 												>
 													볼륨 추이
 												</h3>
-												<ResponsiveContainer width="100%" height={300}>
+												<ResponsiveContainer
+													width="100%"
+													height={isMobile ? 200 : 300}
+												>
 													<LineChart data={volumeData}>
 														<CartesianGrid
 															strokeDasharray="3 3"
 															stroke="#e5e7eb"
 														/>
-														<XAxis dataKey="date" stroke="#666" fontSize={12} />
+														<XAxis
+															dataKey="date"
+															stroke="#666"
+															fontSize={isMobile ? 10 : 12}
+														/>
 														<YAxis
 															stroke="#666"
-															fontSize={12}
+															fontSize={isMobile ? 10 : 12}
 															label={{
 																value: '볼륨 (kg)',
 																angle: -90,
 																position: 'insideLeft',
+																fontSize: isMobile ? 10 : 12,
 															}}
 														/>
 														<Tooltip
@@ -2496,9 +2515,9 @@ export const WorkOutCalendar = () => {
 															type="monotone"
 															dataKey="volume"
 															stroke="#10b981"
-															strokeWidth={3}
-															dot={{ fill: '#10b981', r: 5 }}
-															activeDot={{ r: 7 }}
+															strokeWidth={isMobile ? 2 : 3}
+															dot={{ fill: '#10b981', r: isMobile ? 4 : 5 }}
+															activeDot={{ r: isMobile ? 5 : 7 }}
 															name="볼륨 (kg)"
 														/>
 													</LineChart>
@@ -2511,28 +2530,36 @@ export const WorkOutCalendar = () => {
 											<div>
 												<h3
 													style={{
-														fontSize: '18px',
+														fontSize: isMobile ? '16px' : '18px',
 														fontWeight: 700,
-														marginBottom: '20px',
+														marginBottom: isMobile ? '12px' : '20px',
 														color: '#1a1a1a',
 													}}
 												>
 													1RM 추이
 												</h3>
-												<ResponsiveContainer width="100%" height={300}>
+												<ResponsiveContainer
+													width="100%"
+													height={isMobile ? 200 : 300}
+												>
 													<LineChart data={oneRMData}>
 														<CartesianGrid
 															strokeDasharray="3 3"
 															stroke="#e5e7eb"
 														/>
-														<XAxis dataKey="date" stroke="#666" fontSize={12} />
+														<XAxis
+															dataKey="date"
+															stroke="#666"
+															fontSize={isMobile ? 10 : 12}
+														/>
 														<YAxis
 															stroke="#666"
-															fontSize={12}
+															fontSize={isMobile ? 10 : 12}
 															label={{
 																value: '1RM (kg)',
 																angle: -90,
 																position: 'insideLeft',
+																fontSize: isMobile ? 10 : 12,
 															}}
 														/>
 														<Tooltip
@@ -2547,9 +2574,9 @@ export const WorkOutCalendar = () => {
 															type="monotone"
 															dataKey="oneRM"
 															stroke="#6366f1"
-															strokeWidth={3}
-															dot={{ fill: '#6366f1', r: 5 }}
-															activeDot={{ r: 7 }}
+															strokeWidth={isMobile ? 2 : 3}
+															dot={{ fill: '#6366f1', r: isMobile ? 4 : 5 }}
+															activeDot={{ r: isMobile ? 5 : 7 }}
 															name="1RM (kg)"
 														/>
 													</LineChart>
@@ -2561,8 +2588,9 @@ export const WorkOutCalendar = () => {
 											<div
 												style={{
 													textAlign: 'center',
-													padding: '40px',
+													padding: isMobile ? '20px' : '40px',
 													color: '#666',
+													fontSize: isMobile ? '14px' : '16px',
 												}}
 											>
 												표시할 데이터가 없습니다.
@@ -2612,7 +2640,12 @@ export const WorkOutCalendar = () => {
 				{/* 그래프 모달 */}
 				<Modal
 					title={
-						<div style={{ fontSize: '20px', fontWeight: 700 }}>
+						<div
+							style={{
+								fontSize: window.innerWidth <= 768 ? '16px' : '20px',
+								fontWeight: 700,
+							}}
+						>
 							{selectedExerciseName} 기록 분석
 						</div>
 					}
@@ -2621,18 +2654,23 @@ export const WorkOutCalendar = () => {
 						setGraphModalVisible(false)
 						setSelectedExerciseName(null)
 					}}
-					width={window.innerWidth <= 768 ? '95%' : 900}
+					width={window.innerWidth <= 768 ? '90%' : 900}
 					footer={null}
-					style={{ top: 20 }}
+					centered
 					styles={{
 						body: {
 							maxWidth: '100vw',
 							overflowX: 'hidden',
+							padding: window.innerWidth <= 768 ? '12px' : '24px',
 						},
 					}}
 				>
 					{selectedExerciseName && (
-						<div style={{ padding: '20px 0' }}>
+						<div
+							style={{
+								padding: window.innerWidth <= 768 ? '10px 0' : '20px 0',
+							}}
+						>
 							{(() => {
 								const graphData = getGraphData(selectedExerciseName)
 								const volumeData = graphData.filter(
@@ -2641,36 +2679,45 @@ export const WorkOutCalendar = () => {
 								const oneRMData = graphData.filter(
 									(d: { oneRM: number | null }) => d.oneRM !== null,
 								)
+								const isMobile = window.innerWidth <= 768
 
 								return (
 									<>
 										{/* 볼륨 그래프 */}
 										{volumeData.length > 0 && (
-											<div style={{ marginBottom: '40px' }}>
+											<div style={{ marginBottom: isMobile ? '24px' : '40px' }}>
 												<h3
 													style={{
-														fontSize: '18px',
+														fontSize: isMobile ? '16px' : '18px',
 														fontWeight: 700,
-														marginBottom: '20px',
+														marginBottom: isMobile ? '12px' : '20px',
 														color: '#1a1a1a',
 													}}
 												>
 													볼륨 추이
 												</h3>
-												<ResponsiveContainer width="100%" height={300}>
+												<ResponsiveContainer
+													width="100%"
+													height={isMobile ? 200 : 300}
+												>
 													<LineChart data={volumeData}>
 														<CartesianGrid
 															strokeDasharray="3 3"
 															stroke="#e5e7eb"
 														/>
-														<XAxis dataKey="date" stroke="#666" fontSize={12} />
+														<XAxis
+															dataKey="date"
+															stroke="#666"
+															fontSize={isMobile ? 10 : 12}
+														/>
 														<YAxis
 															stroke="#666"
-															fontSize={12}
+															fontSize={isMobile ? 10 : 12}
 															label={{
 																value: '볼륨 (kg)',
 																angle: -90,
 																position: 'insideLeft',
+																fontSize: isMobile ? 10 : 12,
 															}}
 														/>
 														<Tooltip
@@ -2685,9 +2732,9 @@ export const WorkOutCalendar = () => {
 															type="monotone"
 															dataKey="volume"
 															stroke="#10b981"
-															strokeWidth={3}
-															dot={{ fill: '#10b981', r: 5 }}
-															activeDot={{ r: 7 }}
+															strokeWidth={isMobile ? 2 : 3}
+															dot={{ fill: '#10b981', r: isMobile ? 4 : 5 }}
+															activeDot={{ r: isMobile ? 5 : 7 }}
 															name="볼륨 (kg)"
 														/>
 													</LineChart>
@@ -2700,28 +2747,36 @@ export const WorkOutCalendar = () => {
 											<div>
 												<h3
 													style={{
-														fontSize: '18px',
+														fontSize: isMobile ? '16px' : '18px',
 														fontWeight: 700,
-														marginBottom: '20px',
+														marginBottom: isMobile ? '12px' : '20px',
 														color: '#1a1a1a',
 													}}
 												>
 													1RM 추이
 												</h3>
-												<ResponsiveContainer width="100%" height={300}>
+												<ResponsiveContainer
+													width="100%"
+													height={isMobile ? 200 : 300}
+												>
 													<LineChart data={oneRMData}>
 														<CartesianGrid
 															strokeDasharray="3 3"
 															stroke="#e5e7eb"
 														/>
-														<XAxis dataKey="date" stroke="#666" fontSize={12} />
+														<XAxis
+															dataKey="date"
+															stroke="#666"
+															fontSize={isMobile ? 10 : 12}
+														/>
 														<YAxis
 															stroke="#666"
-															fontSize={12}
+															fontSize={isMobile ? 10 : 12}
 															label={{
 																value: '1RM (kg)',
 																angle: -90,
 																position: 'insideLeft',
+																fontSize: isMobile ? 10 : 12,
 															}}
 														/>
 														<Tooltip
@@ -2736,9 +2791,9 @@ export const WorkOutCalendar = () => {
 															type="monotone"
 															dataKey="oneRM"
 															stroke="#6366f1"
-															strokeWidth={3}
-															dot={{ fill: '#6366f1', r: 5 }}
-															activeDot={{ r: 7 }}
+															strokeWidth={isMobile ? 2 : 3}
+															dot={{ fill: '#6366f1', r: isMobile ? 4 : 5 }}
+															activeDot={{ r: isMobile ? 5 : 7 }}
 															name="1RM (kg)"
 														/>
 													</LineChart>
@@ -2750,8 +2805,9 @@ export const WorkOutCalendar = () => {
 											<div
 												style={{
 													textAlign: 'center',
-													padding: '40px',
+													padding: isMobile ? '20px' : '40px',
 													color: '#666',
+													fontSize: isMobile ? '14px' : '16px',
 												}}
 											>
 												표시할 데이터가 없습니다.
