@@ -29,6 +29,14 @@ interface MainParams {
 }
 
 export const TonsilLayout = (params: MainParams) => {
+	// IOS 새로고침을 위한 코드삽입
+	const CURRENT_VERSION = '1.0.0'
+	const savedVersion = localStorage.getItem('app_version')
+	if (savedVersion !== CURRENT_VERSION) {
+		localStorage.setItem('app_version', CURRENT_VERSION)
+		window.location.reload()
+	}
+
 	const navigate = useNavigate()
 	const [clickCount, setClickCount] = useState(0)
 
