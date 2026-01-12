@@ -123,68 +123,6 @@ const NumberBadge = styled.div`
 	}
 `
 
-const CardContent = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-`
-
-const InfoRow = styled.div`
-	display: flex;
-	align-items: flex-start;
-	gap: 8px;
-	padding: 10px;
-	background: #f8f9fa;
-	border-radius: 8px;
-	border-left: 3px solid #4facfe;
-	transition: all 0.2s ease;
-
-	&:hover {
-		background: #f0f0f0;
-		border-left-color: #00f2fe;
-	}
-
-	@media screen and (max-width: 768px) {
-		padding: 8px;
-		gap: 6px;
-	}
-`
-
-const InfoLabel = styled.span`
-	font-weight: 700;
-	color: #4facfe;
-	font-size: 13px;
-	min-width: 60px;
-
-	@media screen and (max-width: 768px) {
-		font-size: 12px;
-		min-width: 50px;
-	}
-`
-
-const InfoValue = styled.span`
-	color: #495057;
-	font-size: 13px;
-	line-height: 1.5;
-
-	@media screen and (max-width: 768px) {
-		font-size: 12px;
-	}
-`
-
-const EmptyInfo = styled.div`
-	padding: 20px;
-	text-align: center;
-	color: #999;
-	font-size: 13px;
-	font-style: italic;
-
-	@media screen and (max-width: 768px) {
-		padding: 16px;
-		font-size: 12px;
-	}
-`
-
 const FilterTag = styled(Tag)`
 	padding: 6px 16px;
 	font-size: 14px;
