@@ -57,7 +57,7 @@ export const Router = () => {
 		<BrowserRouter>
 			<Routes>
 				<Route path="/bobmukza" element={<MainPage />} />
-				<Route path="/" element={<MainRoute />} />
+				<Route path="/" element={<MainPage />} />
 				<Route
 					path="/workout/list"
 					element={
