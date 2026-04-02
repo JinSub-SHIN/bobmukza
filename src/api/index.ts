@@ -2,7 +2,7 @@ import axios from 'axios'
 
 export const getHoliday = async (year: string, month: string) => {
 	const url =
-		'http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo'
+		'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo'
 
 	const holidayKey =
 		'AwOQo6YEaZQEdwgYEcu0MqhFe350qUdMswEJiF23I2VYvkROTncVDMiMkiod6vhWj4lEdvr1GYoxNNF0pyF/rw=='
