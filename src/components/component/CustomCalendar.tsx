@@ -8,7 +8,6 @@ import {
 	Popconfirm,
 	Skeleton,
 	Tag,
-	theme,
 } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -41,31 +40,330 @@ import { numberRegexp } from '../hook/useNumberRegexp'
 import { cloneDeep } from 'lodash'
 import { numberWithCommas } from '../hook/useNumberComma'
 
+/** 달력 칸 하단(태그·상태) 영역 높이 — StyledCalendar·CalendarCellSlot과 동일하게 유지 */
+const CALENDAR_CELL_CONTENT_HEIGHT_PX = 80
+
 const StyledCalendar = styled(Calendar)`
+	border-radius: 0;
+	overflow: visible;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+
+	.ant-picker-panel {
+		background: transparent !important;
+		border: none !important;
+	}
+
+	.ant-picker-body {
+		padding: 6px 2px 12px !important;
+	}
+
+	.ant-picker-content table {
+		width: 100%;
+		border-collapse: separate;
+		border-spacing: 8px;
+	}
+
+	.ant-picker-content thead > tr > th {
+		background: linear-gradient(180deg, #ffe8f4 0%, #fffafd 100%) !important;
+		border: 3px solid #ffc8e4 !important;
+		border-radius: 0 !important;
+		padding: 8px 4px !important;
+		font-size: 15px !important;
+		font-weight: 400 !important;
+		color: #c86ba8 !important;
+	}
+
+	.ant-picker-content thead > tr > th:nth-child(1),
+	.ant-picker-content thead > tr > th:nth-child(7) {
+		background: linear-gradient(180deg, #ffd8e0 0%, #fff0f3 100%) !important;
+		border-color: #ffb3c6 !important;
+		color: #e85d7a !important;
+	}
+
+	.ant-picker-content tbody tr .ant-picker-cell:nth-child(1),
+	.ant-picker-content tbody tr .ant-picker-cell:nth-child(7) {
+		background: #fffafc !important;
+	}
+
+	.ant-picker-cell {
+		padding: 0 !important;
+		border-radius: 12px !important;
+		overflow: hidden !important;
+		vertical-align: top !important;
+		background: #fffffe !important;
+		border: 3px solid #f0e0ff !important;
+		box-shadow: 0 4px 0 rgba(230, 210, 255, 0.65);
+		transition:
+			box-shadow 0.15s ease,
+			border-color 0.15s ease,
+			background-color 0.15s ease;
+	}
+
+	.ant-picker-cell:not(.ant-picker-cell-disabled):hover {
+		box-shadow:
+			0 6px 0 rgba(230, 210, 255, 0.8),
+			0 10px 18px rgba(255, 180, 220, 0.22);
+		border-color: #e8b4ff !important;
+		background: #fffafd !important;
+	}
+
+	.ant-picker-content
+		tbody
+		tr
+		.ant-picker-cell:nth-child(1):not(.ant-picker-cell-disabled):hover,
+	.ant-picker-content
+		tbody
+		tr
+		.ant-picker-cell:nth-child(7):not(.ant-picker-cell-disabled):hover {
+		background: #fff5fb !important;
+	}
+
+	/* 오늘: 노란 테두리·배경 제거 — 큰 이모지가 숫자 위로 나와도 잘리지 않게 */
+	.ant-picker-cell-today {
+		overflow: visible !important;
+		border-color: #f0e0ff !important;
+		box-shadow: 0 4px 0 rgba(230, 210, 255, 0.65) !important;
+	}
+
+	.ant-picker-cell-today:not(.ant-picker-cell-disabled):hover {
+		border-color: #e8b4ff !important;
+		background: #fffafd !important;
+		box-shadow:
+			0 6px 0 rgba(230, 210, 255, 0.8),
+			0 10px 18px rgba(255, 180, 220, 0.22) !important;
+	}
+
+	.ant-picker-content tbody tr .ant-picker-cell:nth-child(1).ant-picker-cell-today:not(.ant-picker-cell-disabled):hover,
+	.ant-picker-content tbody tr .ant-picker-cell:nth-child(7).ant-picker-cell-today:not(.ant-picker-cell-disabled):hover {
+		background: #fff5fb !important;
+	}
+
+	.ant-picker-cell:hover .ant-picker-calendar-date {
+		background: transparent !important;
+	}
+
+	.ant-picker-cell-disabled {
+		opacity: 0.38 !important;
+		box-shadow: none !important;
+	}
+
+	.ant-picker-cell-inner {
+		border-radius: 0 !important;
+		width: 100% !important;
+		box-sizing: border-box !important;
+		padding: 10px 8px 4px !important;
+		font-weight: 400 !important;
+		font-size: 17px !important;
+		color: #8b7eb8 !important;
+		background: transparent !important;
+		min-height: auto !important;
+	}
+
+	/* 오늘: 숫자는 가운데 그대로, 이모지는 덮어씌우듯 절대 배치 */
+	.ant-picker-calendar-date.ant-picker-calendar-date-today {
+		position: relative !important;
+	}
+
+	.ant-picker-calendar-date.ant-picker-calendar-date-today::after {
+		content: '🌟';
+		position: absolute;
+		top: 0;
+		left: 50%;
+		z-index: 2;
+		font-size: 2.35rem;
+		line-height: 1;
+		pointer-events: none;
+		transform: translate(-48%, -6px) rotate(-14deg);
+		filter: drop-shadow(0 3px 6px rgba(255, 190, 60, 0.65));
+	}
+
+	.ant-picker-calendar-date {
+		border-top: none !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		width: 100% !important;
+		box-sizing: border-box !important;
+		border-radius: 0 !important;
+	}
+
 	.ant-picker-calendar-date-content {
-		height: 65px !important;
+		height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px !important;
+		min-height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px !important;
 		overflow-y: hidden !important;
 		overflow-x: hidden !important;
+		padding: 0 !important;
+		width: 100% !important;
+		box-sizing: border-box !important;
+		border-radius: 0 !important;
 	}
 
-	.ant-picker-content thead {
-		font-size: 15px;
-		font-weight: 600;
+	.ant-picker-calendar .ant-tag {
+		border-radius: 12px !important;
+		font-size: 11px !important;
+		padding: 2px 8px !important;
+		border: none !important;
+		font-weight: 400 !important;
+		margin: 0 !important;
 	}
 
-	.ant-picker-content thead > tr > th:nth-child(1) {
-		color: red !important; /* 일요일 */
+	.ant-picker-calendar-date-content .ant-tag {
+		margin-inline: 0 !important;
 	}
 
-	.ant-picker-content thead > tr > th:nth-child(7) {
-		color: red !important; /* 토요일 */
-	}
-
-	padding-top: 25px;
+	padding-top: 4px;
 `
 
 const StyledHolidayP = styled.p`
-	color: red;
+	margin: 0;
+	width: 100%;
+	text-align: center;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.35;
+	color: #e87092;
+`
+
+type CuteCellTone = 'plain' | 'weekend' | 'holiday' | 'muted'
+
+/** 하단 영역 전체를 채우고 태그를 정가운데 (Dropdown·Popconfirm 트리거가 줄어드는 것 방지) */
+const CalendarCellSlot = styled.div`
+	position: relative;
+	width: 100%;
+	height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px;
+	min-height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+`
+
+const CuteCellInner = styled.div<{
+	$tone?: CuteCellTone
+	$click?: boolean
+}>`
+	flex: 1;
+	align-self: stretch;
+	min-height: 0;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 0 6px;
+	text-align: center;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1.3;
+	color: #8b7b99;
+	cursor: ${p => (p.$click ? 'pointer' : 'default')};
+	border-radius: 0;
+	background: ${p => {
+		switch (p.$tone) {
+			case 'holiday':
+				return 'linear-gradient(180deg, transparent 0%, rgba(255, 232, 240, 0.75) 38%, rgba(255, 255, 255, 0.15) 100%)'
+			case 'weekend':
+				return 'transparent'
+			case 'muted':
+				return 'linear-gradient(180deg, transparent 0%, rgba(245, 245, 245, 0.65) 55%, transparent 100%)'
+			default:
+				return 'transparent'
+		}
+	}};
+	transition: transform 0.1s ease;
+
+	${p =>
+		p.$click &&
+		`
+		&:active {
+			transform: scale(0.97);
+		}
+	`}
+`
+
+const CuteResetButton = styled(Button)`
+	height: 50px !important;
+	border-radius: 999px !important;
+	font-size: 18px !important;
+	font-weight: 400 !important;
+	border: 3px solid #f5a8cc !important;
+	background: linear-gradient(180deg, #ffc9e3 0%, #ff9ec8 100%) !important;
+	color: #fff !important;
+	text-shadow: 0 1px 0 rgba(210, 90, 140, 0.35);
+	box-shadow:
+		0 6px 0 #e878a8,
+		0 10px 20px rgba(255, 130, 180, 0.35) !important;
+
+	&:hover {
+		background: linear-gradient(180deg, #ffd4eb 0%, #ffb0d6 100%) !important;
+		color: #fff !important;
+		border-color: #f5a8cc !important;
+	}
+
+	&:active {
+		transform: translateY(3px);
+		box-shadow:
+			0 3px 0 #e878a8,
+			0 6px 12px rgba(255, 130, 180, 0.3) !important;
+	}
+`
+
+/** 부모 PaneInner와 높이 맞춤: 헤더·달력·버튼을 세로 flex로 배치 */
+const CalendarRoot = styled.div`
+	position: relative;
+	height: 100%;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+`
+
+const MonthTitleBar = styled.div`
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 12px;
+	padding: 12px 28px;
+	border-radius: 999px;
+	background: linear-gradient(
+		95deg,
+		#ffd6ec 0%,
+		#fff3b8 28%,
+		#c8f7e4 55%,
+		#c9e8ff 100%
+	);
+	border: 4px solid #fff;
+	box-shadow:
+		0 5px 0 #f8b4d9,
+		0 10px 24px rgba(255, 160, 200, 0.25);
+
+	h1 {
+		margin: 0;
+		font-size: 1.85rem;
+		font-weight: 400;
+		letter-spacing: 0.03em;
+		color: #b565c8;
+		text-shadow:
+			1px 1px 0 #fff,
+			2px 2px 0 rgba(255, 200, 230, 0.8);
+	}
+`
+
+const CalendarBody = styled.div`
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	padding-right: 2px;
+`
+
+const CalendarFooter = styled.div`
+	flex-shrink: 0;
+	margin-top: 12px;
 `
 
 export const CustomCalendar = () => {
@@ -371,10 +669,6 @@ export const CustomCalendar = () => {
 	}
 
 	const dateCellRender = (value: Dayjs) => {
-		const {
-			token: { colorTextTertiary },
-		} = theme.useToken()
-
 		const isWeekend = value.day() === 0 || value.day() === 6
 
 		const holiday = workdayStatus.holidayList.find(
@@ -408,37 +702,27 @@ export const CustomCalendar = () => {
 							menu={{ items: holidayItems, onClick: handleMenuClick(value) }}
 							trigger={['contextMenu']}
 						>
-							<div
-								style={{
-									color: colorTextTertiary,
-									textAlign: 'center',
-									height: '50px',
-									lineHeight: '50px',
-								}}
-							>
-								<StyledHolidayP>
-									근로자의날
-									{savedMenuKey && savedMenuKey !== '휴무' && (
-										<Tag color="volcano"> ({savedMenuKey})</Tag>
-									)}
-								</StyledHolidayP>
-							</div>
+							<CalendarCellSlot>
+								<CuteCellInner $tone="holiday">
+									<StyledHolidayP>
+										근로자의날
+										{savedMenuKey && savedMenuKey !== '휴무' && (
+											<Tag color="magenta">({savedMenuKey})</Tag>
+										)}
+									</StyledHolidayP>
+								</CuteCellInner>
+							</CalendarCellSlot>
 						</Dropdown>
 					</>
 				)
 			}
 
 			return (
-				<div
-					style={{
-						color: colorTextTertiary,
-						textAlign: 'center',
-						height: '50px',
-						lineHeight: '50px',
-					}}
-				>
-					<StyledHolidayP>근로자의날</StyledHolidayP>
-				</div>
+				<CalendarCellSlot>
+					<CuteCellInner $tone="holiday">
+						<StyledHolidayP>근로자의날</StyledHolidayP>
+					</CuteCellInner>
+				</CalendarCellSlot>
 			)
 		}
 
@@ -451,52 +735,39 @@ export const CustomCalendar = () => {
 							menu={{ items: holidayItems, onClick: handleMenuClick(value) }}
 							trigger={['contextMenu']}
 						>
-							<div
-								style={{
-									color: colorTextTertiary,
-									textAlign: 'center',
-									height: '50px',
-									lineHeight: '50px',
-								}}
-							>
-								<StyledHolidayP>
-									{holidayName}
-									{savedMenuKey && savedMenuKey !== '휴무' && (
-										<Tag color="volcano"> ({savedMenuKey})</Tag>
-									)}
-								</StyledHolidayP>
-							</div>
+							<CalendarCellSlot>
+								<CuteCellInner $tone="holiday">
+									<StyledHolidayP>
+										{holidayName}
+										{savedMenuKey && savedMenuKey !== '휴무' && (
+											<Tag color="magenta">({savedMenuKey})</Tag>
+										)}
+									</StyledHolidayP>
+								</CuteCellInner>
+							</CalendarCellSlot>
 						</Dropdown>
 					</>
 				)
 			}
 			return (
-				<div
-					style={{
-						color: colorTextTertiary,
-						textAlign: 'center',
-						height: '50px',
-						lineHeight: '50px',
-					}}
-				>
-					<StyledHolidayP>{holidayName}</StyledHolidayP>
-				</div>
+				<CalendarCellSlot>
+					<CuteCellInner $tone="holiday">
+						<StyledHolidayP>{holidayName}</StyledHolidayP>
+					</CuteCellInner>
+				</CalendarCellSlot>
 			)
 		}
 
 		// 다음달에 공휴일인 경우
 		if (nextMonthHolidayName) {
 			return (
-				<div
-					style={{
-						color: colorTextTertiary,
-						textAlign: 'center',
-						height: '50px',
-						lineHeight: '50px',
-					}}
-				>
-					<StyledHolidayP>{nextMonthHolidayName}</StyledHolidayP>
-				</div>
+				<CalendarCellSlot>
+					<CuteCellInner $tone="muted">
+						<StyledHolidayP style={{ color: '#aaa0b8' }}>
+							{nextMonthHolidayName}
+						</StyledHolidayP>
+					</CuteCellInner>
+				</CalendarCellSlot>
 			)
 		}
 
@@ -509,18 +780,13 @@ export const CustomCalendar = () => {
 							menu={{ items: holidayItems, onClick: handleMenuClick(value) }}
 							trigger={['contextMenu']}
 						>
-							<div
-								style={{
-									color: colorTextTertiary,
-									textAlign: 'center',
-									height: '50px',
-									lineHeight: '50px',
-								}}
-							>
-								{savedMenuKey && savedMenuKey !== '휴무' && (
-									<Tag color="volcano"> ({savedMenuKey})</Tag>
-								)}
-							</div>
+							<CalendarCellSlot>
+								<CuteCellInner $tone="weekend">
+									{savedMenuKey && savedMenuKey !== '휴무' && (
+										<Tag color="magenta">({savedMenuKey})</Tag>
+									)}
+								</CuteCellInner>
+							</CalendarCellSlot>
 						</Dropdown>
 					</>
 				)
@@ -538,12 +804,17 @@ export const CustomCalendar = () => {
 				>
 					<Popconfirm
 						key={value.format('YYYY-MM-DD')}
-						title="얼마짜리 먹을 계획이야?"
+						title="이날 식비 얼마 쓸 거야? 🍱"
 						description={
 							<Input
-								placeholder="금액입력"
-								variant="underlined"
-								style={{ padding: 0 }}
+								placeholder="숫자만!"
+								size="large"
+								style={{
+									marginTop: 10,
+									borderRadius: 14,
+									borderWidth: 2,
+									borderColor: '#ffc8e4',
+								}}
 								onChange={handleInputChange}
 								ref={inputRef}
 								onPressEnter={() => {
@@ -564,40 +835,42 @@ export const CustomCalendar = () => {
 						}}
 						open={value.format('YYYY-MM-DD') == calendarSellKey}
 					>
-						<div
-							style={{
-								color: colorTextTertiary,
-								textAlign: 'center',
-								height: '50px',
-								lineHeight: '50px',
-							}}
-							onClick={() => handleLeftClick(value)}
-						>
-							{savedMenuKey &&
-								savedMenuKey !== '근무' &&
-								savedMenuKey !== '휴가' &&
-								savedMenuKey !== '오전반차' && (
-									<Tag color="volcano"> ({savedMenuKey})</Tag>
-								)}
-							{(savedMenuKey === '휴가' || savedMenuKey === '오전반차') && (
-								<Tag color="purple">({savedMenuKey})</Tag>
-							)}
-						</div>
-						{/* 기념일이면서, 해당기념일이 오늘 이후인지 확인 */}
-						{speicalDay && dayjs(speicalDay.locdate).isAfter(dayjs()) && (
-							<div
-								style={{
-									position: 'absolute',
-									bottom: 0,
-									right: 0,
-									padding: 3,
-								}}
+						<CalendarCellSlot>
+							<CuteCellInner
+								$tone="plain"
+								$click
+								onClick={() => handleLeftClick(value)}
+								role="presentation"
 							>
-								<Tag color="processing" style={{ fontSize: 10 }}>
-									-{numberWithCommas(speicalDay.amount)}원
-								</Tag>
-							</div>
-						)}
+								{savedMenuKey &&
+									savedMenuKey !== '근무' &&
+									savedMenuKey !== '휴가' &&
+									savedMenuKey !== '오전반차' && (
+										<Tag color="orange">({savedMenuKey})</Tag>
+									)}
+								{(savedMenuKey === '휴가' || savedMenuKey === '오전반차') && (
+									<Tag color="cyan">({savedMenuKey})</Tag>
+								)}
+							</CuteCellInner>
+							{/* 기념일이면서, 해당기념일이 오늘 이후인지 확인 */}
+							{speicalDay && dayjs(speicalDay.locdate).isAfter(dayjs()) && (
+								<div
+									style={{
+										position: 'absolute',
+										bottom: 0,
+										right: 0,
+										padding: 3,
+									}}
+								>
+									<Tag
+										color="geekblue"
+										style={{ fontSize: 11, borderRadius: 10 }}
+									>
+										-{numberWithCommas(speicalDay.amount)}원
+									</Tag>
+								</div>
+							)}
+						</CalendarCellSlot>
 					</Popconfirm>
 				</Dropdown>
 			)
@@ -698,51 +971,60 @@ export const CustomCalendar = () => {
 	}
 
 	return (
-		<>
+		<CalendarRoot>
 			{!fetchStatus ? (
-				<Skeleton.Node
-					active={true}
-					style={{ width: '47vw', height: '80vh' }}
-				/>
+				<div
+					style={{
+						flex: 1,
+						minHeight: 0,
+						display: 'flex',
+					}}
+				>
+					<Skeleton.Node
+						active={true}
+						style={{
+							width: '100%',
+							flex: 1,
+							minHeight: 320,
+							borderRadius: 12,
+						}}
+					/>
+				</div>
 			) : (
 				<>
 					{contextHolder}
-					<div style={{ textAlign: 'center', marginTop: 15, height: 50 }}>
-						<h1>{dayjs().month() + 1}월</h1>
-					</div>
-					<StyledCalendar
-						cellRender={cellRender}
-						disabledDate={disabledDate}
-						headerRender={() => <></>}
-						locale={locale}
-					/>
-					<div style={{ marginTop: 15 }}>
-						<Button
-							block
-							style={{ height: 35 }}
-							onClick={handleReset}
-							color="magenta"
-							variant="solid"
-						>
-							달력 초기화
-						</Button>
-					</div>
+					<MonthTitleBar>
+						<h1>🌈 {dayjs().month() + 1}월 달력 🌈</h1>
+					</MonthTitleBar>
+					<CalendarBody>
+						<StyledCalendar
+							cellRender={cellRender}
+							disabledDate={disabledDate}
+							headerRender={() => <></>}
+							locale={locale}
+						/>
+					</CalendarBody>
+					<CalendarFooter>
+						<CuteResetButton block type="primary" onClick={handleReset}>
+							🔄 처음부터 다시!
+						</CuteResetButton>
+					</CalendarFooter>
 					<Button
 						ref={hiddenRef}
 						onClick={error}
-						style={{ visibility: 'hidden' }}
+						style={{ visibility: 'hidden', position: 'absolute' }}
 					>
 						Error
 					</Button>
 					<Button
 						ref={hiddenRef2}
 						onClick={error2}
-						style={{ visibility: 'hidden' }}
+						style={{ visibility: 'hidden', position: 'absolute' }}
 					>
 						Error
 					</Button>
 				</>
 			)}
-		</>
+		</CalendarRoot>
 	)
 }
