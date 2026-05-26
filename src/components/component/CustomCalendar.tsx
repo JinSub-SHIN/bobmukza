@@ -555,9 +555,6 @@ export const CustomCalendar = () => {
 				count++
 			}
 		}
-		if (now.format('MM') === '05') {
-			count--
-		}
 
 		return count
 	}
