@@ -15,11 +15,27 @@ import {
 } from '@ant-design/icons'
 import type { ReactNode } from 'react'
 
+/* 쌍팔년도 신문/한컴 팔레트 — CustomCalendar.tsx와 동일 */
+const RETRO_PAPER = '#efe2bd'
+const RETRO_PAPER_LIGHT = '#f7ecca'
+const RETRO_INK = '#1d150b'
+const RETRO_FRAME = '#2b1e10'
+const RETRO_RED = '#a3231c'
+const RETRO_YELLOW = '#e6b736'
+const RETRO_GREEN = '#3a5c1f'
+const RETRO_BLUE = '#274a72'
+const RETRO_MUTED = '#7a6a4f'
+
+const RETRO_SERIF = `'Batang', '바탕', 'Nanum Myeongjo', 'Noto Serif KR', 'Times New Roman', serif`
+const RETRO_MONO = `'GulimChe', '굴림체', 'D2Coding', 'Courier New', monospace`
+
 const CalculatingRoot = styled.div`
 	height: 100%;
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
+	font-family: ${RETRO_SERIF};
+	color: ${RETRO_INK};
 `
 
 const InputStack = styled.div`
@@ -40,81 +56,82 @@ const FieldLabelRow = styled.div`
 	display: flex;
 	align-items: center;
 	gap: 8px;
+
+	.anticon {
+		color: ${RETRO_RED} !important;
+	}
 `
 
 const FieldLabel = styled.span`
+	font-family: ${RETRO_SERIF};
 	font-size: 16px;
-	font-weight: 400;
-	letter-spacing: 0.02em;
-	color: #8b6bb0;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	color: ${RETRO_INK};
 `
 
 const FieldHint = styled.span`
+	font-family: ${RETRO_SERIF};
 	font-size: 14px;
 	line-height: 1.45;
-	color: #a898c0;
+	color: ${RETRO_MUTED};
 	padding-left: 2px;
 `
 
 const SuffixWon = styled.span`
+	font-family: ${RETRO_SERIF};
 	font-size: 14px;
 	font-weight: 700;
-	color: rgba(0, 0, 0, 0.38);
+	color: ${RETRO_INK};
 	font-variant-numeric: tabular-nums;
 	user-select: none;
 `
 
 const AmountFieldShell = styled.div<{ $accent: 'primary' | 'warning' }>`
 	.ant-input-affix-wrapper {
-		border-radius: 22px;
+		border-radius: 0;
 		padding: 12px 16px;
 		min-height: 54px;
 		background: ${p =>
-			p.$accent === 'primary'
-				? `linear-gradient(180deg, #fffafd 0%, #ffeef8 100%)`
-				: `linear-gradient(180deg, #fffef8 0%, #fff4e0 100%)`};
+			p.$accent === 'primary' ? RETRO_PAPER_LIGHT : RETRO_PAPER};
 		border-width: 3px;
 		border-style: solid;
-		border-color: ${p =>
-			p.$accent === 'primary' ? '#ffc8e8' : '#ffd4a8'};
-		box-shadow:
-			0 4px 0 ${p => (p.$accent === 'primary' ? '#f5b8e0' : '#f5d0a0')},
-			0 6px 14px rgba(255, 180, 210, 0.2);
+		border-color: ${RETRO_FRAME};
+		box-shadow: 4px 4px 0 ${RETRO_INK};
 		transition:
-			border-color 0.2s ease,
-			box-shadow 0.2s ease,
+			background-color 0.15s ease,
+			box-shadow 0.15s ease,
 			transform 0.1s ease;
 	}
 
 	.ant-input-affix-wrapper:hover {
-		border-color: ${p => (p.$accent === 'primary' ? '#ff9ecf' : '#ffc078')};
+		background: ${p =>
+			p.$accent === 'primary' ? '#fff3d1' : RETRO_PAPER_LIGHT};
 	}
 
 	.ant-input-affix-wrapper-focused,
 	.ant-input-affix-wrapper:focus-within {
-		border-color: ${p => (p.$accent === 'primary' ? '#ff7eb9' : '#ffb347')} !important;
+		border-color: ${RETRO_RED} !important;
 		box-shadow:
-			0 0 0 4px
-				${p =>
-					p.$accent === 'primary'
-						? 'rgba(255, 160, 210, 0.35)'
-						: 'rgba(255, 200, 120, 0.4)'},
-			0 4px 0 ${p => (p.$accent === 'primary' ? '#f5b8e0' : '#f5d0a0')} !important;
+			4px 4px 0 ${RETRO_INK},
+			inset 0 0 0 2px ${RETRO_RED} !important;
 	}
 
 	.ant-input {
+		font-family: ${RETRO_MONO};
 		font-size: 18px;
-		font-weight: 600;
+		font-weight: 700;
 		font-variant-numeric: tabular-nums;
-		letter-spacing: -0.02em;
+		letter-spacing: 0;
 		background: transparent !important;
-		color: #7b6899 !important;
+		color: ${RETRO_INK} !important;
 	}
 
 	.ant-input::placeholder {
+		font-family: ${RETRO_SERIF};
 		font-size: 15px !important;
 		font-weight: 400 !important;
-		color: #c4b8d4 !important;
+		color: ${RETRO_MUTED} !important;
 	}
 `
 
@@ -127,25 +144,20 @@ const ScrollCardsArea = styled.div`
 `
 
 const InfoPaneCard = styled(Card)<{ $tint?: 'base' | 'calc' | 'extra' }>`
-	margin-bottom: 14px;
-	border-radius: 22px;
+	margin-bottom: 16px;
+	border-radius: 0 !important;
 	overflow: hidden;
-	border: 3px solid #f0e0ff;
-	background: rgba(255, 255, 255, 0.75);
-	box-shadow:
-		0 5px 0 rgba(230, 210, 255, 0.55),
-		0 10px 20px rgba(220, 190, 255, 0.15);
+	border: 3px solid ${RETRO_FRAME} !important;
+	background: ${RETRO_PAPER} !important;
+	box-shadow: 6px 6px 0 ${RETRO_INK};
+	font-family: ${RETRO_SERIF};
 
 	.ant-card-head {
 		min-height: 52px;
 		padding: 0 16px;
-		background: ${({ $tint = 'base' }) =>
-			$tint === 'calc'
-				? `linear-gradient(95deg, #d4fff5 0%, #e8fffd 50%, #fff 100%)`
-				: $tint === 'extra'
-					? `linear-gradient(95deg, #fff3d6 0%, #fff8e8 50%, #fff 100%)`
-					: `linear-gradient(95deg, #ffe4f3 0%, #f5e8ff 50%, #fff 100%)`};
-		border-bottom: 3px dashed #f5e6ff;
+		background: ${RETRO_FRAME} !important;
+		border-bottom: 3px solid ${RETRO_FRAME} !important;
+		color: ${RETRO_PAPER} !important;
 	}
 
 	.ant-card-head-title {
@@ -153,13 +165,13 @@ const InfoPaneCard = styled(Card)<{ $tint?: 'base' | 'calc' | 'extra' }>`
 	}
 
 	.ant-card-body {
-		padding: 8px 16px 16px;
+		padding: 10px 16px 14px;
 		background: ${({ $tint = 'base' }) =>
 			$tint === 'calc'
-				? `linear-gradient(180deg, #f5fffc 0%, #ffffff 100%)`
+				? `repeating-linear-gradient(0deg, ${RETRO_PAPER_LIGHT} 0, ${RETRO_PAPER_LIGHT} 24px, rgba(43,30,16,0.05) 24px, rgba(43,30,16,0.05) 25px)`
 				: $tint === 'extra'
-					? `linear-gradient(180deg, #fffbf5 0%, #ffffff 100%)`
-					: `linear-gradient(180deg, #fff8fd 0%, #ffffff 100%)`};
+					? `repeating-linear-gradient(0deg, #f5e9c4 0, #f5e9c4 24px, rgba(43,30,16,0.05) 24px, rgba(43,30,16,0.05) 25px)`
+					: `repeating-linear-gradient(0deg, ${RETRO_PAPER} 0, ${RETRO_PAPER} 24px, rgba(43,30,16,0.05) 24px, rgba(43,30,16,0.05) 25px)`};
 	}
 
 	&:last-child {
@@ -170,39 +182,35 @@ const InfoPaneCard = styled(Card)<{ $tint?: 'base' | 'calc' | 'extra' }>`
 const CardTitleInner = styled.div`
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 12px;
 `
 
 const TitleIcon = styled.span<{ $from: string; $to: string }>`
-	width: 40px;
-	height: 40px;
-	border-radius: 50%;
+	width: 38px;
+	height: 38px;
+	border-radius: 0;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	font-size: 18px;
-	color: #fff;
-	background: linear-gradient(145deg, ${p => p.$from} 0%, ${p => p.$to} 100%);
-	border: 3px solid #fff;
-	box-shadow:
-		0 3px 0 rgba(0, 0, 0, 0.08),
-		0 6px 12px rgba(0, 0, 0, 0.1);
+	color: ${RETRO_INK};
+	background: ${RETRO_YELLOW};
+	border: 2px solid ${RETRO_PAPER};
+	box-shadow: 3px 3px 0 ${RETRO_INK};
+
+	.anticon {
+		color: ${RETRO_INK} !important;
+	}
 `
 
 const TitleText = styled.span<{ $from: string; $to: string }>`
+	font-family: ${RETRO_SERIF};
 	font-size: 17px;
-	font-weight: 400;
-	letter-spacing: 0.02em;
-	background: linear-gradient(98deg, ${p => p.$from} 0%, ${p => p.$to} 100%);
-	-webkit-background-clip: text;
-	background-clip: text;
-	-webkit-text-fill-color: transparent;
-
-	@supports not (background-clip: text) {
-		background: none;
-		-webkit-text-fill-color: unset;
-		color: ${p => p.$from};
-	}
+	font-weight: 700;
+	letter-spacing: 0.2em;
+	color: ${RETRO_PAPER};
+	text-shadow: 2px 2px 0 ${RETRO_RED};
+	-webkit-text-fill-color: ${RETRO_PAPER};
 `
 
 const StatRow = styled.div`
@@ -211,7 +219,7 @@ const StatRow = styled.div`
 	align-items: flex-start;
 	gap: 14px;
 	padding: 10px 0;
-	border-bottom: 2px dotted #f0e4f8;
+	border-bottom: 1px dashed ${RETRO_FRAME};
 
 	&:last-child {
 		border-bottom: none;
@@ -220,17 +228,19 @@ const StatRow = styled.div`
 `
 
 const StatLabel = styled.span`
+	font-family: ${RETRO_SERIF};
 	font-size: 15px;
-	color: #9b8ab5;
+	color: ${RETRO_INK};
 	line-height: 1.45;
 	flex: 1;
 	min-width: 0;
 	font-weight: 400;
+	letter-spacing: 0.04em;
 `
 
 const StatLabelHelp = styled.span`
 	cursor: help;
-	border-bottom: 2px dotted #d4c4e8;
+	border-bottom: 1px dotted ${RETRO_FRAME};
 `
 
 const StatRight = styled.div`
@@ -244,33 +254,36 @@ const StatRight = styled.div`
 `
 
 const StatValue = styled.span<{ $tone?: 'default' | 'emphasis' | 'plus' | 'minus' | 'warn' }>`
+	font-family: ${RETRO_MONO};
 	font-size: 16px;
-	font-weight: 400;
+	font-weight: 700;
 	font-variant-numeric: tabular-nums;
-	letter-spacing: -0.02em;
+	letter-spacing: 0;
 	color: ${p =>
 		p.$tone === 'emphasis'
-			? '#2db5a8'
+			? RETRO_RED
 			: p.$tone === 'plus'
-				? '#52c41a'
+				? RETRO_GREEN
 				: p.$tone === 'minus'
-					? '#ff6b9d'
+					? RETRO_RED
 					: p.$tone === 'warn'
-						? '#ffa940'
-						: '#7b6899'};
+						? RETRO_BLUE
+						: RETRO_INK};
 `
 
 const StatUnit = styled.span`
+	font-family: ${RETRO_SERIF};
 	font-size: 13px;
-	font-weight: 400;
-	color: #b8a8d0;
-	margin-left: 1px;
+	font-weight: 700;
+	color: ${RETRO_MUTED};
+	margin-left: 2px;
 `
 
 const StatMeta = styled.span`
+	font-family: ${RETRO_MONO};
 	font-size: 13px;
 	font-weight: 400;
-	color: #c4b4d8;
+	color: ${RETRO_MUTED};
 	font-variant-numeric: tabular-nums;
 `
 
