@@ -13,7 +13,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import locale from 'antd/es/calendar/locale/ko_KR'
 import { useEffect, useRef, useState } from 'react'
-import { getHoliday } from '../../api'
+import { getHoliday, normalizeHolidayItems } from '../../api'
 import {
 	CheckOutlined,
 	CloseOutlined,
@@ -355,7 +355,7 @@ const CuteResetButton = styled(Button)`
 const CalendarRoot = styled.div`
 	position: relative;
 	height: 100%;
-	min-height: 0;
+	min-height: 420px;
 	display: flex;
 	flex-direction: column;
 `
@@ -394,7 +394,7 @@ const MonthTitleBar = styled.div`
 
 const CalendarBody = styled.div`
 	flex: 1;
-	min-height: 0;
+	min-height: 320px;
 	overflow: auto;
 	padding-right: 2px;
 `
@@ -454,76 +454,51 @@ export const CustomCalendar = () => {
 
 	useEffect(() => {
 		const fetchHoliday = async () => {
+			const now = dayjs()
+			const nextMonth = now.add(1, 'month')
+			let nowHoliday: HolidayObj[] = []
+			let nextHoliday: HolidayObj[] = []
+
 			try {
-				const now = dayjs()
-				const nextMonth = now.add(1, 'month')
+				const [response, nextMonthResponse] = await Promise.all([
+					getHoliday(now.format('YYYY'), now.format('MM')),
+					getHoliday(nextMonth.format('YYYY'), nextMonth.format('MM')),
+				])
 
-				// API 고장으로 인한 임시 데이터 (11월 휴일 없음)
-				const response = await getHoliday(now.format('YYYY'), now.format('MM'))
-				const nextMonthResponse = await getHoliday(
-					nextMonth.format('YYYY'),
-					nextMonth.format('MM'),
+				nowHoliday = normalizeHolidayItems(response).map(holiday => ({
+					locdate: holiday.locdate.toString(),
+					dateName: holiday.dateName.toString(),
+				}))
+				nextHoliday = normalizeHolidayItems(nextMonthResponse).map(
+					holiday => ({
+						locdate: holiday.locdate.toString(),
+						dateName: holiday.dateName.toString(),
+					}),
 				)
-
-				// 임시 데이터: 11월 휴일 없음
-				let holidayresponseArray = response.response.body.items.item
-					? response.response.body.items.item
-					: []
-				let holidayNextresponseArray = nextMonthResponse.response.body.items
-					.item
-					? nextMonthResponse.response.body.items.item
-					: []
-
-				// api 에서 반환된 값이 1개 일때는 객채로 오므로,
-				// 배열로 변환해준다.
-				holidayresponseArray = Array.isArray(holidayresponseArray)
-					? holidayresponseArray
-					: [holidayresponseArray]
-
-				// api 에서 반환된 값이 1개 일때는 객채로 오므로,
-				// 배열로 변환해준다.
-				holidayNextresponseArray = Array.isArray(holidayNextresponseArray)
-					? holidayNextresponseArray
-					: [holidayNextresponseArray]
-
-				setFetchStatus(true)
-
-				const nowHoliday = holidayresponseArray.map((holiday: any) => ({
-					locdate: holiday.locdate.toString(),
-					dateName: holiday.dateName.toString(),
-				}))
-
-				const nextHoliday = holidayNextresponseArray.map((holiday: any) => ({
-					locdate: holiday.locdate.toString(),
-					dateName: holiday.dateName.toString(),
-				}))
-
-				const copy = cloneDeep(workdayStatus)
-				copy.holidayList = nowHoliday
-				copy.nextMonthHolidayList = nextHoliday
-
-				const workday = getWeekdaysInMonth(nowHoliday)
-				const remaningWorkday = getRemainingWorkdays(nowHoliday)
-				copy.workday = workday
-				copy.workRemaningDay = remaningWorkday
-
-				// 오늘 이후인 기념일만 남기고 나머지는 삭제한다.
-				const filtered = workdayStatus.specialDayList.filter(item => {
-					const itemDate = dayjs(item.locdate)
-					return itemDate.isAfter(dayjs())
-				})
-
-				copy.specialDayList = filtered
-
-				dispatch(setWorkday(copy))
 			} catch (error) {
-				return []
+				console.error('공휴일 API 실패 — 달력은 휴일 없이 표시합니다.', error)
 			}
+
+			const copy = cloneDeep(workdayStatus)
+			copy.holidayList = nowHoliday
+			copy.nextMonthHolidayList = nextHoliday
+
+			const workday = getWeekdaysInMonth(nowHoliday)
+			const remaningWorkday = getRemainingWorkdays(nowHoliday)
+			copy.workday = workday
+			copy.workRemaningDay = remaningWorkday
+
+			// 오늘 이후인 기념일만 남기고 나머지는 삭제한다.
+			copy.specialDayList = workdayStatus.specialDayList.filter(item => {
+				const itemDate = dayjs(item.locdate)
+				return itemDate.isAfter(dayjs())
+			})
+
+			dispatch(setWorkday(copy))
+			// API 실패해도 달력 UI는 반드시 보여준다
+			setFetchStatus(true)
 		}
-		const loadHolidays = async () => {
-			await fetchHoliday()
-		}
-		loadHolidays()
+		void fetchHoliday()
 	}, [refetchStatus])
 
 	useEffect(() => {
