@@ -3,615 +3,398 @@ import styled from 'styled-components'
 import { RootState } from '../../store'
 import { numberWithCommas } from '../hook/useNumberComma'
 import { setWorkday } from '../../store/action/workdaySlice'
-import { Card, Col, Input, Row, Tooltip } from 'antd'
+import { Input, Tooltip } from 'antd'
 import { numberRegexp } from '../hook/useNumberRegexp'
 import dayjs from 'dayjs'
-import {
-	BarChartOutlined,
-	CalculatorOutlined,
-	CalendarOutlined,
-	WalletOutlined,
-	WarningOutlined,
-} from '@ant-design/icons'
-import type { ReactNode } from 'react'
+import { theme } from '../../styles/theme'
 
-/* 쌍팔년도 신문/한컴 팔레트 — CustomCalendar.tsx와 동일 */
-const RETRO_PAPER = '#efe2bd'
-const RETRO_PAPER_LIGHT = '#f7ecca'
-const RETRO_INK = '#1d150b'
-const RETRO_FRAME = '#2b1e10'
-const RETRO_RED = '#a3231c'
-const RETRO_YELLOW = '#e6b736'
-const RETRO_GREEN = '#3a5c1f'
-const RETRO_BLUE = '#274a72'
-const RETRO_MUTED = '#7a6a4f'
-
-const RETRO_SERIF = `'Batang', '바탕', 'Nanum Myeongjo', 'Noto Serif KR', 'Times New Roman', serif`
-const RETRO_MONO = `'GulimChe', '굴림체', 'D2Coding', 'Courier New', monospace`
-
-const CalculatingRoot = styled.div`
+const Root = styled.div`
 	height: 100%;
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
-	font-family: ${RETRO_SERIF};
-	color: ${RETRO_INK};
+	gap: 14px;
+	font-family: ${theme.fontBody};
+	color: ${theme.ink};
 `
 
-const InputStack = styled.div`
+const InputGrid = styled.div`
 	flex-shrink: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 18px;
-	padding-bottom: 6px;
-`
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
 
-const FieldBlock = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-`
-
-const FieldLabelRow = styled.div`
-	display: flex;
-	align-items: center;
-	gap: 8px;
-
-	.anticon {
-		color: ${RETRO_RED} !important;
+	@media (max-width: 700px) {
+		grid-template-columns: 1fr;
 	}
 `
 
-const FieldLabel = styled.span`
-	font-family: ${RETRO_SERIF};
-	font-size: 16px;
+const Field = styled.label`
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 12px 14px;
+	border-radius: ${theme.radiusSm};
+	background: rgba(255, 255, 255, 0.65);
+	border: 1px solid ${theme.line};
+`
+
+const FieldTop = styled.div`
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+`
+
+const FieldName = styled.span`
+	font-size: 13px;
 	font-weight: 700;
-	letter-spacing: 0.12em;
-	color: ${RETRO_INK};
+	color: ${theme.ink};
 `
 
 const FieldHint = styled.span`
-	font-family: ${RETRO_SERIF};
-	font-size: 14px;
-	line-height: 1.45;
-	color: ${RETRO_MUTED};
-	padding-left: 2px;
+	font-size: 11px;
+	font-weight: 500;
+	color: ${theme.inkSoft};
 `
 
-const SuffixWon = styled.span`
-	font-family: ${RETRO_SERIF};
-	font-size: 14px;
+const Suffix = styled.span`
+	font-size: 12px;
 	font-weight: 700;
-	color: ${RETRO_INK};
-	font-variant-numeric: tabular-nums;
-	user-select: none;
+	color: ${theme.inkSoft};
 `
 
-const AmountFieldShell = styled.div<{ $accent: 'primary' | 'warning' }>`
+const FieldInput = styled.div<{ $tone: 'teal' | 'accent' }>`
 	.ant-input-affix-wrapper {
-		border-radius: 0;
-		padding: 12px 16px;
-		min-height: 54px;
-		background: ${p =>
-			p.$accent === 'primary' ? RETRO_PAPER_LIGHT : RETRO_PAPER};
-		border-width: 3px;
-		border-style: solid;
-		border-color: ${RETRO_FRAME};
-		box-shadow: 4px 4px 0 ${RETRO_INK};
-		transition:
-			background-color 0.15s ease,
-			box-shadow 0.15s ease,
-			transform 0.1s ease;
-	}
-
-	.ant-input-affix-wrapper:hover {
-		background: ${p =>
-			p.$accent === 'primary' ? '#fff3d1' : RETRO_PAPER_LIGHT};
+		border-radius: 10px;
+		padding: 8px 12px;
+		min-height: 42px;
+		background: #fff;
+		border: 1px solid ${theme.line};
 	}
 
 	.ant-input-affix-wrapper-focused,
 	.ant-input-affix-wrapper:focus-within {
-		border-color: ${RETRO_RED} !important;
-		box-shadow:
-			4px 4px 0 ${RETRO_INK},
-			inset 0 0 0 2px ${RETRO_RED} !important;
+		border-color: ${p =>
+			p.$tone === 'teal' ? theme.teal : theme.accent} !important;
+		box-shadow: 0 0 0 3px
+			${p =>
+				p.$tone === 'teal'
+					? 'rgba(15, 143, 130, 0.14)'
+					: 'rgba(255, 90, 54, 0.14)'} !important;
 	}
 
 	.ant-input {
-		font-family: ${RETRO_MONO};
-		font-size: 18px;
-		font-weight: 700;
+		font-family: ${theme.fontMono};
+		font-size: 16px;
+		font-weight: 600;
 		font-variant-numeric: tabular-nums;
-		letter-spacing: 0;
-		background: transparent !important;
-		color: ${RETRO_INK} !important;
-	}
-
-	.ant-input::placeholder {
-		font-family: ${RETRO_SERIF};
-		font-size: 15px !important;
-		font-weight: 400 !important;
-		color: ${RETRO_MUTED} !important;
+		color: ${theme.ink} !important;
 	}
 `
 
-const ScrollCardsArea = styled.div`
+const Scroll = styled.div`
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	margin-top: 8px;
-	padding-right: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-right: 2px;
 `
 
-const InfoPaneCard = styled(Card)<{ $tint?: 'base' | 'calc' | 'extra' }>`
-	margin-bottom: 16px;
-	border-radius: 0 !important;
-	overflow: hidden;
-	border: 3px solid ${RETRO_FRAME} !important;
-	background: ${RETRO_PAPER} !important;
-	box-shadow: 6px 6px 0 ${RETRO_INK};
-	font-family: ${RETRO_SERIF};
-
-	.ant-card-head {
-		min-height: 52px;
-		padding: 0 16px;
-		background: ${RETRO_FRAME} !important;
-		border-bottom: 3px solid ${RETRO_FRAME} !important;
-		color: ${RETRO_PAPER} !important;
-	}
-
-	.ant-card-head-title {
-		padding: 12px 0;
-	}
-
-	.ant-card-body {
-		padding: 10px 16px 14px;
-		background: ${({ $tint = 'base' }) =>
-			$tint === 'calc'
-				? `repeating-linear-gradient(0deg, ${RETRO_PAPER_LIGHT} 0, ${RETRO_PAPER_LIGHT} 24px, rgba(43,30,16,0.05) 24px, rgba(43,30,16,0.05) 25px)`
-				: $tint === 'extra'
-					? `repeating-linear-gradient(0deg, #f5e9c4 0, #f5e9c4 24px, rgba(43,30,16,0.05) 24px, rgba(43,30,16,0.05) 25px)`
-					: `repeating-linear-gradient(0deg, ${RETRO_PAPER} 0, ${RETRO_PAPER} 24px, rgba(43,30,16,0.05) 24px, rgba(43,30,16,0.05) 25px)`};
-	}
-
-	&:last-child {
-		margin-bottom: 0;
-	}
+const Hero = styled.section<{ $ok: boolean }>`
+	padding: 18px 18px 16px;
+	border-radius: ${theme.radius};
+	border: 1px solid ${theme.line};
+	background: ${p =>
+		p.$ok
+			? 'linear-gradient(145deg, rgba(15,143,130,0.14) 0%, rgba(255,255,255,0.85) 55%)'
+			: 'linear-gradient(145deg, rgba(255,90,54,0.14) 0%, rgba(255,255,255,0.85) 55%)'};
+	box-shadow: ${theme.shadow};
 `
 
-const CardTitleInner = styled.div`
+const HeroTop = styled.div`
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 14px;
 `
 
-const TitleIcon = styled.span<{ $from: string; $to: string }>`
-	width: 38px;
-	height: 38px;
-	border-radius: 0;
+const HeroLabel = styled.p`
+	margin: 0;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	color: ${theme.inkSoft};
+`
+
+const StatusPill = styled.span<{ $ok: boolean }>`
 	display: inline-flex;
 	align-items: center;
-	justify-content: center;
-	font-size: 18px;
-	color: ${RETRO_INK};
-	background: ${RETRO_YELLOW};
-	border: 2px solid ${RETRO_PAPER};
-	box-shadow: 3px 3px 0 ${RETRO_INK};
+	padding: 5px 10px;
+	border-radius: 8px;
+	font-size: 12px;
+	font-weight: 700;
+	color: ${p => (p.$ok ? theme.plus : theme.warn)};
+	background: ${p =>
+		p.$ok ? 'rgba(26, 122, 76, 0.12)' : 'rgba(196, 92, 26, 0.12)'};
+`
 
-	.anticon {
-		color: ${RETRO_INK} !important;
+const HeroGrid = styled.div`
+	display: grid;
+	grid-template-columns: 1.15fr 1fr;
+	gap: 12px;
+
+	@media (max-width: 560px) {
+		grid-template-columns: 1fr;
 	}
 `
 
-const TitleText = styled.span<{ $from: string; $to: string }>`
-	font-family: ${RETRO_SERIF};
-	font-size: 17px;
-	font-weight: 700;
-	letter-spacing: 0.2em;
-	color: ${RETRO_PAPER};
-	text-shadow: 2px 2px 0 ${RETRO_RED};
-	-webkit-text-fill-color: ${RETRO_PAPER};
+const HeroMetric = styled.div`
+	min-width: 0;
 `
 
-const StatRow = styled.div`
+const HeroCaption = styled.div`
+	font-size: 12px;
+	font-weight: 600;
+	color: ${theme.inkSoft};
+	margin-bottom: 4px;
+`
+
+const HeroValue = styled.div<{ $tone?: 'accent' | 'ok' | 'warn' }>`
+	font-family: ${theme.fontDisplay};
+	font-size: clamp(1.7rem, 3vw, 2.25rem);
+	line-height: 1.05;
+	letter-spacing: -0.03em;
+	font-variant-numeric: tabular-nums;
+	color: ${p =>
+		p.$tone === 'accent'
+			? theme.accent
+			: p.$tone === 'ok'
+				? theme.plus
+				: p.$tone === 'warn'
+					? theme.warn
+					: theme.ink};
+
+	small {
+		margin-left: 4px;
+		font-family: ${theme.fontBody};
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: ${theme.inkSoft};
+		letter-spacing: 0;
+	}
+`
+
+const HeroSub = styled.p`
+	margin: 6px 0 0;
+	font-size: 12px;
+	line-height: 1.4;
+	color: ${theme.inkSoft};
+`
+
+const ChipRow = styled.div`
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 8px;
+
+	@media (max-width: 560px) {
+		grid-template-columns: 1fr;
+	}
+`
+
+const Chip = styled.div`
+	padding: 12px 12px 10px;
+	border-radius: ${theme.radiusSm};
+	background: rgba(255, 255, 255, 0.72);
+	border: 1px solid ${theme.line};
+`
+
+const ChipLabel = styled.div`
+	font-size: 11px;
+	font-weight: 700;
+	color: ${theme.inkSoft};
+	margin-bottom: 4px;
+`
+
+const ChipValue = styled.div`
+	font-family: ${theme.fontMono};
+	font-size: 1.05rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: ${theme.ink};
+
+	small {
+		margin-left: 3px;
+		font-family: ${theme.fontBody};
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: ${theme.inkSoft};
+	}
+`
+
+const Section = styled.section`
+	border-radius: ${theme.radiusSm};
+	border: 1px solid ${theme.line};
+	background: rgba(255, 255, 255, 0.7);
+	overflow: hidden;
+`
+
+const SectionHead = styled.div`
+	padding: 11px 14px;
+	font-size: 13px;
+	font-weight: 700;
+	color: ${theme.ink};
+	background: rgba(20, 35, 28, 0.04);
+	border-bottom: 1px solid ${theme.line};
+`
+
+const SectionBody = styled.div`
+	padding: 4px 14px 8px;
+`
+
+const RowLine = styled.div`
 	display: flex;
+	align-items: baseline;
 	justify-content: space-between;
-	align-items: flex-start;
-	gap: 14px;
+	gap: 12px;
 	padding: 10px 0;
-	border-bottom: 1px dashed ${RETRO_FRAME};
+	border-bottom: 1px solid ${theme.line};
 
 	&:last-child {
 		border-bottom: none;
-		padding-bottom: 2px;
 	}
 `
 
-const StatLabel = styled.span`
-	font-family: ${RETRO_SERIF};
-	font-size: 15px;
-	color: ${RETRO_INK};
-	line-height: 1.45;
-	flex: 1;
+const RowLabel = styled.span`
+	font-size: 13px;
+	font-weight: 500;
+	color: ${theme.inkSoft};
 	min-width: 0;
-	font-weight: 400;
-	letter-spacing: 0.04em;
+
+	em {
+		font-style: normal;
+		font-size: 11px;
+		margin-left: 6px;
+		opacity: 0.85;
+	}
 `
 
-const StatLabelHelp = styled.span`
-	cursor: help;
-	border-bottom: 1px dotted ${RETRO_FRAME};
-`
-
-const StatRight = styled.div`
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: flex-end;
-	align-items: baseline;
-	gap: 2px 6px;
+const RowValue = styled.span<{ $tone?: 'plus' | 'minus' | 'strong' }>`
+	font-family: ${theme.fontMono};
+	font-size: 14px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
 	text-align: right;
-	max-width: 58%;
-`
-
-const StatValue = styled.span<{ $tone?: 'default' | 'emphasis' | 'plus' | 'minus' | 'warn' }>`
-	font-family: ${RETRO_MONO};
-	font-size: 16px;
-	font-weight: 700;
-	font-variant-numeric: tabular-nums;
-	letter-spacing: 0;
 	color: ${p =>
-		p.$tone === 'emphasis'
-			? RETRO_RED
-			: p.$tone === 'plus'
-				? RETRO_GREEN
-				: p.$tone === 'minus'
-					? RETRO_RED
-					: p.$tone === 'warn'
-						? RETRO_BLUE
-						: RETRO_INK};
-`
+		p.$tone === 'plus'
+			? theme.plus
+			: p.$tone === 'minus'
+				? theme.minus
+				: p.$tone === 'strong'
+					? theme.ink
+					: theme.ink};
 
-const StatUnit = styled.span`
-	font-family: ${RETRO_SERIF};
-	font-size: 13px;
-	font-weight: 700;
-	color: ${RETRO_MUTED};
-	margin-left: 2px;
-`
-
-const StatMeta = styled.span`
-	font-family: ${RETRO_MONO};
-	font-size: 13px;
-	font-weight: 400;
-	color: ${RETRO_MUTED};
-	font-variant-numeric: tabular-nums;
-`
-
-const tooltipProps = {
-	color: 'rgba(0, 0, 0, 0.88)' as const,
-	overlayInnerStyle: { maxWidth: 300 },
-}
-
-function CardHead({
-	icon,
-	title,
-	from,
-	to,
-	textFrom,
-	textTo,
-}: {
-	icon: ReactNode
-	title: string
-	from: string
-	to: string
-	textFrom: string
-	textTo: string
-}) {
-	return (
-		<CardTitleInner>
-			<TitleIcon $from={from} $to={to}>{icon}</TitleIcon>
-			<TitleText $from={textFrom} $to={textTo}>
-				{title}
-			</TitleText>
-		</CardTitleInner>
-	)
-}
-
-function StatLine({
-	label,
-	labelTooltip,
-	value,
-	tone = 'default',
-	meta,
-}: {
-	label: ReactNode
-	labelTooltip?: ReactNode
-	value: ReactNode
-	tone?: 'default' | 'emphasis' | 'plus' | 'minus' | 'warn'
-	meta?: ReactNode
-}) {
-	const lab = labelTooltip ? (
-		<Tooltip title={labelTooltip} {...tooltipProps}>
-			<StatLabelHelp>{label}</StatLabelHelp>
-		</Tooltip>
-	) : (
-		label
-	)
-
-	return (
-		<StatRow>
-			<StatLabel>{lab}</StatLabel>
-			<StatRight>
-				<StatValue $tone={tone}>{value}</StatValue>
-				{meta != null ? <StatMeta>{meta}</StatMeta> : null}
-			</StatRight>
-		</StatRow>
-	)
-}
-
-function amountFrag(n: number, unit = '원') {
-	return (
-		<>
-			{numberWithCommas(n)}
-			<StatUnit>{unit}</StatUnit>
-		</>
-	)
-}
-
-function BasicInfoBody({ ws }: { ws: RootState['workdayStatus'] }) {
-	return (
-		<>
-			<StatLine
-				label="기본 제공 식대"
-				value={amountFrag(ws.workday * 13000)}
-				meta={`· ${ws.workday}일`}
-			/>
-			<StatLine
-				label="휴가 차감"
-				value={
-					ws.allHolidayCount === 0 ? (
-						amountFrag(0)
-					) : (
-						<>
-							−{numberWithCommas(ws.allHolidayCount * 13000)}
-							<StatUnit>원</StatUnit>
-						</>
-					)
-				}
-				tone={ws.allHolidayCount === 0 ? 'default' : 'minus'}
-				meta={ws.allHolidayCount === 0 ? '· 0일' : `· ${ws.allHolidayCount}일`}
-			/>
-			<StatLine
-				label="오전반차 차감"
-				value={
-					ws.morningHoldayCount === 0 ? (
-						amountFrag(0)
-					) : (
-						<>
-							−{numberWithCommas(ws.morningHoldayCount * 10000)}
-							<StatUnit>원</StatUnit>
-						</>
-					)
-				}
-				tone={ws.morningHoldayCount === 0 ? 'default' : 'minus'}
-				meta={ws.morningHoldayCount === 0 ? '· 0일' : `· ${ws.morningHoldayCount}일`}
-			/>
-			<StatLine
-				label="야근 추가 식대"
-				value={
-					ws.extraMoneyCount === 0 ? (
-						amountFrag(0)
-					) : (
-						<>
-							+{numberWithCommas(ws.extraMoneyCount * 10000)}
-							<StatUnit>원</StatUnit>
-						</>
-					)
-				}
-				tone={ws.extraMoneyCount === 0 ? 'default' : 'plus'}
-				meta={ws.extraMoneyCount === 0 ? '· 0회' : `· ${ws.extraMoneyCount}회`}
-			/>
-		</>
-	)
-}
-
-function CalcInfoBody({
-	ws,
-	remainingAmount,
-}: {
-	ws: RootState['workdayStatus']
-	remainingAmount: number
-}) {
-	return (
-		<>
-			<StatLine
-				label="현재 이용 금액"
-				value={amountFrag(ws.usageAmount ? ws.usageAmount : 0)}
-			/>
-			<StatLine
-				label="반려 · 오사용"
-				labelTooltip="오사용으로 다음 달에 입금해야 하면, 잔액에 그만큼 더해져 계산됩니다."
-				value={amountFrag(ws.exceptionMoney ?? 0)}
-			/>
-			<StatLine
-				label="잔액"
-				value={amountFrag(remainingAmount)}
-				tone="emphasis"
-			/>
-		</>
-	)
-}
-
-function EtcInfoBody({
-	ws,
-	remainingAmount,
-	remainingWorkDays,
-	willPayAmount,
-	averageAmount,
-}: {
-	ws: RootState['workdayStatus']
-	remainingAmount: number
-	remainingWorkDays: number
-	willPayAmount: number
-	averageAmount: string
-}) {
-	const avgNum = Number(averageAmount)
-	const avgHealthy =
-		remainingWorkDays === 0 ? remainingAmount >= 0 : avgNum >= 13000
-
-	const avgValue =
-		remainingWorkDays === 0 ? (
-			amountFrag(remainingAmount)
-		) : (
-			<>
-				{avgNum.toLocaleString('ko-KR', {
-					maximumFractionDigits: 1,
-					minimumFractionDigits: 0,
-				})}
-				<StatUnit>원</StatUnit>
-			</>
-		)
-
-	return (
-		<>
-			<StatLine
-				label="남은 근무 일수"
-				labelTooltip="당일 점심 이후에는 그날을 근무일수로 보지 않습니다."
-				value={
-					<>
-						{remainingWorkDays}
-						<StatUnit>일</StatUnit>
-					</>
-				}
-			/>
-			<StatLine
-				label="예상 지출 등록"
-				value={
-					<>
-						{ws.specialDayList.length}
-						<StatUnit>일</StatUnit>
-					</>
-				}
-			/>
-			<StatLine label="예상 지출 금액" value={amountFrag(willPayAmount)} />
-			<StatLine
-				label="남은 평균 금액"
-				labelTooltip="(잔액 − 예상 지출) ÷ (남은 근무 일수 − 예상 지출 등록 일수)"
-				value={avgValue}
-				tone={avgHealthy ? 'plus' : 'warn'}
-			/>
-		</>
-	)
-}
-
-const ResponsiveWrapper = styled.div`
-	@media (max-width: 1400px) {
-		display: none;
+	small {
+		margin-left: 2px;
+		font-family: ${theme.fontBody};
+		font-size: 11px;
+		font-weight: 700;
+		color: ${theme.inkSoft};
 	}
 `
 
-const MobileWrapper = styled.div`
-	display: none;
-
-	@media (max-width: 1400px) {
-		display: block;
-	}
+const Help = styled.span`
+	cursor: help;
+	border-bottom: 1px dotted ${theme.lineStrong};
 `
+
+function won(n: number) {
+	return numberWithCommas(Math.round(n))
+}
 
 export const Calculating = () => {
 	const dispatch = useDispatch()
-
-	const workdayStatus = useSelector((state: RootState) => state.workdayStatus)
+	const ws = useSelector((state: RootState) => state.workdayStatus)
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		localStorage.setItem('userCalendar', (dayjs().month() + 1).toString())
-
-		const copy = { ...workdayStatus }
+		const copy = { ...ws }
 		const { value } = e.target
 
 		if (value.length === 0) {
 			copy.usageAmount = undefined
 			dispatch(setWorkday(copy))
-		}
-		if (numberRegexp(value) === false) {
 			return
-		} else {
-			if (value.length > 7) {
-				return
-			}
-			copy.usageAmount = Number(value)
-			dispatch(setWorkday(copy))
 		}
+		if (numberRegexp(value) === false || value.length > 7) return
+		copy.usageAmount = Number(value)
+		dispatch(setWorkday(copy))
 	}
 
 	const handleExceptionInputChange = (
 		e: React.ChangeEvent<HTMLInputElement>,
 	) => {
-		const copy = { ...workdayStatus }
+		const copy = { ...ws }
 		const { value } = e.target
 
 		if (value.length === 0) {
 			copy.exceptionMoney = undefined
 			dispatch(setWorkday(copy))
-		}
-		if (numberRegexp(value) === false) {
 			return
-		} else {
-			if (value.length > 7) {
-				return
-			}
-			copy.exceptionMoney = Number(value)
-			dispatch(setWorkday(copy))
 		}
+		if (numberRegexp(value) === false || value.length > 7) return
+		copy.exceptionMoney = Number(value)
+		dispatch(setWorkday(copy))
 	}
 
 	const totalAmount =
-		workdayStatus.workday * 13000 -
-		workdayStatus.allHolidayCount * 13000 -
-		workdayStatus.morningHoldayCount * 10000 +
-		workdayStatus.extraMoneyCount * 10000
+		ws.workday * 13000 -
+		ws.allHolidayCount * 13000 -
+		ws.morningHoldayCount * 10000 +
+		ws.extraMoneyCount * 10000
 
-	const remainingAmount = workdayStatus.usageAmount
-		? totalAmount -
-			workdayStatus.usageAmount +
-			(workdayStatus.exceptionMoney ?? 0)
+	const remainingAmount = ws.usageAmount
+		? totalAmount - ws.usageAmount + (ws.exceptionMoney ?? 0)
 		: totalAmount
 
-	const willPayAmount = workdayStatus.specialDayList.reduce(
+	const willPayAmount = ws.specialDayList.reduce(
 		(sum, item) => sum + item.amount,
 		0,
 	)
 
-	const avgDenom =
-		workdayStatus.workRemaningDay -
-		workdayStatus.afterTodayHolidayCount -
-		workdayStatus.specialDayList.length
-	const averageAmountRaw =
-		avgDenom === 0 ? 0 : (remainingAmount - willPayAmount) / avgDenom
-	const averageAmount = Number.isFinite(averageAmountRaw)
-		? averageAmountRaw.toFixed(1)
-		: '0'
+	const remainingWorkDays = ws.workRemaningDay - ws.afterTodayHolidayCount
 
-	const remainingWorkDays =
-		workdayStatus.workRemaningDay - workdayStatus.afterTodayHolidayCount
+	const avgDenom =
+		ws.workRemaningDay -
+		ws.afterTodayHolidayCount -
+		ws.specialDayList.length
+	const averageAmountRaw =
+		avgDenom === 0 ? remainingAmount : (remainingAmount - willPayAmount) / avgDenom
+	const averageAmount = Number.isFinite(averageAmountRaw) ? averageAmountRaw : 0
+
+	const avgHealthy =
+		remainingWorkDays === 0 ? remainingAmount >= 0 : averageAmount >= 13000
+
+	const avgDisplay =
+		remainingWorkDays === 0
+			? won(remainingAmount)
+			: averageAmount.toLocaleString('ko-KR', {
+					maximumFractionDigits: 0,
+					minimumFractionDigits: 0,
+				})
 
 	return (
-		<CalculatingRoot>
-			<InputStack>
-				<FieldBlock>
-					<div>
-						<FieldLabelRow>
-							<WalletOutlined
-								style={{ color: '#e88ec9', fontSize: 20 }}
-								aria-hidden
-							/>
-							<FieldLabel>고위드 이용 금액</FieldLabel>
-						</FieldLabelRow>
-						<FieldHint>
-							앱에서 확인한 이번 달 누적 이용 금액을 숫자만 입력하세요.
-						</FieldHint>
-					</div>
-					<AmountFieldShell $accent="primary">
+		<Root>
+			<InputGrid>
+				<Field>
+					<FieldTop>
+						<FieldName>고위드 이용 금액</FieldName>
+						<FieldHint>누적</FieldHint>
+					</FieldTop>
+					<FieldInput $tone="teal">
 						<Input
 							allowClear
 							inputMode="numeric"
@@ -619,26 +402,18 @@ export const Calculating = () => {
 							placeholder="예: 125000"
 							onChange={handleChange}
 							value={
-								workdayStatus.usageAmount === undefined
-									? ''
-									: String(workdayStatus.usageAmount)
+								ws.usageAmount === undefined ? '' : String(ws.usageAmount)
 							}
-							suffix={<SuffixWon>원</SuffixWon>}
+							suffix={<Suffix>원</Suffix>}
 						/>
-					</AmountFieldShell>
-				</FieldBlock>
-				<FieldBlock>
-					<div>
-						<FieldLabelRow>
-							<WarningOutlined
-								style={{ color: '#ffb347', fontSize: 20 }}
-								aria-hidden
-							/>
-							<FieldLabel>반려 · 오사용 금액</FieldLabel>
-						</FieldLabelRow>
-						<FieldHint>해당할 때만 입력합니다. 없으면 비워 두세요.</FieldHint>
-					</div>
-					<AmountFieldShell $accent="warning">
+					</FieldInput>
+				</Field>
+				<Field>
+					<FieldTop>
+						<FieldName>반려 · 오사용</FieldName>
+						<FieldHint>있을 때만</FieldHint>
+					</FieldTop>
+					<FieldInput $tone="accent">
 						<Input
 							allowClear
 							inputMode="numeric"
@@ -646,149 +421,150 @@ export const Calculating = () => {
 							placeholder="없으면 비움"
 							onChange={handleExceptionInputChange}
 							value={
-								workdayStatus.exceptionMoney === undefined
+								ws.exceptionMoney === undefined
 									? ''
-									: String(workdayStatus.exceptionMoney)
+									: String(ws.exceptionMoney)
 							}
-							suffix={<SuffixWon>원</SuffixWon>}
+							suffix={<Suffix>원</Suffix>}
 						/>
-					</AmountFieldShell>
-				</FieldBlock>
-			</InputStack>
-			<ScrollCardsArea>
-				<ResponsiveWrapper>
-					<InfoPaneCard
-						$tint="base"
-						hoverable
-						variant="borderless"
-						title={
-							<CardHead
-								icon={<CalendarOutlined />}
-								title="기본 정보"
-								from="#722ed1"
-								to="#9254de"
-								textFrom="#b565c8"
-								textTo="#f0a8e0"
-							/>
-						}
-					>
-						<BasicInfoBody ws={workdayStatus} />
-					</InfoPaneCard>
-					<InfoPaneCard
-						$tint="calc"
-						hoverable
-						variant="borderless"
-						title={
-							<CardHead
-								icon={<CalculatorOutlined />}
-								title="계산 정보"
-								from="#08979c"
-								to="#13c2c2"
-								textFrom="#3dad9a"
-								textTo="#7fe8d8"
-							/>
-						}
-					>
-						<CalcInfoBody
-							ws={workdayStatus}
-							remainingAmount={remainingAmount}
-						/>
-					</InfoPaneCard>
-					<InfoPaneCard
-						$tint="extra"
-						hoverable
-						variant="borderless"
-						title={
-							<CardHead
-								icon={<BarChartOutlined />}
-								title="기타 정보"
-								from="#d46b08"
-								to="#fa8c16"
-								textFrom="#e89860"
-								textTo="#ffd08a"
-							/>
-						}
-					>
-						<EtcInfoBody
-							ws={workdayStatus}
-							remainingAmount={remainingAmount}
-							remainingWorkDays={remainingWorkDays}
-							willPayAmount={willPayAmount}
-							averageAmount={averageAmount}
-						/>
-					</InfoPaneCard>
-				</ResponsiveWrapper>
-				<MobileWrapper>
-					<Row gutter={[16, 16]}>
-						<Col xs={24} lg={8}>
-							<InfoPaneCard
-								$tint="base"
-								hoverable
-								variant="borderless"
-								title={
-									<CardHead
-										icon={<CalendarOutlined />}
-										title="기본 정보"
-										from="#722ed1"
-										to="#9254de"
-										textFrom="#b565c8"
-										textTo="#f0a8e0"
-									/>
-								}
-							>
-								<BasicInfoBody ws={workdayStatus} />
-							</InfoPaneCard>
-						</Col>
-						<Col xs={24} lg={8}>
-							<InfoPaneCard
-								$tint="calc"
-								hoverable
-								variant="borderless"
-								title={
-									<CardHead
-										icon={<CalculatorOutlined />}
-										title="계산 정보"
-										from="#08979c"
-										to="#13c2c2"
-										textFrom="#3dad9a"
-										textTo="#7fe8d8"
-									/>
-								}
-							>
-								<CalcInfoBody
-									ws={workdayStatus}
-									remainingAmount={remainingAmount}
-								/>
-							</InfoPaneCard>
-						</Col>
-						<Col xs={24} lg={8}>
-							<InfoPaneCard
-								$tint="extra"
-								hoverable
-								variant="borderless"
-								title={
-									<CardHead
-										icon={<BarChartOutlined />}
-										title="기타 정보"
-										from="#d46b08"
-										to="#fa8c16"
-										textFrom="#e89860"
-										textTo="#ffd08a"
-									/>
-								}
-							>
-								<EtcInfoBody
-									ws={workdayStatus}
-									remainingAmount={remainingAmount}
-									remainingWorkDays={remainingWorkDays}
-									willPayAmount={willPayAmount}
-									averageAmount={averageAmount}
-								/>
-							</InfoPaneCard>
-						</Col>
-					</Row>
-				</MobileWrapper>
-			</ScrollCardsArea>
-		</CalculatingRoot>
+					</FieldInput>
+				</Field>
+			</InputGrid>
+
+			<Scroll>
+				<Hero $ok={avgHealthy}>
+					<HeroTop>
+						<HeroLabel>지금 한눈에</HeroLabel>
+						<StatusPill $ok={avgHealthy}>
+							{avgHealthy ? '여유 있음' : '조금 빠듯함'}
+						</StatusPill>
+					</HeroTop>
+					<HeroGrid>
+						<HeroMetric>
+							<HeroCaption>남은 식대</HeroCaption>
+							<HeroValue $tone="accent">
+								{won(remainingAmount)}
+								<small>원</small>
+							</HeroValue>
+							<HeroSub>
+								이번 달 총액 {won(totalAmount)}원
+								{ws.usageAmount
+									? ` − 사용 ${won(ws.usageAmount)}원`
+									: ' · 사용액 미입력'}
+							</HeroSub>
+						</HeroMetric>
+						<HeroMetric>
+							<HeroCaption>
+								<Tooltip title="(잔액 − 예상 지출) ÷ (남은 근무일 − 예상 지출 등록 일수)">
+									<Help>앞으로 하루 평균</Help>
+								</Tooltip>
+							</HeroCaption>
+							<HeroValue $tone={avgHealthy ? 'ok' : 'warn'}>
+								{avgDisplay}
+								<small>원</small>
+							</HeroValue>
+							<HeroSub>
+								{remainingWorkDays === 0
+									? '남은 근무일이 없습니다'
+									: `기준 ${13000}원 · ${avgHealthy ? '기준 이상' : '기준 미만'}`}
+							</HeroSub>
+						</HeroMetric>
+					</HeroGrid>
+				</Hero>
+
+				<ChipRow>
+					<Chip>
+						<ChipLabel>
+							<Tooltip title="당일 점심 이후에는 그날을 근무일수로 보지 않습니다.">
+								<Help>남은 근무일</Help>
+							</Tooltip>
+						</ChipLabel>
+						<ChipValue>
+							{remainingWorkDays}
+							<small>일</small>
+						</ChipValue>
+					</Chip>
+					<Chip>
+						<ChipLabel>예상 지출 등록</ChipLabel>
+						<ChipValue>
+							{ws.specialDayList.length}
+							<small>일</small>
+						</ChipValue>
+					</Chip>
+					<Chip>
+						<ChipLabel>예상 지출 금액</ChipLabel>
+						<ChipValue>
+							{won(willPayAmount)}
+							<small>원</small>
+						</ChipValue>
+					</Chip>
+				</ChipRow>
+
+				<Section>
+					<SectionHead>이번 달 식대 구성</SectionHead>
+					<SectionBody>
+						<RowLine>
+							<RowLabel>
+								기본 제공
+								<em>{ws.workday}일 × 13,000</em>
+							</RowLabel>
+							<RowValue $tone="strong">
+								{won(ws.workday * 13000)}
+								<small>원</small>
+							</RowValue>
+						</RowLine>
+						<RowLine>
+							<RowLabel>
+								휴가 차감
+								<em>{ws.allHolidayCount}일</em>
+							</RowLabel>
+							<RowValue $tone={ws.allHolidayCount ? 'minus' : undefined}>
+								{ws.allHolidayCount
+									? `−${won(ws.allHolidayCount * 13000)}`
+									: '0'}
+								<small>원</small>
+							</RowValue>
+						</RowLine>
+						<RowLine>
+							<RowLabel>
+								오전반차 차감
+								<em>{ws.morningHoldayCount}일</em>
+							</RowLabel>
+							<RowValue $tone={ws.morningHoldayCount ? 'minus' : undefined}>
+								{ws.morningHoldayCount
+									? `−${won(ws.morningHoldayCount * 10000)}`
+									: '0'}
+								<small>원</small>
+							</RowValue>
+						</RowLine>
+						<RowLine>
+							<RowLabel>
+								야근 추가
+								<em>{ws.extraMoneyCount}회</em>
+							</RowLabel>
+							<RowValue $tone={ws.extraMoneyCount ? 'plus' : undefined}>
+								{ws.extraMoneyCount
+									? `+${won(ws.extraMoneyCount * 10000)}`
+									: '0'}
+								<small>원</small>
+							</RowValue>
+						</RowLine>
+						<RowLine>
+							<RowLabel>
+								<Tooltip title="오사용으로 다음 달에 입금해야 하면, 잔액에 더해져 계산됩니다.">
+									<Help>반려 · 오사용 반영</Help>
+								</Tooltip>
+							</RowLabel>
+							<RowValue $tone={(ws.exceptionMoney ?? 0) ? 'plus' : undefined}>
+								{(ws.exceptionMoney ?? 0)
+									? `+${won(ws.exceptionMoney ?? 0)}`
+									: '0'}
+								<small>원</small>
+							</RowValue>
+						</RowLine>
+					</SectionBody>
+				</Section>
+			</Scroll>
+		</Root>
 	)
 }

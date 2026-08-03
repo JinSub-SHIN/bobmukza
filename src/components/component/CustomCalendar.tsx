@@ -39,30 +39,19 @@ import {
 import { numberRegexp } from '../hook/useNumberRegexp'
 import { cloneDeep } from 'lodash'
 import { numberWithCommas } from '../hook/useNumberComma'
+import { theme } from '../../styles/theme'
 
 /** 달력 칸 하단(태그·상태) 영역 높이 — StyledCalendar·CalendarCellSlot과 동일하게 유지 */
 const CALENDAR_CELL_CONTENT_HEIGHT_PX = 80
 
-/* 쌍팔년도 신문/한컴 시절 팔레트: 누런 갱지 + 먹색 + 신문 빨강 + 표지 노랑 */
-const RETRO_PAPER = '#efe2bd'
-const RETRO_PAPER_LIGHT = '#f7ecca'
-const RETRO_PAPER_DARK = '#e4d4a7'
-const RETRO_INK = '#1d150b'
-const RETRO_FRAME = '#2b1e10'
-const RETRO_RED = '#a3231c'
-const RETRO_YELLOW = '#e6b736'
-
-const RETRO_SERIF = `'Batang', '바탕', 'Nanum Myeongjo', 'Noto Serif KR', 'Times New Roman', serif`
-const RETRO_MONO = `'GulimChe', '굴림체', 'D2Coding', 'Courier New', monospace`
-
 const StyledCalendar = styled(Calendar)`
-	border-radius: 0;
-	overflow: visible;
-	background: ${RETRO_PAPER};
-	border: 4px double ${RETRO_FRAME};
-	box-shadow: 6px 6px 0 ${RETRO_INK};
-	font-family: ${RETRO_SERIF};
-	padding: 8px;
+	border-radius: ${theme.radiusSm};
+	overflow: hidden;
+	background: rgba(255, 255, 255, 0.55);
+	border: 1px solid ${theme.line};
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+	font-family: ${theme.fontBody};
+	padding: 10px;
 
 	.ant-picker-panel {
 		background: transparent !important;
@@ -70,60 +59,59 @@ const StyledCalendar = styled(Calendar)`
 	}
 
 	.ant-picker-body {
-		padding: 6px 2px 10px !important;
+		padding: 4px 2px 8px !important;
 	}
 
 	.ant-picker-content table {
 		width: 100%;
-		border-collapse: collapse;
-		border-spacing: 0;
+		border-collapse: separate;
+		border-spacing: 4px;
 	}
 
 	.ant-picker-content thead > tr > th {
-		background: ${RETRO_FRAME} !important;
-		border: 2px solid ${RETRO_FRAME} !important;
-		border-radius: 0 !important;
-		padding: 8px 4px !important;
-		font-family: ${RETRO_SERIF} !important;
-		font-size: 14px !important;
+		background: transparent !important;
+		border: none !important;
+		padding: 10px 4px !important;
+		font-family: ${theme.fontBody} !important;
+		font-size: 12px !important;
 		font-weight: 700 !important;
-		letter-spacing: 0.25em !important;
-		color: ${RETRO_PAPER} !important;
+		letter-spacing: 0.08em !important;
+		color: ${theme.inkSoft} !important;
+		text-transform: uppercase;
 	}
 
 	.ant-picker-content thead > tr > th:nth-child(1) {
-		color: #ffb38a !important;
+		color: ${theme.accent} !important;
 	}
 
 	.ant-picker-content thead > tr > th:nth-child(7) {
-		color: #b4cbf0 !important;
+		color: ${theme.teal} !important;
 	}
 
 	.ant-picker-content tbody tr .ant-picker-cell:nth-child(1),
 	.ant-picker-content tbody tr .ant-picker-cell:nth-child(7) {
-		background: ${RETRO_PAPER_DARK} !important;
+		background: ${theme.weekend} !important;
 	}
 
 	.ant-picker-cell {
 		padding: 0 !important;
-		border-radius: 0 !important;
+		border-radius: 14px !important;
 		overflow: hidden !important;
 		vertical-align: top !important;
-		background:
-			repeating-linear-gradient(
-				0deg,
-				${RETRO_PAPER} 0,
-				${RETRO_PAPER} 22px,
-				rgba(43, 30, 16, 0.06) 22px,
-				rgba(43, 30, 16, 0.06) 23px
-			) !important;
-		border: 2px solid ${RETRO_FRAME} !important;
-		box-shadow: inset 0 -3px 0 rgba(43, 30, 16, 0.08);
-		transition: background-color 0.1s ease;
+		background: rgba(255, 255, 255, 0.72) !important;
+		border: 1px solid ${theme.line} !important;
+		transition:
+			background-color 0.18s ease,
+			border-color 0.18s ease,
+			transform 0.15s ease,
+			box-shadow 0.18s ease;
 	}
 
 	.ant-picker-cell:not(.ant-picker-cell-disabled):hover {
-		background: ${RETRO_PAPER_LIGHT} !important;
+		background: #fff !important;
+		border-color: rgba(15, 143, 130, 0.35) !important;
+		box-shadow: 0 8px 18px rgba(20, 35, 28, 0.08);
+		transform: translateY(-1px);
 	}
 
 	.ant-picker-content
@@ -134,18 +122,20 @@ const StyledCalendar = styled(Calendar)`
 		tbody
 		tr
 		.ant-picker-cell:nth-child(7):not(.ant-picker-cell-disabled):hover {
-		background: ${RETRO_PAPER_DARK} !important;
+		background: #e8eef6 !important;
 	}
 
 	.ant-picker-cell-today {
 		overflow: visible !important;
-		border-color: ${RETRO_RED} !important;
-		box-shadow: inset 0 0 0 2px ${RETRO_RED} !important;
+		border-color: ${theme.accent} !important;
+		box-shadow: inset 0 0 0 1.5px ${theme.accent} !important;
 	}
 
 	.ant-picker-cell-today:not(.ant-picker-cell-disabled):hover {
-		background: ${RETRO_PAPER_LIGHT} !important;
-		box-shadow: inset 0 0 0 2px ${RETRO_RED} !important;
+		background: #fff !important;
+		box-shadow:
+			inset 0 0 0 1.5px ${theme.accent},
+			0 8px 18px rgba(255, 90, 54, 0.12) !important;
 	}
 
 	.ant-picker-cell:hover .ant-picker-calendar-date {
@@ -153,51 +143,42 @@ const StyledCalendar = styled(Calendar)`
 	}
 
 	.ant-picker-cell-disabled {
-		opacity: 0.45 !important;
-		background:
-			repeating-linear-gradient(
-				45deg,
-				${RETRO_PAPER_DARK},
-				${RETRO_PAPER_DARK} 4px,
-				${RETRO_PAPER} 4px,
-				${RETRO_PAPER} 8px
-			) !important;
+		opacity: 0.42 !important;
+		background: rgba(20, 35, 28, 0.03) !important;
 		box-shadow: none !important;
 	}
 
 	.ant-picker-cell-inner {
-		border-radius: 0 !important;
+		border-radius: 14px !important;
 		width: 100% !important;
 		box-sizing: border-box !important;
 		padding: 8px 8px 2px !important;
-		font-family: ${RETRO_MONO} !important;
-		font-weight: 700 !important;
-		font-size: 18px !important;
-		color: ${RETRO_INK} !important;
+		font-family: ${theme.fontMono} !important;
+		font-weight: 600 !important;
+		font-size: 16px !important;
+		color: ${theme.ink} !important;
 		background: transparent !important;
 		min-height: auto !important;
 	}
 
-	/* 오늘: 별 이모지 대신 신문 헤드라인풍 [TODAY] 라벨 */
 	.ant-picker-calendar-date.ant-picker-calendar-date-today {
 		position: relative !important;
 	}
 
 	.ant-picker-calendar-date.ant-picker-calendar-date-today::after {
-		content: '★ TODAY';
+		content: 'TODAY';
 		position: absolute;
-		top: 4px;
-		right: 4px;
+		top: 6px;
+		right: 6px;
 		z-index: 2;
-		font-family: ${RETRO_MONO};
+		font-family: ${theme.fontBody};
 		font-size: 9px;
 		font-weight: 700;
-		letter-spacing: 0.15em;
-		color: ${RETRO_PAPER};
-		background: ${RETRO_RED};
-		padding: 1px 5px;
-		border: 1.5px solid ${RETRO_FRAME};
-		box-shadow: 2px 2px 0 ${RETRO_INK};
+		letter-spacing: 0.08em;
+		color: #fff;
+		background: ${theme.accent};
+		padding: 2px 6px;
+		border-radius: 8px;
 		pointer-events: none;
 	}
 
@@ -207,31 +188,30 @@ const StyledCalendar = styled(Calendar)`
 		padding: 0 !important;
 		width: 100% !important;
 		box-sizing: border-box !important;
-		border-radius: 0 !important;
+		border-radius: 14px !important;
 	}
 
 	.ant-picker-calendar-date-content {
 		height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px !important;
 		min-height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px !important;
-		overflow-y: hidden !important;
-		overflow-x: hidden !important;
+		overflow: hidden !important;
 		padding: 0 !important;
 		width: 100% !important;
 		box-sizing: border-box !important;
-		border-radius: 0 !important;
+		border-radius: 0 0 14px 14px !important;
 	}
 
 	.ant-picker-calendar .ant-tag {
-		border-radius: 0 !important;
-		font-family: ${RETRO_SERIF} !important;
+		border-radius: 8px !important;
+		font-family: ${theme.fontBody} !important;
 		font-size: 11px !important;
 		font-weight: 700 !important;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.02em;
 		padding: 1px 8px !important;
-		border: 2px solid ${RETRO_FRAME} !important;
-		background: ${RETRO_YELLOW} !important;
-		color: ${RETRO_INK} !important;
-		box-shadow: 2px 2px 0 ${RETRO_INK};
+		border: 1px solid rgba(15, 143, 130, 0.25) !important;
+		background: ${theme.tealSoft} !important;
+		color: ${theme.teal} !important;
+		box-shadow: none;
 		margin: 0 !important;
 	}
 
@@ -244,17 +224,15 @@ const StyledHolidayP = styled.p`
 	margin: 0;
 	width: 100%;
 	text-align: center;
-	font-family: ${RETRO_SERIF};
+	font-family: ${theme.fontBody};
 	font-size: 12px;
 	font-weight: 700;
 	line-height: 1.35;
-	letter-spacing: 0.05em;
-	color: ${RETRO_RED};
+	color: ${theme.accent};
 `
 
 type CuteCellTone = 'plain' | 'weekend' | 'holiday' | 'muted'
 
-/** 하단 영역 전체를 채우고 태그를 정가운데 (Dropdown·Popconfirm 트리거가 줄어드는 것 방지) */
 const CalendarCellSlot = styled.div`
 	position: relative;
 	width: 100%;
@@ -284,74 +262,62 @@ const CuteCellInner = styled.div<{
 	gap: 4px;
 	padding: 0 6px;
 	text-align: center;
-	font-family: ${RETRO_SERIF};
-	font-size: 13px;
-	font-weight: 700;
+	font-family: ${theme.fontBody};
+	font-size: 12px;
+	font-weight: 600;
 	line-height: 1.3;
-	color: ${RETRO_INK};
+	color: ${theme.ink};
 	cursor: ${p => (p.$click ? 'pointer' : 'default')};
 	border-radius: 0;
 	background: ${p => {
 		switch (p.$tone) {
 			case 'holiday':
-				return `repeating-linear-gradient(
-					135deg,
-					rgba(163, 35, 28, 0.10) 0,
-					rgba(163, 35, 28, 0.10) 5px,
-					transparent 5px,
-					transparent 10px
-				)`
+				return theme.holiday
 			case 'weekend':
 				return 'transparent'
 			case 'muted':
-				return `repeating-linear-gradient(
-					45deg,
-					transparent 0,
-					transparent 6px,
-					rgba(43, 30, 16, 0.07) 6px,
-					rgba(43, 30, 16, 0.07) 12px
-				)`
+				return 'rgba(20, 35, 28, 0.04)'
 			default:
 				return 'transparent'
 		}
 	}};
-	transition: transform 0.1s ease;
+	transition: transform 0.12s ease;
 
 	${p =>
 		p.$click &&
 		`
 		&:active {
-			transform: translate(1px, 1px);
+			transform: scale(0.98);
 		}
 	`}
 `
 
 const CuteResetButton = styled(Button)`
-	height: 50px !important;
-	border-radius: 0 !important;
-	font-family: ${RETRO_SERIF} !important;
-	font-size: 18px !important;
+	height: 48px !important;
+	border-radius: 14px !important;
+	font-family: ${theme.fontBody} !important;
+	font-size: 15px !important;
 	font-weight: 700 !important;
-	letter-spacing: 0.2em !important;
-	border: 3px solid ${RETRO_FRAME} !important;
-	background: ${RETRO_YELLOW} !important;
-	color: ${RETRO_INK} !important;
-	text-shadow: none !important;
-	box-shadow: 5px 5px 0 ${RETRO_INK} !important;
+	letter-spacing: 0.02em !important;
+	border: none !important;
+	background: ${theme.ink} !important;
+	color: #fff !important;
+	box-shadow: 0 12px 28px rgba(20, 35, 28, 0.18) !important;
+	transition:
+		transform 0.15s ease,
+		background 0.15s ease !important;
 
 	&:hover {
-		background: #f0c14b !important;
-		color: ${RETRO_INK} !important;
-		border-color: ${RETRO_FRAME} !important;
+		background: ${theme.accent} !important;
+		color: #fff !important;
+		transform: translateY(-1px);
 	}
 
 	&:active {
-		transform: translate(3px, 3px);
-		box-shadow: 2px 2px 0 ${RETRO_INK} !important;
+		transform: translateY(0);
 	}
 `
 
-/** 부모 PaneInner와 높이 맞춤: 헤더·달력·버튼을 세로 flex로 배치 */
 const CalendarRoot = styled.div`
 	position: relative;
 	height: 100%;
@@ -364,31 +330,30 @@ const MonthTitleBar = styled.div`
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	gap: 14px;
+	justify-content: space-between;
+	gap: 12px;
 	margin-bottom: 14px;
-	padding: 14px 32px;
-	border-radius: 0;
-	background: ${RETRO_FRAME};
-	border: 4px double ${RETRO_PAPER};
-	box-shadow: 6px 6px 0 ${RETRO_INK};
-
-	&::before,
-	&::after {
-		content: '★';
-		color: ${RETRO_YELLOW};
-		font-size: 18px;
-		letter-spacing: 0;
-	}
+	padding: 4px 2px 10px;
+	border-bottom: 1px solid ${theme.line};
 
 	h1 {
 		margin: 0;
-		font-family: ${RETRO_SERIF};
-		font-size: 1.85rem;
-		font-weight: 700;
-		letter-spacing: 0.25em;
-		color: ${RETRO_PAPER};
-		text-shadow: 2px 2px 0 ${RETRO_RED};
+		font-family: ${theme.fontDisplay};
+		font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+		font-weight: 400;
+		letter-spacing: -0.02em;
+		color: ${theme.ink};
+		line-height: 1.15;
+	}
+
+	span {
+		font-family: ${theme.fontBody};
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: ${theme.teal};
+		background: ${theme.tealSoft};
+		padding: 6px 12px;
+		border-radius: 10px;
 	}
 `
 
@@ -1004,7 +969,8 @@ export const CustomCalendar = () => {
 				<>
 					{contextHolder}
 					<MonthTitleBar>
-						<h1>🌈 {dayjs().month() + 1}월 달력 🌈</h1>
+						<h1>{dayjs().month() + 1}월 식대 달력</h1>
+						<span>이번 달만</span>
 					</MonthTitleBar>
 					<CalendarBody>
 						<StyledCalendar
@@ -1016,7 +982,7 @@ export const CustomCalendar = () => {
 					</CalendarBody>
 					<CalendarFooter>
 						<CuteResetButton block type="primary" onClick={handleReset}>
-							🔄 처음부터 다시!
+							처음부터 다시
 						</CuteResetButton>
 					</CalendarFooter>
 					<Button
