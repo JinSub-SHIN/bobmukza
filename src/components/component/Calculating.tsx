@@ -104,48 +104,53 @@ const Scroll = styled.div`
 `
 
 const Hero = styled.section<{ $ok: boolean }>`
-	padding: 18px 18px 16px;
-	border-radius: ${theme.radius};
+	flex-shrink: 0;
+	padding: 26px 24px 24px;
+	border-radius: 22px;
 	border: 1px solid ${theme.line};
 	background: ${p =>
 		p.$ok
-			? 'linear-gradient(145deg, rgba(15,143,130,0.14) 0%, rgba(255,255,255,0.85) 55%)'
-			: 'linear-gradient(145deg, rgba(255,90,54,0.14) 0%, rgba(255,255,255,0.85) 55%)'};
-	box-shadow: ${theme.shadow};
+			? 'linear-gradient(145deg, rgba(15,143,130,0.2) 0%, rgba(255,255,255,0.94) 48%, rgba(255,255,255,0.9) 100%)'
+			: 'linear-gradient(145deg, rgba(255,90,54,0.2) 0%, rgba(255,255,255,0.94) 48%, rgba(255,255,255,0.9) 100%)'};
+	box-shadow:
+		0 18px 40px rgba(20, 35, 28, 0.1),
+		inset 0 1px 0 rgba(255, 255, 255, 0.85);
 `
 
 const HeroTop = styled.div`
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 10px;
-	margin-bottom: 14px;
+	gap: 12px;
+	margin-bottom: 18px;
 `
 
 const HeroLabel = styled.p`
 	margin: 0;
-	font-size: 13px;
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	color: ${theme.inkSoft};
+	font-family: ${theme.fontDisplay};
+	font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+	font-weight: 400;
+	letter-spacing: -0.02em;
+	line-height: 1;
+	color: ${theme.ink};
 `
 
 const StatusPill = styled.span<{ $ok: boolean }>`
 	display: inline-flex;
 	align-items: center;
-	padding: 5px 10px;
-	border-radius: 8px;
-	font-size: 12px;
+	padding: 8px 14px;
+	border-radius: 10px;
+	font-size: 13px;
 	font-weight: 700;
 	color: ${p => (p.$ok ? theme.plus : theme.warn)};
 	background: ${p =>
-		p.$ok ? 'rgba(26, 122, 76, 0.12)' : 'rgba(196, 92, 26, 0.12)'};
+		p.$ok ? 'rgba(26, 122, 76, 0.14)' : 'rgba(196, 92, 26, 0.14)'};
 `
 
 const HeroGrid = styled.div`
 	display: grid;
 	grid-template-columns: 1.15fr 1fr;
-	gap: 12px;
+	gap: 18px;
 
 	@media (max-width: 560px) {
 		grid-template-columns: 1fr;
@@ -154,19 +159,23 @@ const HeroGrid = styled.div`
 
 const HeroMetric = styled.div`
 	min-width: 0;
+	padding: 14px 16px;
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.72);
+	border: 1px solid rgba(20, 35, 28, 0.08);
 `
 
 const HeroCaption = styled.div`
-	font-size: 12px;
-	font-weight: 600;
+	font-size: 14px;
+	font-weight: 700;
 	color: ${theme.inkSoft};
-	margin-bottom: 4px;
+	margin-bottom: 8px;
 `
 
 const HeroValue = styled.div<{ $tone?: 'accent' | 'ok' | 'warn' }>`
 	font-family: ${theme.fontDisplay};
-	font-size: clamp(1.7rem, 3vw, 2.25rem);
-	line-height: 1.05;
+	font-size: clamp(2.35rem, 4.2vw, 3.15rem);
+	line-height: 1;
 	letter-spacing: -0.03em;
 	font-variant-numeric: tabular-nums;
 	color: ${p =>
@@ -179,9 +188,9 @@ const HeroValue = styled.div<{ $tone?: 'accent' | 'ok' | 'warn' }>`
 					: theme.ink};
 
 	small {
-		margin-left: 4px;
+		margin-left: 6px;
 		font-family: ${theme.fontBody};
-		font-size: 0.9rem;
+		font-size: 1.05rem;
 		font-weight: 700;
 		color: ${theme.inkSoft};
 		letter-spacing: 0;
@@ -189,9 +198,10 @@ const HeroValue = styled.div<{ $tone?: 'accent' | 'ok' | 'warn' }>`
 `
 
 const HeroSub = styled.p`
-	margin: 6px 0 0;
-	font-size: 12px;
-	line-height: 1.4;
+	margin: 10px 0 0;
+	font-size: 13px;
+	line-height: 1.45;
+	font-weight: 500;
 	color: ${theme.inkSoft};
 `
 
@@ -388,6 +398,46 @@ export const Calculating = () => {
 
 	return (
 		<Root>
+			<Hero $ok={avgHealthy}>
+				<HeroTop>
+					<HeroLabel>지금 한눈에</HeroLabel>
+					<StatusPill $ok={avgHealthy}>
+						{avgHealthy ? '여유 있음' : '조금 빠듯함'}
+					</StatusPill>
+				</HeroTop>
+				<HeroGrid>
+					<HeroMetric>
+						<HeroCaption>남은 식대</HeroCaption>
+						<HeroValue $tone="accent">
+							{won(remainingAmount)}
+							<small>원</small>
+						</HeroValue>
+						<HeroSub>
+							이번 달 총액 {won(totalAmount)}원
+							{ws.usageAmount
+								? ` − 사용 ${won(ws.usageAmount)}원`
+								: ' · 사용액 미입력'}
+						</HeroSub>
+					</HeroMetric>
+					<HeroMetric>
+						<HeroCaption>
+							<Tooltip title="(잔액 − 예상 지출) ÷ (남은 근무일 − 예상 지출 등록 일수)">
+								<Help>앞으로 하루 평균</Help>
+							</Tooltip>
+						</HeroCaption>
+						<HeroValue $tone={avgHealthy ? 'ok' : 'warn'}>
+							{avgDisplay}
+							<small>원</small>
+						</HeroValue>
+						<HeroSub>
+							{remainingWorkDays === 0
+								? '남은 근무일이 없습니다'
+								: `기준 ${13000}원 · ${avgHealthy ? '기준 이상' : '기준 미만'}`}
+						</HeroSub>
+					</HeroMetric>
+				</HeroGrid>
+			</Hero>
+
 			<InputGrid>
 				<Field>
 					<FieldTop>
@@ -432,46 +482,6 @@ export const Calculating = () => {
 			</InputGrid>
 
 			<Scroll>
-				<Hero $ok={avgHealthy}>
-					<HeroTop>
-						<HeroLabel>지금 한눈에</HeroLabel>
-						<StatusPill $ok={avgHealthy}>
-							{avgHealthy ? '여유 있음' : '조금 빠듯함'}
-						</StatusPill>
-					</HeroTop>
-					<HeroGrid>
-						<HeroMetric>
-							<HeroCaption>남은 식대</HeroCaption>
-							<HeroValue $tone="accent">
-								{won(remainingAmount)}
-								<small>원</small>
-							</HeroValue>
-							<HeroSub>
-								이번 달 총액 {won(totalAmount)}원
-								{ws.usageAmount
-									? ` − 사용 ${won(ws.usageAmount)}원`
-									: ' · 사용액 미입력'}
-							</HeroSub>
-						</HeroMetric>
-						<HeroMetric>
-							<HeroCaption>
-								<Tooltip title="(잔액 − 예상 지출) ÷ (남은 근무일 − 예상 지출 등록 일수)">
-									<Help>앞으로 하루 평균</Help>
-								</Tooltip>
-							</HeroCaption>
-							<HeroValue $tone={avgHealthy ? 'ok' : 'warn'}>
-								{avgDisplay}
-								<small>원</small>
-							</HeroValue>
-							<HeroSub>
-								{remainingWorkDays === 0
-									? '남은 근무일이 없습니다'
-									: `기준 ${13000}원 · ${avgHealthy ? '기준 이상' : '기준 미만'}`}
-							</HeroSub>
-						</HeroMetric>
-					</HeroGrid>
-				</Hero>
-
 				<ChipRow>
 					<Chip>
 						<ChipLabel>
