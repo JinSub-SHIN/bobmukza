@@ -6,7 +6,6 @@ import {
 	Input,
 	message,
 	Popconfirm,
-	Skeleton,
 	Tag,
 } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -23,7 +22,7 @@ import {
 	LaptopOutlined,
 	MehOutlined,
 } from '@ant-design/icons'
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
 import {
 	HolidayObj,
@@ -325,6 +324,196 @@ const CalendarRoot = styled.div`
 	display: flex;
 	flex-direction: column;
 `
+
+const floatY = keyframes`
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-10px); }
+`
+
+const spinSlow = keyframes`
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+`
+
+const pulseDot = keyframes`
+	0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
+	40% { transform: scale(1); opacity: 1; }
+`
+
+const shimmerGrid = keyframes`
+	0% { background-position: 0% 50%; }
+	100% { background-position: 100% 50%; }
+`
+
+const fadeTip = keyframes`
+	0%, 100% { opacity: 0.45; transform: translateY(4px); }
+	20%, 80% { opacity: 1; transform: translateY(0); }
+`
+
+const LoadingWrap = styled.div`
+	flex: 1;
+	min-height: 320px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 22px;
+	padding: 28px 18px;
+	border-radius: ${theme.radiusSm};
+	border: 1px solid ${theme.line};
+	background:
+		radial-gradient(circle at 30% 20%, rgba(15, 143, 130, 0.12), transparent 45%),
+		radial-gradient(circle at 80% 80%, rgba(255, 90, 54, 0.1), transparent 42%),
+		rgba(255, 255, 255, 0.72);
+	overflow: hidden;
+`
+
+const BowlStage = styled.div`
+	position: relative;
+	width: 120px;
+	height: 120px;
+	display: grid;
+	place-items: center;
+	animation: ${floatY} 2.2s ease-in-out infinite;
+`
+
+const BowlRing = styled.div`
+	position: absolute;
+	inset: 8px;
+	border-radius: 50%;
+	border: 3px dashed rgba(15, 143, 130, 0.35);
+	animation: ${spinSlow} 6s linear infinite;
+`
+
+const BowlCore = styled.div`
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	background: linear-gradient(145deg, ${theme.teal} 0%, #1bb5a5 55%, ${theme.accent} 120%);
+	box-shadow:
+		0 14px 28px rgba(15, 143, 130, 0.28),
+		inset 0 -8px 16px rgba(0, 0, 0, 0.12);
+	display: grid;
+	place-items: center;
+
+	span {
+		font-family: ${theme.fontDisplay};
+		font-size: 1.55rem;
+		color: #fff;
+		letter-spacing: -0.02em;
+		line-height: 1;
+	}
+`
+
+const MiniGrid = styled.div`
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 6px;
+	width: min(280px, 86%);
+`
+
+const MiniCell = styled.div<{ $delay: number }>`
+	aspect-ratio: 1;
+	border-radius: 8px;
+	background: linear-gradient(
+		90deg,
+		rgba(20, 35, 28, 0.06) 0%,
+		rgba(15, 143, 130, 0.18) 40%,
+		rgba(255, 90, 54, 0.14) 70%,
+		rgba(20, 35, 28, 0.06) 100%
+	);
+	background-size: 220% 100%;
+	animation: ${shimmerGrid} 1.4s ease-in-out infinite;
+	animation-delay: ${p => p.$delay}s;
+	opacity: 0.9;
+`
+
+const LoadingCopy = styled.div`
+	text-align: center;
+	max-width: 280px;
+`
+
+const LoadingTitle = styled.p`
+	margin: 0 0 8px;
+	font-family: ${theme.fontDisplay};
+	font-size: 1.35rem;
+	letter-spacing: -0.02em;
+	color: ${theme.ink};
+`
+
+const LoadingTip = styled.p`
+	margin: 0;
+	min-height: 2.6em;
+	font-size: 0.92rem;
+	font-weight: 500;
+	line-height: 1.45;
+	color: ${theme.inkSoft};
+	animation: ${fadeTip} 3.2s ease-in-out infinite;
+`
+
+const Dots = styled.div`
+	display: flex;
+	gap: 8px;
+	margin-top: 4px;
+`
+
+const Dot = styled.span<{ $delay: number }>`
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: ${theme.teal};
+	animation: ${pulseDot} 1.1s ease-in-out infinite;
+	animation-delay: ${p => p.$delay}s;
+
+	&:nth-child(2) {
+		background: ${theme.accent};
+	}
+	&:nth-child(3) {
+		background: ${theme.ink};
+	}
+`
+
+const LOADING_TIPS = [
+	'공휴일 정보를 불러오는 때예요',
+	'이번 달 근무일을 세는 중…',
+	'거의 다 됐어요, 식단표 펼치는 중',
+]
+
+function CalendarLoading() {
+	const [tipIndex, setTipIndex] = useState(0)
+
+	useEffect(() => {
+		const timer = window.setInterval(() => {
+			setTipIndex(prev => (prev + 1) % LOADING_TIPS.length)
+		}, 2200)
+		return () => window.clearInterval(timer)
+	}, [])
+
+	return (
+		<LoadingWrap>
+			<BowlStage>
+				<BowlRing />
+				<BowlCore>
+					<span>밥</span>
+				</BowlCore>
+			</BowlStage>
+			<MiniGrid aria-hidden>
+				{Array.from({ length: 21 }, (_, i) => (
+					<MiniCell key={i} $delay={(i % 7) * 0.08} />
+				))}
+			</MiniGrid>
+			<LoadingCopy>
+				<LoadingTitle>달력 준비 중</LoadingTitle>
+				<LoadingTip key={tipIndex}>{LOADING_TIPS[tipIndex]}</LoadingTip>
+				<Dots>
+					<Dot $delay={0} />
+					<Dot $delay={0.15} />
+					<Dot $delay={0.3} />
+				</Dots>
+			</LoadingCopy>
+		</LoadingWrap>
+	)
+}
 
 const MonthTitleBar = styled.div`
 	flex-shrink: 0;
@@ -948,23 +1137,7 @@ export const CustomCalendar = () => {
 	return (
 		<CalendarRoot>
 			{!fetchStatus ? (
-				<div
-					style={{
-						flex: 1,
-						minHeight: 0,
-						display: 'flex',
-					}}
-				>
-					<Skeleton.Node
-						active={true}
-						style={{
-							width: '100%',
-							flex: 1,
-							minHeight: 320,
-							borderRadius: 12,
-						}}
-					/>
-				</div>
+				<CalendarLoading />
 			) : (
 				<>
 					{contextHolder}
