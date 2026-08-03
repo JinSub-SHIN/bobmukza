@@ -84,7 +84,7 @@ export const HeaderMenu = () => {
 		<CustomHeader>
 			<Shell>
 				<BrandBlock type="button" onClick={() => navigate('/')}>
-					<span className="brand">밥먹자</span>
+					<span className="brand">먹부림</span>
 					<span className="tag">이번 달 식대, 한눈에</span>
 				</BrandBlock>
 			</Shell>
