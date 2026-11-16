@@ -1,12 +1,15 @@
 import { useDispatch, useSelector } from 'react-redux'
+import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
-import { RootState } from '../../store'
+import { RootState, store } from '../../store'
 import { numberWithCommas } from '../hook/useNumberComma'
 import { setWorkday } from '../../store/action/workdaySlice'
-import { Input, Tooltip } from 'antd'
+import { Input, Tooltip, message } from 'antd'
 import { numberRegexp } from '../hook/useNumberRegexp'
 import dayjs from 'dayjs'
 import { theme } from '../../styles/theme'
+import { getGowidUsage, getMukburimErrorMessage } from '../../api/mukburim'
+import { getBobmukzaUserName } from '../../auth/bobmukzaSession'
 
 const Root = styled.div`
 	height: 100%;
@@ -26,6 +29,7 @@ const InputGrid = styled.div`
 
 	@media (max-width: 700px) {
 		grid-template-columns: 1fr;
+		gap: 8px;
 	}
 `
 
@@ -115,6 +119,11 @@ const Hero = styled.section<{ $ok: boolean }>`
 	box-shadow:
 		0 18px 40px rgba(20, 35, 28, 0.1),
 		inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+	@media (max-width: 600px) {
+		padding: 18px 14px 16px;
+		border-radius: 16px;
+	}
 `
 
 const HeroTop = styled.div`
@@ -328,6 +337,52 @@ function won(n: number) {
 export const Calculating = () => {
 	const dispatch = useDispatch()
 	const ws = useSelector((state: RootState) => state.workdayStatus)
+	const gowidFetchStarted = useRef(false)
+	const [gowidHint, setGowidHint] = useState<string | null>(null)
+
+	useEffect(() => {
+		const name = getBobmukzaUserName()
+		if (!name || gowidFetchStarted.current) {
+			return
+		}
+		gowidFetchStarted.current = true
+
+		let cancelled = false
+		;(async () => {
+			try {
+				const usage = await getGowidUsage(name)
+				if (cancelled) {
+					return
+				}
+				const current = store.getState().workdayStatus
+				dispatch(
+					setWorkday({
+						...current,
+						usageAmount: usage.total_amount,
+						exceptionMoney:
+							usage.misuse_amount > 0
+								? usage.misuse_amount
+								: undefined,
+					}),
+				)
+				if (usage.last_loaded_at) {
+					setGowidHint(
+						`고위드 API · ${dayjs(usage.last_loaded_at).format('M/D HH:mm')}`,
+					)
+				} else {
+					setGowidHint('고위드 API')
+				}
+			} catch (err) {
+				if (!cancelled) {
+					message.warning(getMukburimErrorMessage(err))
+				}
+			}
+		})()
+
+		return () => {
+			cancelled = true
+		}
+	}, [dispatch])
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		localStorage.setItem('userCalendar', (dayjs().month() + 1).toString())
@@ -442,7 +497,7 @@ export const Calculating = () => {
 				<Field>
 					<FieldTop>
 						<FieldName>고위드 이용 금액</FieldName>
-						<FieldHint>누적</FieldHint>
+						<FieldHint>{gowidHint ?? '로그인 이름 기준 자동 조회'}</FieldHint>
 					</FieldTop>
 					<FieldInput $tone="teal">
 						<Input

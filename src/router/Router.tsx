@@ -1,5 +1,9 @@
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { MainPage } from '../pages/MainPage'
+import { BobmukzaLoginPage } from '../pages/BobmukzaLoginPage'
+import { BobmukzaSignupPage } from '../pages/BobmukzaSignupPage'
+import { BobmukzaAuthGate } from './BobmukzaProtectedRoute'
+import { isBobmukzaLoggedIn } from '../auth/bobmukzaSession'
 import { RafflePage } from '../pages/RafflePage'
 import { Test } from '../components/component/playground/Test'
 import { CoinApiPage } from '../pages/CoinApiPage'
@@ -12,80 +16,84 @@ import { UserList } from '../components/component/tonsil/trainerOnly/UserList'
 import { WorkOutCalendar } from '../components/component/tonsil/calendar/WorkOutCalendar'
 import { TonsilLayout } from '../components/common/TonsilLayout'
 
-const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
+const TonsilProtectedRoute = ({ children }: { children: React.ReactElement }) => {
 	const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
 
 	if (!isLoggedIn) {
-		return <Navigate to="/" replace />
+		return <Navigate to="/member/login" replace />
 	}
 
 	return children
 }
 
-// const MainRoute = () => {
-// 	const navigate = useNavigate()
-// 	const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
-
-// 	useEffect(() => {
-// 		if (isLoggedIn) {
-// 			const userType = localStorage.getItem('userType')
-// 			if (userType === 'trainer') {
-// 				navigate('/member/management', { replace: true })
-// 			} else {
-// 				navigate('/workout/calendar', { replace: true })
-// 			}
-// 		}
-// 	}, [isLoggedIn, navigate])
-
-// 	if (!isLoggedIn) {
-// 		return <LoginScreen />
-// 	}
-
-// 	// 리다이렉트 중일 때는 아무것도 렌더링하지 않음
-// 	return null
-// }
+const GuestOnlyBobmukza = ({ children }: { children: React.ReactElement }) => {
+	if (isBobmukzaLoggedIn()) {
+		return <Navigate to="/" replace />
+	}
+	return children
+}
 
 export const Router = () => {
 	return (
 		<BrowserRouter>
 			<Routes>
-				<Route path="/bobmukza" element={<MainPage />} />
-				<Route path="/" element={<MainPage />} />
 				<Route
-					path="/workout/list"
+					path="/login"
 					element={
-						<ProtectedRoute>
-							<WorkOutListPage />
-						</ProtectedRoute>
+						<GuestOnlyBobmukza>
+							<BobmukzaLoginPage />
+						</GuestOnlyBobmukza>
 					}
 				/>
 				<Route
-					path="/workout/calendar"
+					path="/signup"
 					element={
-						<ProtectedRoute>
-							<TonsilLayout>
-								<WorkOutCalendar />
-							</TonsilLayout>
-						</ProtectedRoute>
+						<GuestOnlyBobmukza>
+							<BobmukzaSignupPage />
+						</GuestOnlyBobmukza>
 					}
 				/>
-				<Route
-					path="/member/management"
-					element={
-						<ProtectedRoute>
-							<TonsilLayout>
-								<UserList />
-							</TonsilLayout>
-						</ProtectedRoute>
-					}
-				/>
-				<Route path="/member/login" element={<LoginStep />} />
-				<Route path="/trainer/login" element={<LoginStep />} />
-				<Route path="/workout/insert" element={<WorkOutInsertPage />} />
-				<Route path="/workout/write" element={<WorkOutWritePage />} />
-				<Route path="/test" element={<RafflePage />} />
-				<Route path="/coinApi" element={<CoinApiPage />} />
-				<Route path="/playground" element={<Test />} />
+
+				<Route element={<BobmukzaAuthGate />}>
+					<Route path="/" element={<MainPage />} />
+					<Route path="/bobmukza" element={<MainPage />} />
+					<Route
+						path="/workout/list"
+						element={
+							<TonsilProtectedRoute>
+								<WorkOutListPage />
+							</TonsilProtectedRoute>
+						}
+					/>
+					<Route
+						path="/workout/calendar"
+						element={
+							<TonsilProtectedRoute>
+								<TonsilLayout>
+									<WorkOutCalendar />
+								</TonsilLayout>
+							</TonsilProtectedRoute>
+						}
+					/>
+					<Route
+						path="/member/management"
+						element={
+							<TonsilProtectedRoute>
+								<TonsilLayout>
+									<UserList />
+								</TonsilLayout>
+							</TonsilProtectedRoute>
+						}
+					/>
+					<Route path="/member/login" element={<LoginStep />} />
+					<Route path="/trainer/login" element={<LoginStep />} />
+					<Route path="/workout/insert" element={<WorkOutInsertPage />} />
+					<Route path="/workout/write" element={<WorkOutWritePage />} />
+					<Route path="/test" element={<RafflePage />} />
+					<Route path="/coinApi" element={<CoinApiPage />} />
+					<Route path="/playground" element={<Test />} />
+					<Route path="*" element={<Navigate to="/" replace />} />
+				</Route>
 			</Routes>
 		</BrowserRouter>
 	)

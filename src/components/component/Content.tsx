@@ -19,7 +19,11 @@ const PageColumn = styled.div`
 	box-sizing: border-box;
 
 	@media (max-width: 900px) {
-		padding: 0 14px 12px;
+		padding: 0 12px 16px;
+	}
+
+	@media (max-width: 600px) {
+		padding: 0 10px 20px;
 	}
 `
 
@@ -42,6 +46,24 @@ const PageIntro = styled.div`
 		flex-direction: column;
 		align-items: stretch;
 		padding: 14px;
+		gap: 12px;
+	}
+
+	@media (max-width: 600px) {
+		padding: 12px;
+		margin-bottom: 14px;
+	}
+`
+
+const IntroAside = styled.div`
+	flex-shrink: 0;
+
+	@media (max-width: 900px) {
+		width: 100%;
+
+		.ant-btn {
+			width: 100%;
+		}
 	}
 `
 
@@ -63,6 +85,11 @@ const IntroCopy = styled.div`
 		font-weight: 500;
 		line-height: 1.55;
 		max-width: 36rem;
+
+		@media (max-width: 600px) {
+			font-size: 0.92rem;
+			line-height: 1.5;
+		}
 	}
 `
 
@@ -147,6 +174,13 @@ const MobileSurface = styled(Surface)`
 	min-height: 0;
 	margin-bottom: 18px;
 	padding: 18px 14px;
+	overflow: hidden;
+
+	@media (max-width: 600px) {
+		padding: 12px 8px 14px;
+		margin-bottom: 14px;
+		border-radius: ${theme.radiusSm};
+	}
 `
 
 const MobileDivider = styled.div`
@@ -181,11 +215,13 @@ export const Content = () => {
 					<IntroCopy>
 						<h2>이번 달, 얼마까지 먹을까</h2>
 						<p>
-							달력에 휴가·야근·예상 지출을 찍고, 고위드 이용 금액을 넣으면 남은
-							평균 식대가 바로 나옵니다.
+							달력에 휴가·야근을 표시하고, 고위드 이용 금액을 넣으면 남은 평균
+							식대가 바로 나옵니다.
 						</p>
 					</IntroCopy>
-					<Notice />
+					<IntroAside>
+						<Notice />
+					</IntroAside>
 				</PageIntro>
 
 				<Desktop>

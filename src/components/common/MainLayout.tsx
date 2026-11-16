@@ -18,7 +18,11 @@ const CustomContent = styled(Content)`
 	animation: bm-rise 0.55s ease both;
 
 	@media (max-width: 768px) {
-		padding: 18px 14px 32px;
+		padding: 14px 10px 28px;
+	}
+
+	@media (max-width: 600px) {
+		padding: 12px 8px 24px;
 	}
 `
 

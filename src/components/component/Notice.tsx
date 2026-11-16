@@ -3,17 +3,50 @@ import { useState } from 'react'
 import styled from 'styled-components'
 import { theme } from '../../styles/theme'
 
+const HELP_SECTIONS = [
+	{
+		emoji: '💳',
+		title: '금액 입력',
+		body: '하단 입력창에 금액을 넣으면 잔액이랑, 남은 근무일 기준 하루 평균 식대를 바로 볼 수 있어요.',
+		tone: 'mint' as const,
+	},
+	{
+		emoji: '📅',
+		title: '달력 클릭',
+		body: '날짜를 눌러 휴가·야근·주말 출근 등을 골라주세요. 계산에 자동으로 반영돼요.',
+		tone: 'sky' as const,
+	},
+	{
+		emoji: '⏰',
+		title: '근무일수',
+		body: '점심 전이면 당일 근무일, 점심 후면 제외예요. 오전반차도 점심 안 먹으니까 빼요.',
+		tone: 'accent' as const,
+	},
+	{
+		emoji: '🗓️',
+		title: '달력 표시',
+		body: '평일·주말 휴무는 기본으로 비워 둬요. 이번 달만 관리하면 됩니다.',
+		tone: 'teal' as const,
+	},
+]
+
 const HelpButton = styled(Button)`
 	height: 44px !important;
 	padding: 0 18px !important;
+
+	@media (max-width: 600px) {
+		height: 48px !important;
+		font-size: 15px !important;
+	}
 	border-radius: 12px !important;
 	border: 1px solid ${theme.lineStrong} !important;
 	background: rgba(255, 255, 255, 0.72) !important;
 	color: ${theme.ink} !important;
 	font-family: ${theme.fontBody} !important;
-	font-weight: 600 !important;
+	font-weight: 700 !important;
 	box-shadow: 0 8px 20px rgba(20, 35, 28, 0.06) !important;
 	backdrop-filter: blur(8px);
+	gap: 6px !important;
 
 	&:hover {
 		border-color: ${theme.accent} !important;
@@ -22,30 +55,122 @@ const HelpButton = styled(Button)`
 	}
 `
 
-const DrawerInner = styled.div`
-	padding: 4px 2px 14px;
+const DrawerIntro = styled.p`
+	margin: 0 0 20px;
+	padding: 14px 16px;
+	border-radius: ${theme.radiusSm};
+	background: linear-gradient(
+		135deg,
+		${theme.mint} 0%,
+		${theme.sky} 55%,
+		rgba(255, 255, 255, 0.9) 100%
+	);
+	border: 1px solid ${theme.line};
 	font-size: 15px;
-	line-height: 1.65;
-	color: ${theme.inkSoft};
-	font-family: ${theme.fontBody};
+	line-height: 1.55;
+	color: ${theme.ink};
+	font-weight: 700;
+	text-align: center;
 `
 
-const DrawerInnerHeader = styled.div`
-	font-size: 1.05rem;
+const TipList = styled.ul`
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+`
+
+const tipBackground: Record<(typeof HELP_SECTIONS)[number]['tone'], string> = {
+	mint: theme.mint,
+	sky: theme.sky,
+	accent: theme.accentSoft,
+	teal: theme.tealSoft,
+}
+
+const TipCard = styled.li<{ $tone: (typeof HELP_SECTIONS)[number]['tone'] }>`
+	display: flex;
+	gap: 14px;
+	align-items: flex-start;
+	padding: 14px 14px 12px;
+	border-radius: ${theme.radiusSm};
+	border: 1px solid ${theme.line};
+	background: ${p => tipBackground[p.$tone]};
+	box-shadow: 0 4px 14px rgba(20, 35, 28, 0.04);
+	transition:
+		transform 0.15s ease,
+		box-shadow 0.15s ease;
+
+	&:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 8px 20px rgba(20, 35, 28, 0.07);
+	}
+`
+
+const TipEmoji = styled.span`
+	flex-shrink: 0;
+	width: 44px;
+	height: 44px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 26px;
+	line-height: 1;
+	border-radius: 14px;
+	background: rgba(255, 255, 255, 0.85);
+	border: 1px solid ${theme.line};
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+`
+
+const TipBody = styled.div`
+	flex: 1;
+	min-width: 0;
+`
+
+const TipTitle = styled.div`
+	font-size: 1rem;
 	font-weight: 700;
-	margin-bottom: 8px;
 	color: ${theme.ink};
-	font-family: ${theme.fontBody};
+	margin-bottom: 6px;
 	letter-spacing: -0.01em;
 `
 
-const DrawerFooter = styled.div`
-	margin-top: 24px;
-	padding-top: 14px;
-	border-top: 1px solid ${theme.line};
-	font-size: 12px;
-	line-height: 1.5;
+const TipText = styled.p`
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.6;
 	color: ${theme.inkSoft};
+	font-weight: 300;
+`
+
+const DrawerFooter = styled.div`
+	margin-top: 22px;
+	padding: 12px 14px;
+	border-radius: ${theme.radiusSm};
+	border: 1px dashed ${theme.lineStrong};
+	background: rgba(255, 255, 255, 0.55);
+	font-size: 13px;
+	line-height: 1.55;
+	color: ${theme.inkSoft};
+	text-align: center;
+	font-weight: 300;
+`
+
+const DrawerTitleRow = styled.span`
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 700;
+`
+
+const HelpWrap = styled.div`
+	text-align: right;
+
+	@media (max-width: 900px) {
+		width: 100%;
+		text-align: left;
+	}
 `
 
 export const Notice = () => {
@@ -53,18 +178,30 @@ export const Notice = () => {
 
 	return (
 		<>
-			<div style={{ textAlign: 'right' }}>
-				<HelpButton onClick={() => setOpen(true)}>사용법 보기</HelpButton>
-			</div>
+			<HelpWrap>
+				<HelpButton onClick={() => setOpen(true)}>
+					<span aria-hidden>📖</span>
+					사용법 보기
+				</HelpButton>
+			</HelpWrap>
 			<Drawer
-				title="밥먹자 사용법"
+				title={
+					<DrawerTitleRow>
+						<span aria-hidden>🍱</span>
+						밥먹자 사용법
+					</DrawerTitleRow>
+				}
 				placement="right"
 				onClose={() => setOpen(false)}
 				open={open}
-				width={Math.min(420, typeof window !== 'undefined' ? window.innerWidth * 0.92 : 420)}
+				width={Math.min(
+					420,
+					typeof window !== 'undefined' ? window.innerWidth * 0.92 : 420,
+				)}
 				styles={{
 					header: {
 						fontFamily: theme.fontDisplay,
+						fontWeight: theme.fontWeightBold,
 						borderBottom: `1px solid ${theme.line}`,
 					},
 					body: {
@@ -72,32 +209,18 @@ export const Notice = () => {
 					},
 				}}
 			>
-				<DrawerInner>
-					<DrawerInnerHeader>금액 입력</DrawerInnerHeader>
-					하단 입력창에 금액을 입력하면 잔액과, 남은 근무일 기준 하루 평균
-					식대를 볼 수 있어요.
-				</DrawerInner>
-				<DrawerInner>
-					<DrawerInnerHeader>클릭</DrawerInnerHeader>
-					달력 날짜를 클릭해 미리 쓸 금액을 넣을 수 있어요. 지우려면 0을
-					입력하세요.
-				</DrawerInner>
-				<DrawerInner>
-					<DrawerInnerHeader>우클릭</DrawerInnerHeader>
-					연차 / 야근식대 / 주말출근 등을 선택해 추가 계산에 반영할 수 있어요.
-				</DrawerInner>
-				<DrawerInner>
-					<DrawerInnerHeader>근무일수</DrawerInnerHeader>
-					점심 전이면 당일을 근무일로 보고, 점심 후면 제외해요. 오전반차도
-					점심을 안 먹으므로 제외됩니다.
-				</DrawerInner>
-				<DrawerInner>
-					<DrawerInnerHeader>달력 표시</DrawerInnerHeader>
-					근무·주말 휴무는 기본으로 표시하지 않아요. 이번 달만 관리합니다.
-				</DrawerInner>
-				<DrawerFooter>
-					* 참고용입니다. 실데이터는 고위드·엑셀을 기준으로 하세요.
-				</DrawerFooter>
+				<DrawerIntro>🍚 한 달 식대, 쉽게 챙겨요!</DrawerIntro>
+				<TipList>
+					{HELP_SECTIONS.map(section => (
+						<TipCard key={section.title} $tone={section.tone}>
+							<TipEmoji aria-hidden>{section.emoji}</TipEmoji>
+							<TipBody>
+								<TipTitle>{section.title}</TipTitle>
+								<TipText>{section.body}</TipText>
+							</TipBody>
+						</TipCard>
+					))}
+				</TipList>
 			</Drawer>
 		</>
 	)

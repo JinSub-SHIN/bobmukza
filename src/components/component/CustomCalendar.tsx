@@ -1,21 +1,11 @@
-import type { CalendarProps, InputRef, MenuProps } from 'antd'
-import {
-	Button,
-	Calendar,
-	Dropdown,
-	Input,
-	message,
-	Popconfirm,
-	Tag,
-} from 'antd'
+import type { CalendarProps, MenuProps } from 'antd'
+import { Button, Calendar, Dropdown, Tag } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import locale from 'antd/es/calendar/locale/ko_KR'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getHoliday, normalizeHolidayItems } from '../../api'
 import {
-	CheckOutlined,
-	CloseOutlined,
 	DislikeOutlined,
 	FrownOutlined,
 	HomeOutlined,
@@ -27,7 +17,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import {
 	HolidayObj,
 	setWorkday,
-	SpecialDay,
 	workdayReset,
 } from '../../store/action/workdaySlice'
 import { RootState } from '../../store'
@@ -35,13 +24,11 @@ import {
 	calendarReset,
 	setCalendarUpdate,
 } from '../../store/action/calendarSlice'
-import { numberRegexp } from '../hook/useNumberRegexp'
 import { cloneDeep } from 'lodash'
-import { numberWithCommas } from '../hook/useNumberComma'
 import { theme } from '../../styles/theme'
 
-/** 달력 칸 하단(태그·상태) 영역 높이 — StyledCalendar·CalendarCellSlot과 동일하게 유지 */
-const CALENDAR_CELL_CONTENT_HEIGHT_PX = 80
+/** 달력 칸 하단(태그·상태) — `CalendarRoot`의 --bm-cell-extra 와 동기화 */
+const cellExtraHeight = 'var(--bm-cell-extra, 80px)'
 
 const StyledCalendar = styled(Calendar)`
 	border-radius: ${theme.radiusSm};
@@ -51,6 +38,10 @@ const StyledCalendar = styled(Calendar)`
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 	font-family: ${theme.fontBody};
 	padding: 10px;
+
+	@media (max-width: 600px) {
+		padding: 6px 4px 8px;
+	}
 
 	.ant-picker-panel {
 		background: transparent !important;
@@ -65,6 +56,11 @@ const StyledCalendar = styled(Calendar)`
 		width: 100%;
 		border-collapse: separate;
 		border-spacing: 4px;
+		table-layout: fixed;
+
+		@media (max-width: 600px) {
+			border-spacing: 2px;
+		}
 	}
 
 	.ant-picker-content thead > tr > th {
@@ -77,6 +73,12 @@ const StyledCalendar = styled(Calendar)`
 		letter-spacing: 0.08em !important;
 		color: ${theme.inkSoft} !important;
 		text-transform: uppercase;
+
+		@media (max-width: 600px) {
+			padding: 6px 0 !important;
+			font-size: 10px !important;
+			letter-spacing: 0.02em !important;
+		}
 	}
 
 	.ant-picker-content thead > tr > th:nth-child(1) {
@@ -96,6 +98,10 @@ const StyledCalendar = styled(Calendar)`
 		padding: 0 !important;
 		border-radius: 14px !important;
 		overflow: hidden !important;
+
+		@media (max-width: 600px) {
+			border-radius: 10px !important;
+		}
 		vertical-align: top !important;
 		background: rgba(255, 255, 255, 0.72) !important;
 		border: 1px solid ${theme.line} !important;
@@ -106,11 +112,20 @@ const StyledCalendar = styled(Calendar)`
 			box-shadow 0.18s ease;
 	}
 
-	.ant-picker-cell:not(.ant-picker-cell-disabled):hover {
-		background: #fff !important;
-		border-color: rgba(15, 143, 130, 0.35) !important;
-		box-shadow: 0 8px 18px rgba(20, 35, 28, 0.08);
-		transform: translateY(-1px);
+	@media (hover: hover) and (pointer: fine) {
+		.ant-picker-cell:not(.ant-picker-cell-disabled):hover {
+			background: #fff !important;
+			border-color: rgba(15, 143, 130, 0.35) !important;
+			box-shadow: 0 8px 18px rgba(20, 35, 28, 0.08);
+			transform: translateY(-1px);
+		}
+	}
+
+	@media (max-width: 600px) {
+		.ant-picker-cell:not(.ant-picker-cell-disabled):active {
+			background: #fff !important;
+			border-color: rgba(15, 143, 130, 0.45) !important;
+		}
 	}
 
 	.ant-picker-content
@@ -122,6 +137,27 @@ const StyledCalendar = styled(Calendar)`
 		tr
 		.ant-picker-cell:nth-child(7):not(.ant-picker-cell-disabled):hover {
 		background: #e8eef6 !important;
+	}
+
+	.ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+		display: none !important;
+	}
+
+	.ant-picker-cell-in-view.ant-picker-cell-selected:not(.ant-picker-cell-disabled)
+		.ant-picker-cell-inner {
+		color: ${theme.ink} !important;
+		background: transparent !important;
+	}
+
+	.ant-picker-cell-in-view.ant-picker-cell-selected:not(.ant-picker-cell-disabled)
+		.ant-picker-calendar-date,
+	.ant-picker-cell-in-view.ant-picker-cell-selected:not(.ant-picker-cell-disabled)
+		.ant-picker-calendar-date-today {
+		background: rgba(15, 143, 130, 0.1) !important;
+	}
+
+	.ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-calendar-date-value {
+		color: ${theme.ink} !important;
 	}
 
 	.ant-picker-cell-today {
@@ -158,6 +194,30 @@ const StyledCalendar = styled(Calendar)`
 		color: ${theme.ink} !important;
 		background: transparent !important;
 		min-height: auto !important;
+
+		@media (max-width: 600px) {
+			padding: 4px 2px 0 !important;
+			font-size: 13px !important;
+		}
+	}
+
+	.ant-picker-calendar-date-value {
+		position: relative;
+		z-index: 2;
+		display: block;
+		text-align: end;
+		line-height: 1.25;
+		padding: 4px 6px 2px;
+		font-family: ${theme.fontMono} !important;
+		font-weight: 700 !important;
+		font-size: 16px !important;
+		color: ${theme.ink} !important;
+		-webkit-font-smoothing: antialiased;
+
+		@media (max-width: 600px) {
+			font-size: 13px !important;
+			padding: 2px 4px 0;
+		}
 	}
 
 	.ant-picker-calendar-date.ant-picker-calendar-date-today {
@@ -168,17 +228,34 @@ const StyledCalendar = styled(Calendar)`
 		content: 'TODAY';
 		position: absolute;
 		top: 6px;
-		right: 6px;
-		z-index: 2;
+		left: 6px;
+		right: auto;
+		z-index: 3;
 		font-family: ${theme.fontBody};
 		font-size: 9px;
 		font-weight: 700;
-		letter-spacing: 0.08em;
+		letter-spacing: 0.06em;
 		color: #fff;
 		background: ${theme.accent};
 		padding: 2px 6px;
 		border-radius: 8px;
 		pointer-events: none;
+		line-height: 1.2;
+		max-width: calc(100% - 36px);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		@media (max-width: 600px) {
+			content: 'TODAY';
+			font-size: 7px;
+			padding: 1px 4px;
+			letter-spacing: 0.04em;
+			top: 3px;
+			left: 3px;
+			border-radius: 6px;
+			max-width: calc(100% - 28px);
+		}
 	}
 
 	.ant-picker-calendar-date {
@@ -191,8 +268,8 @@ const StyledCalendar = styled(Calendar)`
 	}
 
 	.ant-picker-calendar-date-content {
-		height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px !important;
-		min-height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px !important;
+		height: ${cellExtraHeight} !important;
+		min-height: ${cellExtraHeight} !important;
 		overflow: hidden !important;
 		padding: 0 !important;
 		width: 100% !important;
@@ -212,10 +289,21 @@ const StyledCalendar = styled(Calendar)`
 		color: ${theme.teal} !important;
 		box-shadow: none;
 		margin: 0 !important;
+
+		@media (max-width: 600px) {
+			font-size: 9px !important;
+			padding: 0 4px !important;
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 	}
 
 	.ant-picker-calendar-date-content .ant-tag {
 		margin-inline: 0 !important;
+		display: block;
+		max-width: 100%;
 	}
 `
 
@@ -228,6 +316,16 @@ const StyledHolidayP = styled.p`
 	font-weight: 700;
 	line-height: 1.35;
 	color: ${theme.accent};
+
+	@media (max-width: 600px) {
+		font-size: 9px;
+		line-height: 1.25;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		word-break: keep-all;
+	}
 `
 
 type CuteCellTone = 'plain' | 'weekend' | 'holiday' | 'muted'
@@ -235,12 +333,13 @@ type CuteCellTone = 'plain' | 'weekend' | 'holiday' | 'muted'
 const CalendarCellSlot = styled.div`
 	position: relative;
 	width: 100%;
-	height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px;
-	min-height: ${CALENDAR_CELL_CONTENT_HEIGHT_PX}px;
+	height: ${cellExtraHeight};
+	min-height: ${cellExtraHeight};
 	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	-webkit-tap-highlight-color: transparent;
 `
 
 const CuteCellInner = styled.div<{
@@ -282,6 +381,12 @@ const CuteCellInner = styled.div<{
 	}};
 	transition: transform 0.12s ease;
 
+	@media (max-width: 600px) {
+		font-size: 10px;
+		gap: 2px;
+		padding: 0 2px;
+	}
+
 	${p =>
 		p.$click &&
 		`
@@ -315,14 +420,32 @@ const CuteResetButton = styled(Button)`
 	&:active {
 		transform: translateY(0);
 	}
+
+	@media (max-width: 600px) {
+		height: 46px !important;
+		font-size: 14px !important;
+	}
 `
 
 const CalendarRoot = styled.div`
+	--bm-cell-extra: 80px;
 	position: relative;
 	height: 100%;
 	min-height: 420px;
 	display: flex;
 	flex-direction: column;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+
+	@media (max-width: 600px) {
+		--bm-cell-extra: 54px;
+		min-height: 0;
+	}
+
+	@media (max-width: 400px) {
+		--bm-cell-extra: 48px;
+	}
 `
 
 const floatY = keyframes`
@@ -525,6 +648,12 @@ const MonthTitleBar = styled.div`
 	padding: 4px 2px 10px;
 	border-bottom: 1px solid ${theme.line};
 
+	@media (max-width: 600px) {
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-bottom: 10px;
+	}
+
 	h1 {
 		margin: 0;
 		font-family: ${theme.fontDisplay};
@@ -543,6 +672,11 @@ const MonthTitleBar = styled.div`
 		background: ${theme.tealSoft};
 		padding: 6px 12px;
 		border-radius: 10px;
+
+		@media (max-width: 600px) {
+			font-size: 0.78rem;
+			padding: 5px 10px;
+		}
 	}
 `
 
@@ -551,11 +685,38 @@ const CalendarBody = styled.div`
 	min-height: 320px;
 	overflow: auto;
 	padding-right: 2px;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	-webkit-overflow-scrolling: touch;
+
+	@media (max-width: 600px) {
+		min-height: 0;
+		overflow-x: hidden;
+	}
+
+	.ant-picker-calendar {
+		width: 100%;
+		max-width: 100%;
+	}
 `
 
 const CalendarFooter = styled.div`
 	flex-shrink: 0;
 	margin-top: 12px;
+
+	@media (max-width: 600px) {
+		margin-top: 10px;
+		position: sticky;
+		bottom: 0;
+		z-index: 2;
+		padding-bottom: env(safe-area-inset-bottom, 0px);
+		background: linear-gradient(
+			180deg,
+			transparent 0%,
+			rgba(243, 247, 245, 0.92) 35%
+		);
+	}
 `
 
 export const CustomCalendar = () => {
@@ -566,38 +727,7 @@ export const CustomCalendar = () => {
 	const [fetchStatus, setFetchStatus] = useState<boolean>(false)
 	const [refetchStatus, setReFetchStatus] = useState(0)
 
-	const [confirmTemporaryData, setConfirmTemporaryData] = useState<string>()
-	const [inputTemporaryData, setInputTemporaryData] = useState<
-		number | string
-	>()
-
-	const [messageApi, contextHolder] = message.useMessage()
-
-	const hiddenRef = useRef(null)
-	const hiddenRef2 = useRef(null)
-	const inputRef = useRef<InputRef>(null)
 	const storageMonth = localStorage.getItem('userCalendar')
-
-	const [calendarSellKey, setCalendarSellKey] = useState('')
-
-	const error = () => {
-		messageApi.open({
-			type: 'error',
-			content: '잘못 입력했어요! (숫자인지, 동일한 값이 아닌지 확인)',
-		})
-	}
-
-	const error2 = () => {
-		messageApi.open({
-			type: 'error',
-			content: (
-				<div>
-					<p>당일 및 이전 지출 계획은 등록 안되요!</p>
-					<p>지출한 금액은 고위드 이용금액 입력란에 적어주세요.</p>
-				</div>
-			),
-		})
-	}
 
 	useEffect(() => {
 		const nowDate = (dayjs().month() + 1).toString()
@@ -823,15 +953,6 @@ export const CustomCalendar = () => {
 		dispatch(setCalendarUpdate(updatedItem))
 	}
 
-	const handleOpenChange = (open: boolean, value: string) => {
-		setCalendarSellKey(value)
-		if (open) {
-			setTimeout(() => {
-				inputRef.current?.focus()
-			}, 0)
-		}
-	}
-
 	const dateCellRender = (value: Dayjs) => {
 		const isWeekend = value.day() === 0 || value.day() === 6
 
@@ -841,10 +962,6 @@ export const CustomCalendar = () => {
 
 		const nextMonthHoliday = workdayStatus.nextMonthHolidayList.find(
 			holiday => holiday.locdate === value.format('YYYYMMDD'),
-		)
-
-		const speicalDay = workdayStatus.specialDayList.find(
-			specialDay => specialDay.locdate === value.format('YYYY-MM-DD'),
 		)
 
 		const workHoliday = value.format('YYYYMMDD') === '20250501'
@@ -864,10 +981,10 @@ export const CustomCalendar = () => {
 					<>
 						<Dropdown
 							menu={{ items: holidayItems, onClick: handleMenuClick(value) }}
-							trigger={['contextMenu']}
+							trigger={['click']}
 						>
 							<CalendarCellSlot>
-								<CuteCellInner $tone="holiday">
+								<CuteCellInner $tone="holiday" $click>
 									<StyledHolidayP>
 										근로자의날
 										{savedMenuKey && savedMenuKey !== '휴무' && (
@@ -897,10 +1014,10 @@ export const CustomCalendar = () => {
 					<>
 						<Dropdown
 							menu={{ items: holidayItems, onClick: handleMenuClick(value) }}
-							trigger={['contextMenu']}
+							trigger={['click']}
 						>
 							<CalendarCellSlot>
-								<CuteCellInner $tone="holiday">
+								<CuteCellInner $tone="holiday" $click>
 									<StyledHolidayP>
 										{holidayName}
 										{savedMenuKey && savedMenuKey !== '휴무' && (
@@ -942,10 +1059,10 @@ export const CustomCalendar = () => {
 					<>
 						<Dropdown
 							menu={{ items: holidayItems, onClick: handleMenuClick(value) }}
-							trigger={['contextMenu']}
+							trigger={['click']}
 						>
 							<CalendarCellSlot>
-								<CuteCellInner $tone="weekend">
+								<CuteCellInner $tone="weekend" $click>
 									{savedMenuKey && savedMenuKey !== '휴무' && (
 										<Tag color="magenta">({savedMenuKey})</Tag>
 									)}
@@ -964,153 +1081,26 @@ export const CustomCalendar = () => {
 			return (
 				<Dropdown
 					menu={{ items: workDayItems, onClick: handleMenuClick(value) }}
-					trigger={['contextMenu']}
+					trigger={['click']}
 				>
-					<Popconfirm
-						key={value.format('YYYY-MM-DD')}
-						title="이날 식비 얼마 쓸 거야? 🍱"
-						description={
-							<Input
-								placeholder="숫자만!"
-								size="large"
-								style={{
-									marginTop: 10,
-									borderRadius: 14,
-									borderWidth: 2,
-									borderColor: '#ffc8e4',
-								}}
-								onChange={handleInputChange}
-								ref={inputRef}
-								onPressEnter={() => {
-									handleConfirm()
-								}}
-							/>
-						}
-						okText={<CheckOutlined />}
-						cancelText={<CloseOutlined />}
-						trigger="click"
-						icon={''}
-						onConfirm={handleConfirm}
-						onOpenChange={open =>
-							handleOpenChange(open, value.format('YYYY-MM-DD'))
-						}
-						onCancel={() => {
-							setCalendarSellKey('')
-						}}
-						open={value.format('YYYY-MM-DD') == calendarSellKey}
-					>
-						<CalendarCellSlot>
-							<CuteCellInner
-								$tone="plain"
-								$click
-								onClick={() => handleLeftClick(value)}
-								role="presentation"
-							>
-								{savedMenuKey &&
-									savedMenuKey !== '근무' &&
-									savedMenuKey !== '휴가' &&
-									savedMenuKey !== '오전반차' && (
-										<Tag color="orange">({savedMenuKey})</Tag>
-									)}
-								{(savedMenuKey === '휴가' || savedMenuKey === '오전반차') && (
-									<Tag color="cyan">({savedMenuKey})</Tag>
+					<CalendarCellSlot>
+						<CuteCellInner $tone="plain" $click>
+							{savedMenuKey &&
+								savedMenuKey !== '근무' &&
+								savedMenuKey !== '휴가' &&
+								savedMenuKey !== '오전반차' && (
+									<Tag color="orange">({savedMenuKey})</Tag>
 								)}
-							</CuteCellInner>
-							{/* 기념일이면서, 해당기념일이 오늘 이후인지 확인 */}
-							{speicalDay && dayjs(speicalDay.locdate).isAfter(dayjs()) && (
-								<div
-									style={{
-										position: 'absolute',
-										bottom: 0,
-										right: 0,
-										padding: 3,
-									}}
-								>
-									<Tag
-										color="geekblue"
-										style={{ fontSize: 11, borderRadius: 10 }}
-									>
-										-{numberWithCommas(speicalDay.amount)}원
-									</Tag>
-								</div>
+							{(savedMenuKey === '휴가' || savedMenuKey === '오전반차') && (
+								<Tag color="cyan">({savedMenuKey})</Tag>
 							)}
-						</CalendarCellSlot>
-					</Popconfirm>
+						</CuteCellInner>
+					</CalendarCellSlot>
 				</Dropdown>
 			)
 		}
 
 		return <></>
-	}
-
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { value } = e.target
-
-		if (value.length === 0) {
-			setInputTemporaryData('')
-		}
-
-		if (numberRegexp(value) === false) {
-			return
-		} else {
-			if (value.length > 7) {
-				return
-			}
-			setInputTemporaryData(value)
-		}
-	}
-
-	const handleConfirm = () => {
-		const copy = cloneDeep(workdayStatus)
-
-		if (dayjs(confirmTemporaryData).isBefore(dayjs())) {
-			;(hiddenRef2.current as any)?.click()
-			return
-		}
-
-		if (
-			isNaN(Number(inputTemporaryData)) ||
-			inputTemporaryData?.toString().trim() === ''
-		) {
-			;(hiddenRef.current as any)?.click()
-			return
-		}
-
-		const specialObj: SpecialDay = {
-			locdate: confirmTemporaryData!,
-			amount: Number(inputTemporaryData),
-		}
-		const existingIndex = copy.specialDayList.findIndex(
-			item => item.locdate === confirmTemporaryData,
-		)
-
-		if (specialObj.amount === 0) {
-			// amount가 0이면 해당 항목 삭제 (있을 때만)
-			if (existingIndex !== -1) {
-				copy.specialDayList.splice(existingIndex, 1)
-			}
-		} else {
-			// amount가 0이 아니면 추가하거나 수정
-			if (existingIndex !== -1) {
-				copy.specialDayList[existingIndex].amount = specialObj.amount
-			} else {
-				copy.specialDayList.push(specialObj)
-			}
-		}
-
-		dispatch(setWorkday(copy))
-
-		setConfirmTemporaryData('')
-		setInputTemporaryData('')
-
-		setTimeout(() => {
-			setCalendarSellKey('')
-		}, 0)
-	}
-
-	const handleLeftClick = (value: Dayjs) => {
-		setInputTemporaryData('')
-		setConfirmTemporaryData(value.format('YYYY-MM-DD'))
 	}
 
 	const cellRender: CalendarProps<Dayjs>['cellRender'] = (current, info) => {
@@ -1129,8 +1119,6 @@ export const CustomCalendar = () => {
 		dispatch(calendarReset())
 		dispatch(workdayReset())
 		setFetchStatus(false)
-		setConfirmTemporaryData('')
-		setInputTemporaryData('')
 		setReFetchStatus(refetchStatus + 1)
 	}
 
@@ -1140,7 +1128,6 @@ export const CustomCalendar = () => {
 				<CalendarLoading />
 			) : (
 				<>
-					{contextHolder}
 					<MonthTitleBar>
 						<h1>{dayjs().month() + 1}월 식대 달력</h1>
 						<span>이번 달만</span>
@@ -1158,20 +1145,6 @@ export const CustomCalendar = () => {
 							처음부터 다시
 						</CuteResetButton>
 					</CalendarFooter>
-					<Button
-						ref={hiddenRef}
-						onClick={error}
-						style={{ visibility: 'hidden', position: 'absolute' }}
-					>
-						Error
-					</Button>
-					<Button
-						ref={hiddenRef2}
-						onClick={error2}
-						style={{ visibility: 'hidden', position: 'absolute' }}
-					>
-						Error
-					</Button>
 				</>
 			)}
 		</CalendarRoot>
