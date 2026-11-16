@@ -226,46 +226,6 @@ const HeroSub = styled.p`
 	color: ${theme.inkSoft};
 `
 
-const ChipRow = styled.div`
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 8px;
-
-	@media (max-width: 560px) {
-		grid-template-columns: 1fr;
-	}
-`
-
-const Chip = styled.div`
-	padding: 12px 12px 10px;
-	border-radius: ${theme.radiusSm};
-	background: rgba(255, 255, 255, 0.72);
-	border: 1px solid ${theme.line};
-`
-
-const ChipLabel = styled.div`
-	font-size: 11px;
-	font-weight: 700;
-	color: ${theme.inkSoft};
-	margin-bottom: 4px;
-`
-
-const ChipValue = styled.div`
-	font-family: ${theme.fontMono};
-	font-size: 1.05rem;
-	font-weight: 700;
-	font-variant-numeric: tabular-nums;
-	color: ${theme.ink};
-
-	small {
-		margin-left: 3px;
-		font-family: ${theme.fontBody};
-		font-size: 0.75rem;
-		font-weight: 700;
-		color: ${theme.inkSoft};
-	}
-`
-
 const Section = styled.section`
 	border-radius: ${theme.radiusSm};
 	border: 1px solid ${theme.line};
@@ -469,9 +429,17 @@ export const Calculating = () => {
 							<small>원</small>
 						</HeroValue>
 						<HeroSub>
-							{remainingWorkDays === 0
-								? '남은 근무일이 없습니다'
-								: `기준 ${13000}원 · ${avgHealthy ? '기준 이상' : '기준 미만'}`}
+							{remainingWorkDays === 0 ? (
+								'남은 근무일이 없습니다'
+							) : (
+								<>
+									<Tooltip title="당일 점심 이후에는 그날을 근무일수로 보지 않습니다.">
+										<Help>남은 근무일 {remainingWorkDays}일</Help>
+									</Tooltip>
+									{' · '}
+									{`기준 ${13000}원 · ${avgHealthy ? '기준 이상' : '기준 미만'}`}
+								</>
+							)}
 						</HeroSub>
 					</HeroMetric>
 				</HeroGrid>
@@ -515,27 +483,6 @@ export const Calculating = () => {
 			</InputGrid>
 
 			<Scroll>
-				<ChipRow>
-					<Chip>
-						<ChipLabel>
-							<Tooltip title="당일 점심 이후에는 그날을 근무일수로 보지 않습니다.">
-								<Help>남은 근무일</Help>
-							</Tooltip>
-						</ChipLabel>
-						<ChipValue>
-							{remainingWorkDays}
-							<small>일</small>
-						</ChipValue>
-					</Chip>
-					<Chip>
-						<ChipLabel>예상 지출 등록</ChipLabel>
-						<ChipValue>
-							{ws.specialDayList.length}
-							<small>일</small>
-						</ChipValue>
-					</Chip>
-				</ChipRow>
-
 				<Section>
 					<SectionHead>이번 달 식대 구성</SectionHead>
 					<SectionBody>
