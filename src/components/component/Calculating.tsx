@@ -5,7 +5,6 @@ import { RootState, store } from '../../store'
 import { numberWithCommas } from '../hook/useNumberComma'
 import { setWorkday } from '../../store/action/workdaySlice'
 import { Input, Tooltip, message } from 'antd'
-import { numberRegexp } from '../hook/useNumberRegexp'
 import dayjs from 'dayjs'
 import { theme } from '../../styles/theme'
 import { getGowidUsage, getMukburimErrorMessage } from '../../api/mukburim'
@@ -68,24 +67,36 @@ const Suffix = styled.span`
 	color: ${theme.inkSoft};
 `
 
-const FieldInput = styled.div<{ $tone: 'teal' | 'accent' }>`
+const FieldInput = styled.div<{
+	$tone: 'teal' | 'accent'
+	$bound?: boolean
+}>`
 	.ant-input-affix-wrapper {
 		border-radius: 10px;
 		padding: 8px 12px;
 		min-height: 42px;
-		background: #fff;
+		background: ${p =>
+			p.$bound ? 'rgba(20, 35, 28, 0.04)' : '#fff'};
 		border: 1px solid ${theme.line};
+		cursor: ${p => (p.$bound ? 'default' : 'text')};
 	}
 
 	.ant-input-affix-wrapper-focused,
 	.ant-input-affix-wrapper:focus-within {
 		border-color: ${p =>
-			p.$tone === 'teal' ? theme.teal : theme.accent} !important;
-		box-shadow: 0 0 0 3px
-			${p =>
-				p.$tone === 'teal'
-					? 'rgba(15, 143, 130, 0.14)'
-					: 'rgba(255, 90, 54, 0.14)'} !important;
+			p.$bound
+				? theme.line
+				: p.$tone === 'teal'
+					? theme.teal
+					: theme.accent} !important;
+		box-shadow: ${p =>
+			p.$bound
+				? 'none'
+				: `0 0 0 3px ${
+						p.$tone === 'teal'
+							? 'rgba(15, 143, 130, 0.14)'
+							: 'rgba(255, 90, 54, 0.14)'
+					}`} !important;
 	}
 
 	.ant-input {
@@ -94,6 +105,7 @@ const FieldInput = styled.div<{ $tone: 'teal' | 'accent' }>`
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 		color: ${theme.ink} !important;
+		cursor: ${p => (p.$bound ? 'default' : 'text')};
 	}
 `
 
@@ -359,18 +371,13 @@ export const Calculating = () => {
 					setWorkday({
 						...current,
 						usageAmount: usage.total_amount,
-						exceptionMoney:
-							usage.misuse_amount > 0
-								? usage.misuse_amount
-								: undefined,
+						exceptionMoney: usage.misuse_amount,
 					}),
 				)
 				if (usage.last_loaded_at) {
 					setGowidHint(
-						`고위드 API · ${dayjs(usage.last_loaded_at).format('M/D HH:mm')}`,
+						`업데이트날짜 · ${dayjs(usage.last_loaded_at).format('M/D HH:mm')}`,
 					)
-				} else {
-					setGowidHint('고위드 API')
 				}
 			} catch (err) {
 				if (!cancelled) {
@@ -384,36 +391,8 @@ export const Calculating = () => {
 		}
 	}, [dispatch])
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		localStorage.setItem('userCalendar', (dayjs().month() + 1).toString())
-		const copy = { ...ws }
-		const { value } = e.target
-
-		if (value.length === 0) {
-			copy.usageAmount = undefined
-			dispatch(setWorkday(copy))
-			return
-		}
-		if (numberRegexp(value) === false || value.length > 7) return
-		copy.usageAmount = Number(value)
-		dispatch(setWorkday(copy))
-	}
-
-	const handleExceptionInputChange = (
-		e: React.ChangeEvent<HTMLInputElement>,
-	) => {
-		const copy = { ...ws }
-		const { value } = e.target
-
-		if (value.length === 0) {
-			copy.exceptionMoney = undefined
-			dispatch(setWorkday(copy))
-			return
-		}
-		if (numberRegexp(value) === false || value.length > 7) return
-		copy.exceptionMoney = Number(value)
-		dispatch(setWorkday(copy))
-	}
+	const boundUsageAmount = ws.usageAmount ?? 0
+	const boundMisuseAmount = ws.exceptionMoney ?? 0
 
 	const totalAmount =
 		ws.workday * 13000 -
@@ -421,23 +400,19 @@ export const Calculating = () => {
 		ws.morningHoldayCount * 10000 +
 		ws.extraMoneyCount * 10000
 
-	const remainingAmount = ws.usageAmount
-		? totalAmount - ws.usageAmount + (ws.exceptionMoney ?? 0)
-		: totalAmount
+	const gowidBound =
+		ws.usageAmount !== undefined || ws.exceptionMoney !== undefined
 
-	const willPayAmount = ws.specialDayList.reduce(
-		(sum, item) => sum + item.amount,
-		0,
-	)
+	const remainingAmount = gowidBound
+		? totalAmount - boundUsageAmount + boundMisuseAmount
+		: totalAmount
 
 	const remainingWorkDays = ws.workRemaningDay - ws.afterTodayHolidayCount
 
-	const avgDenom =
-		ws.workRemaningDay -
-		ws.afterTodayHolidayCount -
-		ws.specialDayList.length
 	const averageAmountRaw =
-		avgDenom === 0 ? remainingAmount : (remainingAmount - willPayAmount) / avgDenom
+		remainingWorkDays === 0
+			? remainingAmount
+			: remainingAmount / remainingWorkDays
 	const averageAmount = Number.isFinite(averageAmountRaw) ? averageAmountRaw : 0
 
 	const avgHealthy =
@@ -469,14 +444,14 @@ export const Calculating = () => {
 						</HeroValue>
 						<HeroSub>
 							이번 달 총액 {won(totalAmount)}원
-							{ws.usageAmount
-								? ` − 사용 ${won(ws.usageAmount)}원`
-								: ' · 사용액 미입력'}
+							{gowidBound
+								? ` − 사용 ${won(boundUsageAmount)}원`
+								: ' · 사용액 조회 전'}
 						</HeroSub>
 					</HeroMetric>
 					<HeroMetric>
 						<HeroCaption>
-							<Tooltip title="(잔액 − 예상 지출) ÷ (남은 근무일 − 예상 지출 등록 일수)">
+							<Tooltip title="남은 식대 ÷ 남은 근무일">
 								<Help>앞으로 하루 평균</Help>
 							</Tooltip>
 						</HeroCaption>
@@ -497,18 +472,16 @@ export const Calculating = () => {
 				<Field>
 					<FieldTop>
 						<FieldName>고위드 이용 금액</FieldName>
-						<FieldHint>{gowidHint ?? '로그인 이름 기준 자동 조회'}</FieldHint>
+						<FieldHint>
+							{gowidHint ?? 'API 조회 후 반영'}
+						</FieldHint>
 					</FieldTop>
-					<FieldInput $tone="teal">
+					<FieldInput $tone="teal" $bound>
 						<Input
-							allowClear
-							inputMode="numeric"
-							autoComplete="off"
-							placeholder="예: 125000"
-							onChange={handleChange}
-							value={
-								ws.usageAmount === undefined ? '' : String(ws.usageAmount)
-							}
+							readOnly
+							tabIndex={-1}
+							aria-readonly
+							value={String(boundUsageAmount)}
 							suffix={<Suffix>원</Suffix>}
 						/>
 					</FieldInput>
@@ -516,20 +489,16 @@ export const Calculating = () => {
 				<Field>
 					<FieldTop>
 						<FieldName>반려 · 오사용</FieldName>
-						<FieldHint>있을 때만</FieldHint>
+						<FieldHint>
+							{gowidHint ?? 'API 조회 후 반영'}
+						</FieldHint>
 					</FieldTop>
-					<FieldInput $tone="accent">
+					<FieldInput $tone="accent" $bound>
 						<Input
-							allowClear
-							inputMode="numeric"
-							autoComplete="off"
-							placeholder="없으면 비움"
-							onChange={handleExceptionInputChange}
-							value={
-								ws.exceptionMoney === undefined
-									? ''
-									: String(ws.exceptionMoney)
-							}
+							readOnly
+							tabIndex={-1}
+							aria-readonly
+							value={String(boundMisuseAmount)}
 							suffix={<Suffix>원</Suffix>}
 						/>
 					</FieldInput>
@@ -547,20 +516,6 @@ export const Calculating = () => {
 						<ChipValue>
 							{remainingWorkDays}
 							<small>일</small>
-						</ChipValue>
-					</Chip>
-					<Chip>
-						<ChipLabel>예상 지출 등록</ChipLabel>
-						<ChipValue>
-							{ws.specialDayList.length}
-							<small>일</small>
-						</ChipValue>
-					</Chip>
-					<Chip>
-						<ChipLabel>예상 지출 금액</ChipLabel>
-						<ChipValue>
-							{won(willPayAmount)}
-							<small>원</small>
 						</ChipValue>
 					</Chip>
 				</ChipRow>
