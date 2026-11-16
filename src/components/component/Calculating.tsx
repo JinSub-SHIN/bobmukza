@@ -407,12 +407,21 @@ export const Calculating = () => {
 		? totalAmount - boundUsageAmount + boundMisuseAmount
 		: totalAmount
 
+	const willPayAmount = ws.specialDayList.reduce(
+		(sum, item) => sum + item.amount,
+		0,
+	)
+
 	const remainingWorkDays = ws.workRemaningDay - ws.afterTodayHolidayCount
 
+	const avgDenom =
+		ws.workRemaningDay -
+		ws.afterTodayHolidayCount -
+		ws.specialDayList.length
 	const averageAmountRaw =
-		remainingWorkDays === 0
+		avgDenom === 0
 			? remainingAmount
-			: remainingAmount / remainingWorkDays
+			: (remainingAmount - willPayAmount) / avgDenom
 	const averageAmount = Number.isFinite(averageAmountRaw) ? averageAmountRaw : 0
 
 	const avgHealthy =
@@ -451,7 +460,7 @@ export const Calculating = () => {
 					</HeroMetric>
 					<HeroMetric>
 						<HeroCaption>
-							<Tooltip title="남은 식대 ÷ 남은 근무일">
+							<Tooltip title="(잔액 − 예상 지출) ÷ (남은 근무일 − 예상 지출 등록 일수)">
 								<Help>앞으로 하루 평균</Help>
 							</Tooltip>
 						</HeroCaption>
@@ -515,6 +524,13 @@ export const Calculating = () => {
 						</ChipLabel>
 						<ChipValue>
 							{remainingWorkDays}
+							<small>일</small>
+						</ChipValue>
+					</Chip>
+					<Chip>
+						<ChipLabel>예상 지출 등록</ChipLabel>
+						<ChipValue>
+							{ws.specialDayList.length}
 							<small>일</small>
 						</ChipValue>
 					</Chip>
