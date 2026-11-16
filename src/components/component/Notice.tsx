@@ -144,19 +144,6 @@ const TipText = styled.p`
 	font-weight: 300;
 `
 
-const DrawerFooter = styled.div`
-	margin-top: 22px;
-	padding: 12px 14px;
-	border-radius: ${theme.radiusSm};
-	border: 1px dashed ${theme.lineStrong};
-	background: rgba(255, 255, 255, 0.55);
-	font-size: 13px;
-	line-height: 1.55;
-	color: ${theme.inkSoft};
-	text-align: center;
-	font-weight: 300;
-`
-
 const DrawerTitleRow = styled.span`
 	display: inline-flex;
 	align-items: center;

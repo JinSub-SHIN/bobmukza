@@ -121,14 +121,6 @@ const SignupBtn = styled(Link)`
 	}
 `
 
-const FootNote = styled.p`
-	margin: 14px 0 0;
-	text-align: center;
-	font-size: 12px;
-	color: ${theme.inkSoft};
-	font-weight: 300;
-`
-
 export const BobmukzaLoginPage = () => {
 	const navigate = useNavigate()
 	const [userName, setUserName] = useState('')

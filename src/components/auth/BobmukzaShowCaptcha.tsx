@@ -1,5 +1,5 @@
 import { Button, Modal } from 'antd'
-import { CheckOutlined, LoadingOutlined } from '@ant-design/icons'
+import { CheckOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { theme } from '../../styles/theme'
