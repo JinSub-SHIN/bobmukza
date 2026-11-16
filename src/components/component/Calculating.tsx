@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { RootState, store } from '../../store'
 import { numberWithCommas } from '../hook/useNumberComma'
@@ -309,20 +309,23 @@ function won(n: number) {
 export const Calculating = () => {
 	const dispatch = useDispatch()
 	const ws = useSelector((state: RootState) => state.workdayStatus)
-	const gowidFetchStarted = useRef(false)
+	const userName = getBobmukzaUserName()
 	const [gowidHint, setGowidHint] = useState<string | null>(null)
+	const [gowidLoaded, setGowidLoaded] = useState(false)
 
 	useEffect(() => {
-		const name = getBobmukzaUserName()
-		if (!name || gowidFetchStarted.current) {
+		if (!userName) {
+			setGowidLoaded(false)
+			setGowidHint(null)
 			return
 		}
-		gowidFetchStarted.current = true
 
 		let cancelled = false
+		setGowidLoaded(false)
+
 		;(async () => {
 			try {
-				const usage = await getGowidUsage(name)
+				const usage = await getGowidUsage(userName)
 				if (cancelled) {
 					return
 				}
@@ -334,13 +337,17 @@ export const Calculating = () => {
 						exceptionMoney: usage.misuse_amount,
 					}),
 				)
+				setGowidLoaded(true)
 				if (usage.last_loaded_at) {
 					setGowidHint(
 						`업데이트날짜 · ${dayjs(usage.last_loaded_at).format('M/D HH:mm')}`,
 					)
+				} else {
+					setGowidHint('업데이트날짜 · —')
 				}
 			} catch (err) {
 				if (!cancelled) {
+					setGowidLoaded(false)
 					message.warning(getMukburimErrorMessage(err))
 				}
 			}
@@ -349,10 +356,10 @@ export const Calculating = () => {
 		return () => {
 			cancelled = true
 		}
-	}, [dispatch])
+	}, [userName, dispatch])
 
-	const boundUsageAmount = ws.usageAmount ?? 0
-	const boundMisuseAmount = ws.exceptionMoney ?? 0
+	const boundUsageAmount = gowidBound ? (ws.usageAmount ?? 0) : 0
+	const boundMisuseAmount = gowidBound ? (ws.exceptionMoney ?? 0) : 0
 
 	const totalAmount =
 		ws.workday * 13000 -
@@ -360,8 +367,7 @@ export const Calculating = () => {
 		ws.morningHoldayCount * 10000 +
 		ws.extraMoneyCount * 10000
 
-	const gowidBound =
-		ws.usageAmount !== undefined || ws.exceptionMoney !== undefined
+	const gowidBound = gowidLoaded
 
 	const remainingAmount = gowidBound
 		? totalAmount - boundUsageAmount + boundMisuseAmount
@@ -450,7 +456,7 @@ export const Calculating = () => {
 					<FieldTop>
 						<FieldName>고위드 이용 금액</FieldName>
 						<FieldHint>
-							{gowidHint ?? 'API 조회 후 반영'}
+							{gowidHint ?? (gowidLoaded ? '—' : '조회 중…')}
 						</FieldHint>
 					</FieldTop>
 					<FieldInput $tone="teal" $bound>
@@ -458,7 +464,8 @@ export const Calculating = () => {
 							readOnly
 							tabIndex={-1}
 							aria-readonly
-							value={String(boundUsageAmount)}
+							value={gowidBound ? String(boundUsageAmount) : ''}
+							placeholder={gowidLoaded ? '0' : '조회 중'}
 							suffix={<Suffix>원</Suffix>}
 						/>
 					</FieldInput>
@@ -467,7 +474,7 @@ export const Calculating = () => {
 					<FieldTop>
 						<FieldName>반려 · 오사용</FieldName>
 						<FieldHint>
-							{gowidHint ?? 'API 조회 후 반영'}
+							{gowidHint ?? (gowidLoaded ? '—' : '조회 중…')}
 						</FieldHint>
 					</FieldTop>
 					<FieldInput $tone="accent" $bound>
@@ -475,7 +482,8 @@ export const Calculating = () => {
 							readOnly
 							tabIndex={-1}
 							aria-readonly
-							value={String(boundMisuseAmount)}
+							value={gowidBound ? String(boundMisuseAmount) : ''}
+							placeholder={gowidLoaded ? '0' : '조회 중'}
 							suffix={<Suffix>원</Suffix>}
 						/>
 					</FieldInput>

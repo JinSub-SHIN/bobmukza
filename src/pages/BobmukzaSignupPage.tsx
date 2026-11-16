@@ -293,7 +293,10 @@ export const BobmukzaSignupPage = () => {
 				title="가입 확인"
 				open={confirmOpen}
 				centered
-				width={Math.min(340, typeof window !== 'undefined' ? window.innerWidth * 0.9 : 340)}
+				width={Math.min(
+					340,
+					typeof window !== 'undefined' ? window.innerWidth * 0.9 : 340,
+				)}
 				onCancel={() => setConfirmOpen(false)}
 				footer={
 					<ModalFooterActions>
@@ -314,9 +317,7 @@ export const BobmukzaSignupPage = () => {
 				<ConfirmCopy>
 					<strong>{pendingName}</strong> 이름으로 가입할까요?
 				</ConfirmCopy>
-				<ConfirmHint>
-					고위드 카드 별칭과 같은 실명으로 가입해 주세요.
-				</ConfirmHint>
+				<ConfirmHint>서비스 이용을 위해 실명으로 가입해 주세요.</ConfirmHint>
 			</StyledConfirmModal>
 
 			<BobmukzaShowCaptcha

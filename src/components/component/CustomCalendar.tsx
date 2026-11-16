@@ -19,7 +19,7 @@ import {
 	setWorkday,
 	workdayReset,
 } from '../../store/action/workdaySlice'
-import { RootState } from '../../store'
+import { RootState, store } from '../../store'
 import {
 	calendarReset,
 	setCalendarUpdate,
@@ -763,7 +763,7 @@ export const CustomCalendar = () => {
 				console.error('공휴일 API 실패 — 달력은 휴일 없이 표시합니다.', error)
 			}
 
-			const copy = cloneDeep(workdayStatus)
+			const copy = cloneDeep(store.getState().workdayStatus)
 			copy.holidayList = nowHoliday
 			copy.nextMonthHolidayList = nextHoliday
 
