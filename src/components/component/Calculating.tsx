@@ -358,6 +358,8 @@ export const Calculating = () => {
 		}
 	}, [userName, dispatch])
 
+	const gowidBound = gowidLoaded
+
 	const boundUsageAmount = gowidBound ? (ws.usageAmount ?? 0) : 0
 	const boundMisuseAmount = gowidBound ? (ws.exceptionMoney ?? 0) : 0
 
@@ -366,8 +368,6 @@ export const Calculating = () => {
 		ws.allHolidayCount * 13000 -
 		ws.morningHoldayCount * 10000 +
 		ws.extraMoneyCount * 10000
-
-	const gowidBound = gowidLoaded
 
 	const remainingAmount = gowidBound
 		? totalAmount - boundUsageAmount + boundMisuseAmount
