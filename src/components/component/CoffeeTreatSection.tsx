@@ -1,8 +1,14 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import styled from 'styled-components'
-import { Button, Input, Tag, message } from 'antd'
+import { Button, Input, Popconfirm, Tag, message } from 'antd'
 import { theme } from '../../styles/theme'
-import { getBobmukzaUserName } from '../../auth/bobmukzaSession'
+import {
+	CoffeePresetSlot,
+	clearCoffeePreset,
+	getCoffeePresetCounts,
+	loadCoffeePreset,
+	saveCoffeePreset,
+} from '../../auth/coffeeParticipantStorage'
 import { CoffeeSlotMachine } from './CoffeeSlotMachine'
 
 const PageIntro = styled.div`
@@ -56,11 +62,40 @@ const Row = styled.div`
 const AddRow = styled.div`
 	display: flex;
 	gap: 8px;
-	margin-bottom: 18px;
+	margin-bottom: 14px;
 
 	@media (max-width: 600px) {
 		flex-direction: column;
 	}
+`
+
+const PresetBar = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 16px;
+	padding: 12px 14px;
+	border-radius: ${theme.radiusSm};
+	background: rgba(255, 255, 255, 0.72);
+	border: 1px solid ${theme.line};
+`
+
+const PresetLabel = styled.span`
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: ${theme.inkSoft};
+`
+
+const PresetRow = styled.div`
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+`
+
+const PresetSlot = styled.div`
+	display: inline-flex;
+	align-items: stretch;
+	gap: 4px;
 `
 
 const SlotBlock = styled.div`
@@ -69,15 +104,21 @@ const SlotBlock = styled.div`
 	border-top: 1px solid ${theme.line};
 `
 
-const defaultNames = () => {
-	const me = getBobmukzaUserName()?.trim()
-	return me ? [me] : []
-}
-
 export const CoffeeTreatSection = () => {
 	const [draft, setDraft] = useState('')
-	const [members, setMembers] = useState<string[]>(defaultNames)
+	/** 탭을 다시 열면 목록 초기화 — 프리셋으로만 복구 */
+	const [members, setMembers] = useState<string[]>([])
 	const [membersVersion, setMembersVersion] = useState(0)
+	const [presetCounts, setPresetCounts] = useState(getCoffeePresetCounts)
+
+	const bumpMembers = useCallback((next: string[]) => {
+		setMembers(next)
+		setMembersVersion(v => v + 1)
+	}, [])
+
+	const refreshPresetCounts = () => {
+		setPresetCounts(getCoffeePresetCounts())
+	}
 
 	const addMember = () => {
 		const name = draft.trim()
@@ -88,21 +129,52 @@ export const CoffeeTreatSection = () => {
 			message.warning('이미 있는 이름이에요.')
 			return
 		}
-		setMembers(prev => [...prev, name])
+		bumpMembers([...members, name])
 		setDraft('')
-		setMembersVersion(v => v + 1)
 	}
 
 	const removeMember = (name: string) => {
-		setMembers(prev => prev.filter(m => m !== name))
-		setMembersVersion(v => v + 1)
+		bumpMembers(members.filter(m => m !== name))
+	}
+
+	const applyPreset = (slot: CoffeePresetSlot) => {
+		const saved = loadCoffeePreset(slot)
+		if (!saved || saved.length === 0) {
+			message.info(`프리셋 ${slot}에 저장된 이름이 없어요.`)
+			return
+		}
+		bumpMembers(saved)
+		message.success(`프리셋 ${slot}을 불러왔어요. (${saved.length}명)`)
+	}
+
+	const storePreset = (slot: CoffeePresetSlot) => {
+		if (members.length === 0) {
+			message.warning('저장할 참여자가 없어요.')
+			return
+		}
+		saveCoffeePreset(slot, members)
+		refreshPresetCounts()
+		message.success(`프리셋 ${slot}에 저장했어요. (${members.length}명)`)
+	}
+
+	const resetPreset = (slot: CoffeePresetSlot) => {
+		const cleared = clearCoffeePreset(slot)
+		if (!cleared) {
+			message.info(`프리셋 ${slot}은 이미 비어 있어요.`)
+			return
+		}
+		refreshPresetCounts()
+		message.success(`프리셋 ${slot}을 초기화했어요.`)
 	}
 
 	return (
 		<>
 			<PageIntro>
 				<h2>오늘 커피, 누가 쏠까</h2>
-				<p>참여자를 넣고 슬롯을 돌리면 세 릴이 맞춰진 사람이 커피 담당이 됩니다.</p>
+				<p>
+					탭을 바꿨다 들어오면 목록은 비워져요. 프리셋을 불러오거나 이름을
+					추가한 뒤 슬롯을 돌려 주세요.
+				</p>
 			</PageIntro>
 
 			<Panel>
@@ -118,6 +190,46 @@ export const CoffeeTreatSection = () => {
 						추가
 					</Button>
 				</AddRow>
+
+				<PresetBar>
+					<PresetLabel>프리셋 불러오기</PresetLabel>
+					<PresetRow>
+						{([1, 2, 3] as const).map(slot => (
+							<PresetSlot key={`preset-${slot}`}>
+								<Button
+									onClick={() => applyPreset(slot)}
+									disabled={presetCounts[slot] === 0}
+								>
+									프리셋 {slot}
+									{presetCounts[slot] > 0 ? ` (${presetCounts[slot]})` : ''}
+								</Button>
+								<Popconfirm
+									title={`프리셋 ${slot}을 비울까요?`}
+									okText="초기화"
+									cancelText="취소"
+									onConfirm={() => resetPreset(slot)}
+									disabled={presetCounts[slot] === 0}
+								>
+									<Button
+										danger
+										disabled={presetCounts[slot] === 0}
+										aria-label={`프리셋 ${slot} 초기화`}
+									>
+										초기화
+									</Button>
+								</Popconfirm>
+							</PresetSlot>
+						))}
+					</PresetRow>
+					<PresetLabel>현재 목록 저장</PresetLabel>
+					<PresetRow>
+						{([1, 2, 3] as const).map(slot => (
+							<Button key={`save-${slot}`} onClick={() => storePreset(slot)}>
+								프리셋 {slot} 에 저장
+							</Button>
+						))}
+					</PresetRow>
+				</PresetBar>
 
 				<Row>
 					{members.length === 0 ? (
