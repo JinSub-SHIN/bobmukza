@@ -210,13 +210,40 @@ const EmptyHint = styled.p`
 	text-align: center;
 `
 
-const pickRandom = (names: string[]) =>
-	names[Math.floor(Math.random() * names.length)] ?? ''
+const FairNote = styled.p`
+	margin: 0;
+	text-align: center;
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: ${theme.inkSoft};
+	line-height: 1.45;
+`
+
+/** 0 .. length-1 균등 정수. `Math.random` 대신 rejection sampling */
+const pickUniformIndex = (length: number): number => {
+	if (length <= 1) {
+		return 0
+	}
+	const bucket = new Uint32Array(1)
+	const max = 0x1_0000_0000
+	const limit = max - (max % length)
+	const cryptoApi = globalThis.crypto
+	if (cryptoApi?.getRandomValues) {
+		do {
+			cryptoApi.getRandomValues(bucket)
+		} while (bucket[0] >= limit)
+		return bucket[0] % length
+	}
+	return Math.floor(Math.random() * length)
+}
+
+const pickWinner = (names: string[]) =>
+	names[pickUniformIndex(names.length)] ?? ''
 
 const buildStrip = (names: string[], winner: string, extraSpins: number) => {
 	const strip: string[] = []
 	for (let i = 0; i < extraSpins; i++) {
-		strip.push(pickRandom(names))
+		strip.push(pickWinner(names))
 	}
 	strip.push(winner)
 	return strip
@@ -243,6 +270,7 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 		{ strip: ['—'], offset: 0 },
 		{ strip: ['—'], offset: 0 },
 	])
+	const [sessionWins, setSessionWins] = useState<Record<string, number>>({})
 	const endTimerRef = useRef<number | null>(null)
 
 	const n = names.length
@@ -271,7 +299,7 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 			window.clearTimeout(endTimerRef.current)
 		}
 
-		const picked = pickRandom(names)
+		const picked = pickWinner(names)
 		setWinner(null)
 		setJackpot(false)
 		setSpinning(false)
@@ -301,10 +329,19 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 			setSpinning(false)
 			setJackpot(true)
 			setWinner(picked)
+			setSessionWins(prev => ({
+				...prev,
+				[picked]: (prev[picked] ?? 0) + 1,
+			}))
 			onResult?.(picked)
 			endTimerRef.current = null
 		}, REEL_SPIN_MS[2] + 120)
 	}
+
+	const sessionStatsText = names
+		.map(name => `${name} ${sessionWins[name] ?? 0}회`)
+		.join(' · ')
+	const totalSpins = Object.values(sessionWins).reduce((a, b) => a + b, 0)
 
 	if (n < 2) {
 		return (
@@ -360,6 +397,17 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 					</>
 				) : null}
 			</Result>
+
+			<FairNote>
+				당첨 확률은 참여자마다 {n >= 2 ? `1/${n}` : '—'}로 같습니다. 릴에 이름이 많이
+				보여도 당첨은 매번 새로 뽑혀요.
+				{totalSpins > 0 ? (
+					<>
+						<br />
+						이번 목록 통계 · {sessionStatsText}
+					</>
+				) : null}
+			</FairNote>
 		</Stage>
 	)
 }
