@@ -309,6 +309,7 @@ function won(n: number) {
 export const Calculating = () => {
 	const dispatch = useDispatch()
 	const ws = useSelector((state: RootState) => state.workdayStatus)
+	const gowidRefreshNonce = ws.gowidRefreshNonce ?? 0
 	const userName = getBobmukzaUserName()
 	const [gowidHint, setGowidHint] = useState<string | null>(null)
 	const [gowidLoaded, setGowidLoaded] = useState(false)
@@ -321,7 +322,11 @@ export const Calculating = () => {
 		}
 
 		let cancelled = false
-		setGowidLoaded(false)
+		const hadGowid =
+			ws.usageAmount !== undefined || ws.exceptionMoney !== undefined
+		if (!hadGowid) {
+			setGowidLoaded(false)
+		}
 
 		;(async () => {
 			try {
@@ -356,12 +361,13 @@ export const Calculating = () => {
 		return () => {
 			cancelled = true
 		}
-	}, [userName, dispatch])
+	}, [userName, dispatch, gowidRefreshNonce])
 
-	const gowidBound = gowidLoaded
-
-	const boundUsageAmount = gowidBound ? (ws.usageAmount ?? 0) : 0
-	const boundMisuseAmount = gowidBound ? (ws.exceptionMoney ?? 0) : 0
+	const hasGowidAmounts =
+		ws.usageAmount !== undefined && ws.exceptionMoney !== undefined
+	const gowidActive = gowidLoaded && hasGowidAmounts
+	const boundUsageAmount = ws.usageAmount ?? 0
+	const boundMisuseAmount = ws.exceptionMoney ?? 0
 
 	const totalAmount =
 		ws.workday * 13000 -
@@ -369,7 +375,7 @@ export const Calculating = () => {
 		ws.morningHoldayCount * 10000 +
 		ws.extraMoneyCount * 10000
 
-	const remainingAmount = gowidBound
+	const remainingAmount = gowidActive
 		? totalAmount - boundUsageAmount + boundMisuseAmount
 		: totalAmount
 
@@ -419,9 +425,11 @@ export const Calculating = () => {
 						</HeroValue>
 						<HeroSub>
 							이번 달 총액 {won(totalAmount)}원
-							{gowidBound
+							{gowidActive
 								? ` − 사용 ${won(boundUsageAmount)}원`
-								: ' · 사용액 조회 전'}
+								: gowidLoaded
+									? ' · 사용액 갱신 중'
+									: ' · 사용액 조회 전'}
 						</HeroSub>
 					</HeroMetric>
 					<HeroMetric>
@@ -464,7 +472,7 @@ export const Calculating = () => {
 							readOnly
 							tabIndex={-1}
 							aria-readonly
-							value={gowidBound ? String(boundUsageAmount) : ''}
+							value={hasGowidAmounts ? String(boundUsageAmount) : ''}
 							placeholder={gowidLoaded ? '0' : '조회 중'}
 							suffix={<Suffix>원</Suffix>}
 						/>
@@ -482,7 +490,7 @@ export const Calculating = () => {
 							readOnly
 							tabIndex={-1}
 							aria-readonly
-							value={gowidBound ? String(boundMisuseAmount) : ''}
+							value={hasGowidAmounts ? String(boundMisuseAmount) : ''}
 							placeholder={gowidLoaded ? '0' : '조회 중'}
 							suffix={<Suffix>원</Suffix>}
 						/>

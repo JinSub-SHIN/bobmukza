@@ -27,6 +27,8 @@ export interface Workday {
 	usageAmount: number | undefined
 	specialDayList: SpecialDay[]
 	exceptionMoney: number | undefined
+	/** 달력「처음부터 다시」 시 고위드 API 재조회 트리거 */
+	gowidRefreshNonce: number
 }
 
 const initialState: Workday = {
@@ -46,6 +48,7 @@ const initialState: Workday = {
 	usageAmount: undefined,
 	specialDayList: [],
 	exceptionMoney: undefined,
+	gowidRefreshNonce: 0,
 }
 
 const workdaySlice = createSlice({
@@ -61,8 +64,13 @@ const workdaySlice = createSlice({
 		setWorkday: (_, action: PayloadAction<Workday>) => {
 			return { ...action.payload }
 		},
-		workdayReset: () => {
-			return initialState
+		workdayReset: state => {
+			return {
+				...initialState,
+				usageAmount: state.usageAmount,
+				exceptionMoney: state.exceptionMoney,
+				gowidRefreshNonce: state.gowidRefreshNonce + 1,
+			}
 		},
 	},
 })
