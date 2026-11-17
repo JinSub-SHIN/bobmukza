@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import styled, { css, keyframes } from 'styled-components'
 import { theme } from '../../styles/theme'
+import { SlotFireworks } from './SlotFireworks'
 
 type Props = {
 	names: string[]
@@ -50,9 +51,17 @@ const Stage = styled.div`
 `
 
 const StageCentered = styled(Stage)`
+	position: relative;
 	justify-content: center;
-	min-height: min(340px, 42vh);
-	padding: 12px 0;
+	align-items: center;
+	min-height: min(380px, 48vh);
+	padding: 16px 0;
+	width: 100%;
+
+	& > *:not([data-fireworks]) {
+		position: relative;
+		z-index: 1;
+	}
 `
 
 const EmptyStateCard = styled.div`
@@ -253,20 +262,6 @@ const Result = styled.div<{ $show: boolean }>`
 	}
 `
 
-const FairNote = styled.p`
-	margin: 0;
-	text-align: center;
-	font-size: 0.8rem;
-	font-weight: 500;
-	color: ${theme.inkSoft};
-	line-height: 1.45;
-
-	strong {
-		color: ${theme.teal};
-		font-weight: 700;
-	}
-`
-
 /** 0 .. length-1 균등 정수. `Math.random` 대신 rejection sampling */
 const pickUniformIndex = (length: number): number => {
 	if (length <= 1) {
@@ -313,12 +308,12 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 	const [jackpot, setJackpot] = useState(false)
 	const [winner, setWinner] = useState<string | null>(null)
 	const [spinEpoch, setSpinEpoch] = useState(0)
+	const [fireworkBurst, setFireworkBurst] = useState(0)
 	const [reels, setReels] = useState<ReelState[]>([
 		{ strip: ['—'], offset: 0 },
 		{ strip: ['—'], offset: 0 },
 		{ strip: ['—'], offset: 0 },
 	])
-	const [sessionWins, setSessionWins] = useState<Record<string, number>>({})
 	const endTimerRef = useRef<number | null>(null)
 
 	const n = names.length
@@ -351,6 +346,7 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 		setWinner(null)
 		setJackpot(false)
 		setSpinning(false)
+		setFireworkBurst(0)
 
 		const extras = [18, 22, 26]
 		const nextReels = extras.map(extra => {
@@ -377,19 +373,11 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 			setSpinning(false)
 			setJackpot(true)
 			setWinner(picked)
-			setSessionWins(prev => ({
-				...prev,
-				[picked]: (prev[picked] ?? 0) + 1,
-			}))
+			setFireworkBurst(b => b + 1)
 			onResult?.(picked)
 			endTimerRef.current = null
 		}, REEL_SPIN_MS[2] + 120)
 	}
-
-	const sessionStatsText = names
-		.map(name => `${name} ${sessionWins[name] ?? 0}회`)
-		.join(' · ')
-	const totalSpins = Object.values(sessionWins).reduce((a, b) => a + b, 0)
 
 	if (n < 2) {
 		return (
@@ -407,8 +395,11 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 		)
 	}
 
+	const showFireworks = Boolean(winner) && !spinning && fireworkBurst > 0
+
 	return (
-		<Stage>
+		<StageCentered>
+			<SlotFireworks active={showFireworks} burstKey={fireworkBurst} />
 			<Cabinet $jackpot={jackpot && Boolean(winner)}>
 				<MarqueeBar>
 					<MarqueeTrack $run={spinning || jackpot}>
@@ -448,22 +439,11 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 			<Result $show={Boolean(winner) && !spinning}>
 				{winner ? (
 					<>
-						<div className="badge">🎰 잭팟</div>
+						<div className="badge">🎰 커피담당</div>
 						<div className="name">{winner}</div>
 					</>
 				) : null}
 			</Result>
-
-			<FairNote>
-				<strong>검증된 1/N 균등 추첨</strong> — 참여자 {n}명이면 각각 1/{n}
-				확률입니다. 릴 연출과 무관하게 매 스핀 새로 뽑습니다.
-				{totalSpins > 0 ? (
-					<>
-						<br />
-						이번 목록 통계 · {sessionStatsText}
-					</>
-				) : null}
-			</FairNote>
-		</Stage>
+		</StageCentered>
 	)
 }
