@@ -1,6 +1,10 @@
 import axios, { AxiosError, isAxiosError } from 'axios'
 
-export const MUKBURIM_API_BASE = 'https://cal.carenation.kr/mukburim'
+/** 배포: API 서버 직접 호출(CORS 허용 도메인). 개발: Vite 프록시 경로 */
+export const MUKBURIM_API_BASE = import.meta.env.DEV
+	? '/mukburim'
+	: (import.meta.env.VITE_MUKBURIM_API_BASE ??
+		'https://cal.carenation.kr/mukburim')
 
 export const mukburimClient = axios.create({
 	baseURL: MUKBURIM_API_BASE,
