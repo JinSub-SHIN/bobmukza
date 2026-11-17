@@ -159,14 +159,6 @@ const Cell = styled.div`
 	line-height: 1.15;
 	word-break: keep-all;
 `
-
-const LeverHint = styled.p`
-	margin: 10px 0 0;
-	text-align: center;
-	font-size: 0.78rem;
-	color: rgba(255, 255, 255, 0.55);
-`
-
 const SpinButton = styled.button<{ $disabled: boolean }>`
 	appearance: none;
 	border: 0;
