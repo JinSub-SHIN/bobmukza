@@ -49,6 +49,56 @@ const Stage = styled.div`
 	width: 100%;
 `
 
+const StageCentered = styled(Stage)`
+	justify-content: center;
+	min-height: min(340px, 42vh);
+	padding: 12px 0;
+`
+
+const EmptyStateCard = styled.div`
+	width: min(100%, 340px);
+	margin: 0 auto;
+	padding: 32px 24px;
+	text-align: center;
+	border-radius: ${theme.radius};
+	background: linear-gradient(
+		165deg,
+		rgba(255, 255, 255, 0.95) 0%,
+		rgba(243, 247, 245, 0.92) 100%
+	);
+	border: 1px solid ${theme.line};
+	box-shadow: ${theme.shadow};
+`
+
+const EmptyIcon = styled.div`
+	font-size: 2.25rem;
+	line-height: 1;
+	margin-bottom: 12px;
+`
+
+const EmptyMessage = styled.p`
+	margin: 0 0 16px;
+	font-size: 0.98rem;
+	font-weight: 600;
+	color: ${theme.ink};
+	line-height: 1.55;
+`
+
+const EmptyFair = styled.p`
+	margin: 0;
+	padding-top: 14px;
+	border-top: 1px solid ${theme.line};
+	font-size: 0.82rem;
+	font-weight: 500;
+	color: ${theme.inkSoft};
+	line-height: 1.55;
+
+	strong {
+		color: ${theme.teal};
+		font-weight: 700;
+	}
+`
+
 const Cabinet = styled.div<{ $jackpot: boolean }>`
 	width: min(100%, 360px);
 	padding: 18px 16px 20px;
@@ -203,13 +253,6 @@ const Result = styled.div<{ $show: boolean }>`
 	}
 `
 
-const EmptyHint = styled.p`
-	margin: 0;
-	color: ${theme.inkSoft};
-	font-size: 0.92rem;
-	text-align: center;
-`
-
 const FairNote = styled.p`
 	margin: 0;
 	text-align: center;
@@ -217,6 +260,11 @@ const FairNote = styled.p`
 	font-weight: 500;
 	color: ${theme.inkSoft};
 	line-height: 1.45;
+
+	strong {
+		color: ${theme.teal};
+		font-weight: 700;
+	}
 `
 
 /** 0 .. length-1 균등 정수. `Math.random` 대신 rejection sampling */
@@ -345,9 +393,17 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 
 	if (n < 2) {
 		return (
-			<Stage>
-				<EmptyHint>슬롯을 돌리려면 참여자를 2명 이상 넣어 주세요.</EmptyHint>
-			</Stage>
+			<StageCentered>
+				<EmptyStateCard>
+					<EmptyIcon aria-hidden>🎰</EmptyIcon>
+					<EmptyMessage>참여자를 2명 이상 넣어 주세요.</EmptyMessage>
+					<EmptyFair>
+						당첨은 <strong>검증된 1/N 균등 추첨</strong>으로 정해집니다.
+						<br />
+						브라우저 암호 난수로 참여자마다 같은 확률을 보장해요.
+					</EmptyFair>
+				</EmptyStateCard>
+			</StageCentered>
 		)
 	}
 
@@ -399,8 +455,8 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 			</Result>
 
 			<FairNote>
-				당첨 확률은 참여자마다 {n >= 2 ? `1/${n}` : '—'}로 같습니다. 릴에 이름이 많이
-				보여도 당첨은 매번 새로 뽑혀요.
+				<strong>검증된 1/N 균등 추첨</strong> — 참여자 {n}명이면 각각 1/{n}
+				확률입니다. 릴 연출과 무관하게 매 스핀 새로 뽑습니다.
 				{totalSpins > 0 ? (
 					<>
 						<br />
