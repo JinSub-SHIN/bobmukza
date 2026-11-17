@@ -131,7 +131,7 @@ const MarqueeBar = styled.div`
 	border: 1px solid rgba(255, 217, 102, 0.35);
 `
 
-const MarqueeTrack = styled.div<{ $run: boolean }>`
+const MarqueeTrack = styled.div`
 	display: flex;
 	width: max-content;
 	font-family: ${theme.fontDisplay};
@@ -140,12 +140,8 @@ const MarqueeTrack = styled.div<{ $run: boolean }>`
 	color: #ffe082;
 	white-space: nowrap;
 	gap: 32px;
-
-	${p =>
-		p.$run &&
-		css`
-			animation: ${marquee} 4s linear infinite;
-		`}
+	animation: ${marquee} 4s linear infinite;
+	will-change: transform;
 `
 
 const ReelsRow = styled.div`
@@ -259,6 +255,14 @@ const Result = styled.div<{ $show: boolean }>`
 		font-family: ${theme.fontDisplay};
 		font-size: clamp(1.4rem, 3vw, 1.85rem);
 		color: ${theme.accent};
+	}
+
+	.quip {
+		margin-top: 8px;
+		font-size: 0.92rem;
+		font-weight: 600;
+		color: ${theme.inkSoft};
+		line-height: 1.45;
 	}
 `
 
@@ -402,7 +406,7 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 			<SlotFireworks active={showFireworks} burstKey={fireworkBurst} />
 			<Cabinet $jackpot={jackpot && Boolean(winner)}>
 				<MarqueeBar>
-					<MarqueeTrack $run={spinning || jackpot}>
+					<MarqueeTrack>
 						<span>☕ COFFEE SLOT ☕ 세 줄 맞추면 담당 확정 ☕</span>
 						<span>☕ COFFEE SLOT ☕ 세 줄 맞추면 담당 확정 ☕</span>
 					</MarqueeTrack>
@@ -441,6 +445,7 @@ export const CoffeeSlotMachine = ({ names, onResult }: Props) => {
 					<>
 						<div className="badge">🎰 커피담당</div>
 						<div className="name">{winner}</div>
+						<p className="quip">오늘 커피는 여기까지— 나머지는 나만 아니면 돼 ☕</p>
 					</>
 				) : null}
 			</Result>

@@ -37,6 +37,15 @@ const PageIntro = styled.div`
 	}
 `
 
+const Quip = styled.p`
+	margin: 8px 0 0;
+	font-family: ${theme.fontDisplay};
+	font-size: clamp(1.05rem, 2.4vw, 1.2rem);
+	font-weight: 700;
+	color: ${theme.accent};
+	letter-spacing: -0.02em;
+`
+
 const Panel = styled.div`
 	width: 100%;
 	padding: 22px 20px;
@@ -344,12 +353,8 @@ export const CoffeeTreatSection = () => {
 		<>
 			<PageIntro>
 				<h2>오늘 커피, 누가 쏠까</h2>
-				<p>
-					탭을 바꿨다 들어오면 목록은 비워져요. 프리셋을 불러오거나 이름을
-					추가한 뒤 슬롯을 돌려 주세요.
-				</p>
+				<Quip>「나만 아니면 돼」</Quip>
 			</PageIntro>
-
 			<Panel>
 				<AddRow>
 					<Input
